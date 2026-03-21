@@ -39,10 +39,20 @@
       (function(){
         try {
           var t = localStorage.getItem('app-theme');
+          var colorMap = { day: '#fafafa', night: '#0a0a0a', blu: '#000080' };
+          var bg = colorMap[t] || '#fafafa';
+          // Set theme-color immediately (no media query) so webview status bar matches app theme
+          var tcMeta = document.querySelector('meta[name="theme-color"]:not([media])') || document.createElement('meta');
+          tcMeta.setAttribute('name', 'theme-color');
+          tcMeta.setAttribute('content', bg);
+          if (!tcMeta.parentNode) document.head.appendChild(tcMeta);
           if (t === 'night') {
             document.documentElement.classList.add('dark');
             var loader = document.getElementById('initial-loader');
             if (loader) loader.style.background = '#0a0a0a';
+          }
+          if (t === 'blu') {
+            document.documentElement.classList.add('blu');
           }
         } catch(e) {}
       })();
