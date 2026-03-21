@@ -1,0 +1,25 @@
+project_id = "rcpcqekcvatzekpoxbkf"
+
+[functions.ai-assistant]
+verify_jwt = false
+
+[functions.smart-notifications]
+verify_jwt = false
+
+[functions.import-source]
+verify_jwt = false
+
+[functions.daily-briefing]
+verify_jwt = false
+
+[functions.send-push]
+verify_jwt = false
+
+[functions.shared-archive-ask]
+verify_jwt = false
+
+[functions.check-reminders]
+verify_jwt = false
+
+[functions.ai-notification-scheduler]
+verify_jwt = false

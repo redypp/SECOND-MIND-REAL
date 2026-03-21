@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content" />
+    <!-- TODO: Set the document title to the name of your application -->
+    <title>Lovable App</title>
+    <meta name="description" content="Lovable Generated Project" />
+    <meta name="author" content="Lovable" />
+
+   <!-- iOS Status Bar -->
+   <meta name="apple-mobile-web-app-capable" content="yes" />
+   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+   <meta name="theme-color" content="#0a0a0a" media="(prefers-color-scheme: dark)" />
+   <meta name="theme-color" content="#fafafa" media="(prefers-color-scheme: light)" />
+   
+   <!-- Prevent audio session claiming - allow background music to continue -->
+   <meta name="audio" content="false" />
+
+    <!-- TODO: Update og:title to match your application name -->
+    <meta property="og:title" content="Lovable App" />
+    <meta property="og:description" content="Lovable Generated Project" />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@Lovable" />
+    <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+  </head>
+
+  <body>
+    <div id="root">
+      <!-- Instant loading indicator - removed once React mounts -->
+      <div id="initial-loader" style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:var(--background,#fafafa);transition:opacity 0.3s ease;">
+        <img id="initial-spinner" src="/splash-logo.png" alt="" style="width:80px;height:80px;object-fit:contain;animation:_s 1.2s linear infinite" />
+        <style>@keyframes _s{to{transform:rotate(360deg)}}</style>
+      </div>
+    </div>
+    <!-- Apply saved theme BEFORE React to prevent light→dark flash -->
+    <script>
+      (function(){
+        try {
+          var t = localStorage.getItem('app-theme');
+          if (t === 'night') {
+            document.documentElement.classList.add('dark');
+            var loader = document.getElementById('initial-loader');
+            if (loader) loader.style.background = '#0a0a0a';
+          }
+        } catch(e) {}
+      })();
+    </script>
+    <!-- Escape hatch: runs BEFORE React to unblock stuck devices -->
+    <script>
+      (function() {
+        try {
+          var params = new URLSearchParams(window.location.search);
+          if (params.get('clear-cache') === 'true') {
+            // Nuclear option: clear ALL localStorage to unblock the app
+            try { localStorage.clear(); } catch(e) {}
+            try { sessionStorage.clear(); } catch(e) {}
+            // Remove param and reload
+            params.delete('clear-cache');
+            var newUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
+            window.history.replaceState({}, '', newUrl);
+            window.location.reload();
+          }
+        } catch(e) {
+          // If even this fails, try to clear and reload
+          try { localStorage.clear(); } catch(e2) {}
+          try { sessionStorage.clear(); } catch(e3) {}
+        }
+      })();
+    </script>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cat \"/c/Users/monta/Desktop/Personal/Projects/Second Mind/Second-Mind/secondminded/supabase/migrations/\"*.sql)",
+      "Bash(wc -l \"/c/Users/monta/Desktop/Personal/Projects/Second Mind/Second-Mind/secondminded/supabase/migrations/\"*.sql)",
+      "Bash(node_modules/.bin/tsc --noEmit --pretty)",
+      "Bash(npm install:*)",
+      "Bash(export PATH=\"$PATH:/usr/local/bin:/opt/homebrew/bin:/usr/bin\")",
+      "Read(//Users/reidpet/.nvm/versions/**)",
+      "Read(//Users/reidpet/.volta/**)",
+      "Read(//Users/reidpet/**)",
+      "Bash(grep -E \"^/Users/reidpet/Desktop/secondminded-main/[^/]+/?[^/]*/?[^/]*$\")",
+      "Bash(grep -r \"export.*hook\\\\|export.*function\" /Users/reidpet/Desktop/secondminded-main/src/hooks/*.ts)",
+      "Bash(source ~/.zshrc)",
+      "Bash(npm --version)"
+    ]
+  }
+}
