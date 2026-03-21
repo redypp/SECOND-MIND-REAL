@@ -53,12 +53,16 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     if (theme === 'blu') root.classList.add('blu');
     localStorage.setItem('app-theme', theme);
 
-    // Update iOS status bar theme-color
-    const themeColorMeta = document.querySelector('meta[name="theme-color"]:not([media])') || document.createElement('meta');
-    themeColorMeta.setAttribute('name', 'theme-color');
+    // Update iOS status bar theme-color + html background to prevent white bar under status bar
     const colorMap: Record<Theme, string> = { day: '#fafafa', night: '#0a0a0a', blu: '#000080' };
-    themeColorMeta.setAttribute('content', colorMap[theme]);
+    const themeColor = colorMap[theme];
+    const themeColorMeta = document.querySelector('meta[name="theme-color"]') || document.createElement('meta');
+    themeColorMeta.setAttribute('name', 'theme-color');
+    themeColorMeta.removeAttribute('media');
+    themeColorMeta.setAttribute('content', themeColor);
     if (!themeColorMeta.parentNode) document.head.appendChild(themeColorMeta);
+    // Keep html background in sync so safe-area behind status bar always matches theme
+    root.style.background = themeColor;
 
     // Update iOS status bar style
     const statusBarMeta = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]');
