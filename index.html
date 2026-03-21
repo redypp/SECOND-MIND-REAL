@@ -11,8 +11,10 @@
    <!-- iOS Status Bar -->
    <meta name="apple-mobile-web-app-capable" content="yes" />
    <meta name="apple-mobile-web-app-title" content="Second Mind" />
+   <!-- Default to dark theme values; overridden immediately by inline script below -->
    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-   <meta name="theme-color" content="#fafafa" />
+   <meta name="color-scheme" content="dark" />
+   <meta name="theme-color" content="#0a0a0a" />
 
    <!-- Prevent audio session claiming - allow background music to continue -->
    <meta name="audio" content="false" />
@@ -39,15 +41,33 @@
         try {
           var t = localStorage.getItem('app-theme');
           var colorMap = { day: '#fafafa', night: '#0a0a0a', blu: '#000080' };
-          var bg = colorMap[t] || '#fafafa';
-          // Set theme-color immediately so status bar matches app theme
+          var isDark = (t === 'night' || t === 'blu');
+          var bg = colorMap[t] || '#0a0a0a';
+
+          // 1. theme-color — tells WebView what color the status bar chrome is
           var tcMeta = document.querySelector('meta[name="theme-color"]') || document.createElement('meta');
           tcMeta.setAttribute('name', 'theme-color');
           tcMeta.setAttribute('content', bg);
           tcMeta.removeAttribute('media');
           if (!tcMeta.parentNode) document.head.appendChild(tcMeta);
-          // Apply background to html element immediately to prevent white flash under status bar
+
+          // 2. apple-mobile-web-app-status-bar-style — controls icon color
+          //    'black-translucent' = white icons (dark bg), 'default' = dark icons (light bg)
+          var sbMeta = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]') || document.createElement('meta');
+          sbMeta.setAttribute('name', 'apple-mobile-web-app-status-bar-style');
+          sbMeta.setAttribute('content', isDark ? 'black-translucent' : 'default');
+          if (!sbMeta.parentNode) document.head.appendChild(sbMeta);
+
+          // 3. color-scheme — second signal for icon color used by some WKWebView wrappers
+          var csMeta = document.querySelector('meta[name="color-scheme"]') || document.createElement('meta');
+          csMeta.setAttribute('name', 'color-scheme');
+          csMeta.setAttribute('content', isDark ? 'dark' : 'light');
+          if (!csMeta.parentNode) document.head.appendChild(csMeta);
+
+          // 4. html element background + color-scheme — prevents white flash under status bar
           document.documentElement.style.background = bg;
+          document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
+
           if (t === 'night') {
             document.documentElement.classList.add('dark');
             var loader = document.getElementById('initial-loader');
