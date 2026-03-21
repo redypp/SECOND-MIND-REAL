@@ -63,7 +63,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     // Update iOS status bar style
     const statusBarMeta = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]');
     if (statusBarMeta) {
-      statusBarMeta.setAttribute('content', theme === 'day' ? 'default' : 'black-translucent');
+      statusBarMeta.setAttribute('content', 'black-translucent');
     }
 
     // Sync to cloud
