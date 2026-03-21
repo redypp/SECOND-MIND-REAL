@@ -12,8 +12,7 @@
    <meta name="apple-mobile-web-app-capable" content="yes" />
    <meta name="apple-mobile-web-app-title" content="Second Mind" />
    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-   <meta name="theme-color" content="#0a0a0a" media="(prefers-color-scheme: dark)" />
-   <meta name="theme-color" content="#fafafa" media="(prefers-color-scheme: light)" />
+   <meta name="theme-color" content="#fafafa" />
 
    <!-- Prevent audio session claiming - allow background music to continue -->
    <meta name="audio" content="false" />
@@ -41,11 +40,14 @@
           var t = localStorage.getItem('app-theme');
           var colorMap = { day: '#fafafa', night: '#0a0a0a', blu: '#000080' };
           var bg = colorMap[t] || '#fafafa';
-          // Set theme-color immediately (no media query) so webview status bar matches app theme
-          var tcMeta = document.querySelector('meta[name="theme-color"]:not([media])') || document.createElement('meta');
+          // Set theme-color immediately so status bar matches app theme
+          var tcMeta = document.querySelector('meta[name="theme-color"]') || document.createElement('meta');
           tcMeta.setAttribute('name', 'theme-color');
           tcMeta.setAttribute('content', bg);
+          tcMeta.removeAttribute('media');
           if (!tcMeta.parentNode) document.head.appendChild(tcMeta);
+          // Apply background to html element immediately to prevent white flash under status bar
+          document.documentElement.style.background = bg;
           if (t === 'night') {
             document.documentElement.classList.add('dark');
             var loader = document.getElementById('initial-loader');
@@ -53,6 +55,8 @@
           }
           if (t === 'blu') {
             document.documentElement.classList.add('blu');
+            var loader = document.getElementById('initial-loader');
+            if (loader) loader.style.background = '#000080';
           }
         } catch(e) {}
       })();

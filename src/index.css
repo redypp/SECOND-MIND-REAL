@@ -277,6 +277,7 @@
     -webkit-text-size-adjust: 100%;
     overflow-x: hidden;
     overscroll-behavior-x: none;
+    background-color: hsl(var(--background));
   }
 
   body {

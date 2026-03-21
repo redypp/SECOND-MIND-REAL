@@ -12,7 +12,21 @@
       "Bash(grep -E \"^/Users/reidpet/Desktop/secondminded-main/[^/]+/?[^/]*/?[^/]*$\")",
       "Bash(grep -r \"export.*hook\\\\|export.*function\" /Users/reidpet/Desktop/secondminded-main/src/hooks/*.ts)",
       "Bash(source ~/.zshrc)",
-      "Bash(npm --version)"
+      "Bash(npm --version)",
+      "Bash(grep -i -E \"\\\\.\\(png|jpg|jpeg|svg|webp\\)$\")",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:9999/splash-preview.html)",
+      "Bash(python3 -c \"from PIL import Image, ImageDraw, ImageFont; print\\(''PIL available''\\)\")",
+      "Bash(pip3 install:*)",
+      "Bash(python3:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Skill(codebase-ref)",
+      "Skill(codebase-ref:*)",
+      "Bash(grep -l \"habits\" /Users/reidpet/Desktop/secondminded-main/supabase/migrations/*.sql)",
+      "Skill(fix-bug)",
+      "Skill(fix-bug:*)"
     ]
   }
 }
