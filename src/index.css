@@ -95,7 +95,7 @@
     --tracking-normal: -0.011em;
     --tracking-tight: -0.022em;
 
-    --app-safe-top-min: 50px;
+    --app-safe-top-min: 0px;
     --app-safe-top: max(env(safe-area-inset-top, 0px), var(--app-safe-top-min));
     --app-safe-top-legacy: max(constant(safe-area-inset-top), var(--app-safe-top-min));
   }
