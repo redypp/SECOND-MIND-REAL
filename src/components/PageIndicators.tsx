@@ -8,7 +8,7 @@ interface PageIndicatorsProps {
 
 export function PageIndicators({ currentIndex, onPageSelect }: PageIndicatorsProps) {
   return (
-    <nav className="fixed bottom-[calc(env(safe-area-inset-bottom,6px)+28px)] left-1/2 -translate-x-1/2 z-50 pointer-events-none page-indicators" style={{ width: '25%' }}>
+    <nav className="fixed bottom-[calc(max(var(--app-safe-bottom),6px)+28px)] left-1/2 -translate-x-1/2 z-50 pointer-events-none page-indicators" style={{ width: '25%' }}>
       <div
         className="relative w-full h-[4px] rounded-full bg-foreground/20 pointer-events-auto flex overflow-hidden"
       >

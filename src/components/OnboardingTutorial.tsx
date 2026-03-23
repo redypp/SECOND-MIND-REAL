@@ -438,7 +438,7 @@ export function OnboardingTutorial() {
               exit={{ y: 60, opacity: 0 }}
               transition={{ type: 'spring', damping: 25, stiffness: 220 }}
               className="fixed bottom-0 left-0 right-0 z-[100000] bg-card border-t border-border/50 shadow-2xl"
-              style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 20px)' }}
+              style={{ paddingBottom: 'max(var(--app-safe-bottom), 20px)' }}
             >
               <div className="px-5 pt-4 pb-1 flex items-center gap-3">
                 <motion.div
@@ -470,7 +470,7 @@ export function OnboardingTutorial() {
               exit={{ y: 60, opacity: 0 }}
               transition={{ type: 'spring', damping: 25, stiffness: 200, delay: 0.15 }}
               className="fixed bottom-0 left-0 right-0 z-[100000] bg-card border-t border-border/50 shadow-2xl"
-              style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 20px)' }}
+              style={{ paddingBottom: 'max(var(--app-safe-bottom), 20px)' }}
             >
               <div className="px-5 pt-4 pb-1">
                 {/* Step progress + dismiss */}

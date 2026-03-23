@@ -334,7 +334,7 @@ export function OrganizeModal({ isOpen, onClose, spaceId, spaceName, onItemSaved
       {/* ── Input bar ───────────────────────────────────────────── */}
       <div
         className="shrink-0 border-t border-border/25 bg-background px-3 pt-2"
-        style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 10px)' }}
+        style={{ paddingBottom: 'max(var(--app-safe-bottom), 10px)' }}
       >
         <div className="flex items-end gap-1.5">
 

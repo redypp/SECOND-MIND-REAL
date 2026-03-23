@@ -16,7 +16,7 @@ interface CollectionsPageProps {
 // bottom-nav clearance (40px), and cumulative gap between 7 cards (6 × 6px = 36px).
 // Total overhead = 136px = 8.5rem — cards fill the screen naturally with 7 archives
 // and scroll gracefully beyond that.
-const CARD_HEIGHT = 'calc((100dvh - 8.5rem - env(safe-area-inset-bottom, 0px)) / 7)';
+const CARD_HEIGHT = 'calc((100dvh - 8.5rem - var(--app-safe-bottom)) / 7)';
 
 export default function CollectionsPage({ embedded = false }: CollectionsPageProps) {
   const navigate = useNavigate();
@@ -51,7 +51,7 @@ export default function CollectionsPage({ embedded = false }: CollectionsPagePro
 
       {/* Content */}
       <main
-        className="flex-1 min-h-0 flex flex-col px-0 pt-2 pb-[calc(2.5rem+env(safe-area-inset-bottom,0px))] gap-1.5 overflow-y-auto"
+        className="flex-1 min-h-0 flex flex-col px-0 pt-2 pb-[calc(2.5rem+var(--app-safe-bottom))] gap-1.5 overflow-y-auto"
         style={{ overscrollBehavior: 'none' }}
       >
         {!hasSpaces ? (

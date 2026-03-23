@@ -354,7 +354,7 @@ export default function JournalPage({ embedded = false, onBack }: JournalPagePro
               e.preventDefault();
               insertNewline();
             }}
-            className="fixed bottom-[env(safe-area-inset-bottom,12px)] right-4 mb-2 z-50 w-11 h-11 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-lg active:scale-95 transition-transform"
+            className="fixed bottom-[max(var(--app-safe-bottom),12px)] right-4 mb-2 z-50 w-11 h-11 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-lg active:scale-95 transition-transform"
             aria-label="New line"
           >
             <CornerDownLeft className="w-5 h-5" />

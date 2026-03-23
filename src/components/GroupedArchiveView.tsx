@@ -306,7 +306,7 @@ export function GroupedArchiveView({ items, groups, onDeleteItem, onGroupsChange
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 60, opacity: 0 }}
               transition={{ type: 'spring', damping: 28, stiffness: 320 }}
-              className="relative bg-background border-t border-border rounded-t-2xl shadow-2xl p-4 pb-[max(1.5rem,env(safe-area-inset-bottom))]"
+              className="relative bg-background border-t border-border rounded-t-2xl shadow-2xl p-4 pb-[max(1.5rem,var(--app-safe-bottom))]"
             >
               <div className="flex items-center justify-between mb-3">
                 <span className="text-sm font-semibold text-foreground">Move to section</span>

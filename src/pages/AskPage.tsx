@@ -590,7 +590,7 @@ export default function AskPage() {
       {/* ── Input composer ── */}
       <div
         className="border-t border-border/20 px-4 pt-3 bg-background shrink-0"
-        style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 14px)' }}
+        style={{ paddingBottom: 'max(var(--app-safe-bottom), 14px)' }}
       >
         {/* Voice error banner */}
         <AnimatePresence>

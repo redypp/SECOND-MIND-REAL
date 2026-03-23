@@ -590,7 +590,7 @@ export function ChamberModal({ isOpen, onClose, initialMode, lockMode = false }:
               )}
             </div>
 
-              <div className="border-t border-border/40 px-4 pt-3 pb-2 bg-background shrink-0" style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 12px)' }}>
+              <div className="border-t border-border/40 px-4 pt-3 pb-2 bg-background shrink-0" style={{ paddingBottom: 'max(var(--app-safe-bottom), 12px)' }}>
                 {/* Type / Talk toggle — 44px touch targets */}
                 {voice.isSupported && (
                   <div className="flex items-center gap-1 mb-2">
@@ -925,7 +925,7 @@ export function ChamberModal({ isOpen, onClose, initialMode, lockMode = false }:
 
             {/* Input area - only show when no results */}
             {!organizeHasResults && savedCount === null && !isOrganizeLoading && (
-              <div className="border-t border-border/40 px-4 pt-3 pb-2 bg-background shrink-0" style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 12px)' }}>
+              <div className="border-t border-border/40 px-4 pt-3 pb-2 bg-background shrink-0" style={{ paddingBottom: 'max(var(--app-safe-bottom), 12px)' }}>
                 {/* Type / Talk toggle — 44px touch targets */}
                 {voice.isSupported && (
                   <div className="flex items-center gap-1 mb-2">

@@ -58,8 +58,8 @@ export function AIButton() {
         whileHover={{ scale: 1.08 }}
         whileTap={{ scale: 0.93 }}
         onClick={handleClick}
-        className="fixed bottom-0 left-0 z-40 pb-[calc(env(safe-area-inset-bottom,0px)+6px)] pl-4 flex items-end"
-        style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 6px)' }}
+        className="fixed bottom-0 left-0 z-40 pb-[calc(var(--app-safe-bottom)+6px)] pl-4 flex items-end"
+        style={{ paddingBottom: 'calc(var(--app-safe-bottom) + 6px)' }}
         aria-label={settings.isPremiumUnlocked ? "Open AI Chamber" : "AI Chamber (Premium)"}
       >
         <div className="relative">
