@@ -117,6 +117,7 @@ export default function AuthPage() {
   const [appleLoading, setAppleLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [logoReady, setLogoReady] = useState(false);
+  const [logoSettled, setLogoSettled] = useState(false);
 
   const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
@@ -129,6 +130,13 @@ export default function AuthPage() {
     const t = setTimeout(() => setLogoReady(true), 80);
     return () => clearTimeout(t);
   }, []);
+
+  // After entrance animation finishes, switch to looping idle state
+  useEffect(() => {
+    if (!logoReady) return;
+    const t = setTimeout(() => setLogoSettled(true), 1600);
+    return () => clearTimeout(t);
+  }, [logoReady]);
 
   const handleOAuth = async (provider: 'google' | 'apple') => {
     const setProviderLoading = provider === 'google' ? setGoogleLoading : setAppleLoading;
@@ -221,7 +229,7 @@ export default function AuthPage() {
           transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
           className="relative mb-8"
         >
-          {/* Outer pulse ring */}
+          {/* Entrance: outer pulse ring (fires once) */}
           <motion.div
             initial={{ opacity: 0, scale: 0.5 }}
             animate={logoReady ? { opacity: [0, 0.3, 0], scale: [0.5, 1.8, 2.2] } : {}}
@@ -229,7 +237,7 @@ export default function AuthPage() {
             className="absolute inset-0 rounded-full pointer-events-none"
             style={{ background: 'rgba(255,255,255,0.15)' }}
           />
-          {/* Inner pulse ring */}
+          {/* Entrance: inner pulse ring (fires once) */}
           <motion.div
             initial={{ opacity: 0, scale: 0.6 }}
             animate={logoReady ? { opacity: [0, 0.2, 0], scale: [0.6, 1.4, 1.7] } : {}}
@@ -237,12 +245,31 @@ export default function AuthPage() {
             className="absolute inset-0 rounded-full pointer-events-none"
             style={{ background: 'rgba(255,255,255,0.12)' }}
           />
+          {/* Idle: ambient glow that breathes forever after entrance */}
+          <motion.div
+            initial={{ opacity: 0, scale: 1 }}
+            animate={logoSettled ? { opacity: [0, 0.18, 0], scale: [1, 1.45, 1] } : { opacity: 0 }}
+            transition={{ duration: 4, ease: 'easeInOut', repeat: Infinity, repeatDelay: 0.6 }}
+            className="absolute inset-0 rounded-full pointer-events-none"
+            style={{ background: 'rgba(230,225,210,0.5)', filter: 'blur(12px)' }}
+          />
+          {/* Logo — entrance blur+scale, then slow breathe */}
           <motion.img
             src={splashLogo}
             alt="Second Mind"
             initial={{ opacity: 0, scale: 0.4, filter: 'blur(14px)' }}
-            animate={logoReady ? { opacity: 1, scale: 1, filter: 'blur(0px)' } : {}}
-            transition={{ duration: 0.85, ease: [0.16, 1, 0.3, 1] }}
+            animate={
+              logoSettled
+                ? { opacity: 1, scale: [1, 1.04, 1], filter: 'blur(0px)' }
+                : logoReady
+                ? { opacity: 1, scale: 1, filter: 'blur(0px)' }
+                : {}
+            }
+            transition={
+              logoSettled
+                ? { scale: { duration: 4, ease: 'easeInOut', repeat: Infinity, repeatDelay: 0.6 } }
+                : { duration: 0.85, ease: [0.16, 1, 0.3, 1] }
+            }
             className="w-24 h-24 rounded-full relative z-10"
           />
         </motion.div>
