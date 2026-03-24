@@ -99,12 +99,12 @@ export function JournalPrompts({ onSelectPrompt }: JournalPromptsProps) {
         className="space-y-2 pb-4"
       >
         <div className="flex items-center justify-between">
-          <span className="text-[11px] text-muted-foreground/50 uppercase tracking-wider font-medium">
+          <span className="text-[12px] text-muted-foreground/65 uppercase tracking-wider font-medium">
             Prompts for you
           </span>
           <button
             onClick={fetchPrompts}
-            className="p-1 text-muted-foreground/40 hover:text-muted-foreground transition-colors"
+            className="p-1 text-muted-foreground/60 hover:text-muted-foreground transition-colors"
             aria-label="Refresh prompts"
           >
             <RefreshCw className="w-3 h-3" />
@@ -122,7 +122,7 @@ export function JournalPrompts({ onSelectPrompt }: JournalPromptsProps) {
             <p className="text-sm text-foreground/80 leading-relaxed group-hover:text-foreground transition-colors">
               {prompt.text}
             </p>
-            <span className="text-[10px] text-muted-foreground/40 mt-1 block">
+            <span className="text-[11px] text-muted-foreground/55 mt-1 block">
               {prompt.seed}
             </span>
           </motion.button>

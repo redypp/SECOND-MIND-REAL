@@ -195,7 +195,7 @@ function BriefingContent({ briefing, onDismiss }: { briefing: BriefingData; onDi
           className="mb-10"
         >
           <p
-            className="text-[11px] font-medium uppercase tracking-[0.15em] mb-5 text-center"
+            className="text-[12px] font-medium uppercase tracking-[0.15em] mb-5 text-center"
             style={{ color: '#8E8E93' }}
           >
             Today's Focus
@@ -277,8 +277,8 @@ function BriefingContent({ briefing, onDismiss }: { briefing: BriefingData; onDi
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 1.4 }}
-            className="text-[12px] mt-5 font-light"
-            style={{ color: '#8E8E93', opacity: 0.6 }}
+            className="text-[13px] mt-5 font-normal"
+            style={{ color: '#8E8E93' }}
           >
             {briefing.encouragement}
           </motion.p>

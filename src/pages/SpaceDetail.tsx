@@ -479,8 +479,8 @@ export default function SpaceDetail() {
             animate={{ opacity: 1, y: 0 }}
             className="text-center py-20 px-6"
           >
-            <p className="text-muted-foreground/60 text-[14px] mb-4">Nothing here yet</p>
-            <p className="text-muted-foreground/40 text-[13px] mb-6">
+            <p className="text-muted-foreground/70 text-[14px] mb-4">Nothing here yet</p>
+            <p className="text-muted-foreground/55 text-[13px] mb-6">
               Tap + to add notes, images, or links
             </p>
             <motion.button

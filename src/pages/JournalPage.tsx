@@ -330,7 +330,7 @@ export default function JournalPage({ embedded = false, onBack }: JournalPagePro
                 ref={textareaRef}
                 defaultValue={contentRef.current}
                 placeholder="Write something…"
-                className="w-full bg-transparent text-foreground text-[17px] leading-[1.7] resize-none focus:outline-none min-h-[60vh] placeholder:text-muted-foreground/40 caret-primary"
+                className="w-full bg-transparent text-foreground text-[17px] leading-[1.7] resize-none focus:outline-none min-h-[60vh] placeholder:text-muted-foreground/55 caret-primary"
                 style={{
                   fontFamily: 'inherit',
                   overflow: 'hidden',

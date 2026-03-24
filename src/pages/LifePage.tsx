@@ -96,7 +96,7 @@ export default function LifePage({ embedded = false, onNavigateToSection }: Life
       </div>
 
       {/* Section cards — evenly fill remaining height */}
-      <main className="flex-1 min-h-0 flex flex-col px-0 pt-2 pb-[calc(2.5rem+var(--app-safe-bottom))] gap-1.5">
+      <main className="flex-1 min-h-0 flex flex-col px-0 pt-2 pb-[calc(max(var(--app-safe-bottom),6px)+36px)] gap-1.5">
         {sections.map((section, i) => (
           <motion.button
             key={section.id}

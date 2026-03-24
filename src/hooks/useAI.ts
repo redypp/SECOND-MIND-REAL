@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useSpaces } from '@/contexts/SpacesContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/app-client';
 import { fetchSourcesForItems, ArchiveSource } from '@/lib/archiveSources';
 
@@ -104,6 +105,7 @@ interface OrganizeAllResponse {
 
 export function useAI() {
   const { spaces, items } = useSpaces();
+  const { profile } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [sourcesCache, setSourcesCache] = useState<ArchiveSource[]>([]);
   const sourcesFetchedRef = useRef(false);
@@ -142,6 +144,7 @@ export function useAI() {
         content: item.content,
         blocks: item.blocks || [],
         spaceIds: item.spaceIds || [],
+        keywords: item.keywords || [],
         scheduledDate: item.scheduledDate,
         scheduledTime: item.scheduledTime,
         createdAt: item.createdAt,
@@ -149,8 +152,16 @@ export function useAI() {
         ...(sourcesByItem[item.id] ? { importedContent: sourcesByItem[item.id] } : {}),
       })),
       currentTime: new Date().toISOString(),
+      // User profile for personalisation
+      ...(profile ? {
+        profile: {
+          name: profile.full_name || undefined,
+          location: profile.location || undefined,
+          birthday: profile.birthday || undefined,
+        },
+      } : {}),
     };
-  }, [spaces, items, sourcesCache]);
+  }, [spaces, items, sourcesCache, profile]);
 
   const askQuestion = useCallback(async (
     question: string,

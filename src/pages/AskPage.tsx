@@ -454,7 +454,7 @@ export default function AskPage() {
           /* ── Empty state: bottom-aligned prompts near input ── */
           <div className="h-full flex flex-col justify-end px-5 pb-3 gap-3">
             {contextLine && (
-              <p className="text-[11px] text-center text-muted-foreground/35 tracking-wide pb-0.5">
+              <p className="text-[12px] text-center text-muted-foreground/55 tracking-wide pb-0.5">
                 {contextLine}
               </p>
             )}
@@ -616,7 +616,7 @@ export default function AskPage() {
               initial={{ opacity: 0, y: 4 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 4 }}
-              className="text-[11px] text-center text-muted-foreground/40 mb-2 tracking-wide"
+              className="text-[12px] text-center text-muted-foreground/60 mb-2 tracking-wide"
             >
               Listening… tap mic to stop
             </motion.p>
@@ -626,7 +626,7 @@ export default function AskPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="text-[11px] text-center text-muted-foreground/40 mb-2 tracking-wide"
+              className="text-[12px] text-center text-muted-foreground/60 mb-2 tracking-wide"
             >
               Processing…
             </motion.p>
@@ -666,7 +666,7 @@ export default function AskPage() {
             readOnly={isListening}
             data-tutorial="ai-input"
             className={[
-              'flex-1 px-4 py-3 rounded-2xl bg-muted/20 border focus:outline-none resize-none text-[15px] leading-relaxed max-h-32 overflow-y-auto disabled:opacity-40 placeholder:text-muted-foreground/30 transition-colors',
+              'flex-1 px-4 py-3 rounded-2xl bg-muted/20 border focus:outline-none resize-none text-[15px] leading-relaxed max-h-32 overflow-y-auto disabled:opacity-40 placeholder:text-muted-foreground/50 transition-colors',
               isListening
                 ? 'border-red-500/30 bg-red-500/5 text-foreground/60 focus:border-red-500/40 cursor-default'
                 : 'border-border/30 focus:border-border/60 focus:bg-muted/30',

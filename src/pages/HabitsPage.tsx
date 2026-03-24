@@ -777,9 +777,9 @@ export default function HabitsPage({ embedded = false, onBack }: HabitsPageProps
                         tabIndex={-1}
                         className={`
                           flex-shrink-0 w-8 h-8 rounded flex items-center justify-center
-                          text-[9px] font-medium transition-all duration-150 touch-manipulation
-                          ${isFuture 
-                            ? 'bg-secondary/30 text-muted-foreground/40 cursor-not-allowed'
+                          text-[11px] font-medium transition-all duration-150 touch-manipulation
+                          ${isFuture
+                            ? 'bg-secondary/30 text-muted-foreground/55 cursor-not-allowed'
                             : 'hover:scale-110 active:scale-95 cursor-pointer'
                           }
                           ${status === 'done' 

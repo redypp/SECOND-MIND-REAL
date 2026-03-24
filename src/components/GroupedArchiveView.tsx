@@ -180,7 +180,7 @@ export function GroupedArchiveView({ items, groups, onDeleteItem, onGroupsChange
                   `}
                 >
                   <span className="capitalize">{group.label}</span>
-                  <span className={`text-[10px] tabular-nums ${isActive ? 'opacity-50' : 'opacity-40'}`}>
+                  <span className={`text-[11px] tabular-nums ${isActive ? 'opacity-70' : 'opacity-60'}`}>
                     {group.items.length}
                   </span>
                 </button>

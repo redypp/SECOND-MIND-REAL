@@ -241,7 +241,7 @@ export function OrganizeModal({ isOpen, onClose, spaceId, spaceName, onItemSaved
         {!hasSubmitted ? (
           /* Empty hint */
           <div className="h-full flex items-center justify-center">
-            <p className="text-[13px] text-muted-foreground/40 text-center leading-relaxed max-w-[200px]">
+            <p className="text-[13px] text-muted-foreground/60 text-center leading-relaxed max-w-[200px]">
               {spaceName
                 ? `Drop anything into ${spaceName}`
                 : 'Dump your thoughts — AI will sort them'}
@@ -374,7 +374,7 @@ export function OrganizeModal({ isOpen, onClose, spaceId, spaceName, onItemSaved
                 if (e.key === 'Enter') { e.preventDefault(); handleAddLink(); }
                 if (e.key === 'Escape') { setShowLinkInput(false); setLinkInput(''); setTimeout(() => textareaRef.current?.focus(), 50); }
               }}
-              className="flex-1 px-3.5 bg-secondary/60 border border-border/40 focus:border-primary/30 focus:outline-none rounded-2xl text-[14px] text-foreground placeholder:text-muted-foreground/40 transition-colors"
+              className="flex-1 px-3.5 bg-secondary/60 border border-border/40 focus:border-primary/30 focus:outline-none rounded-2xl text-[14px] text-foreground placeholder:text-muted-foreground/50 transition-colors"
               style={{ height: '40px' }}
             />
           ) : (
@@ -391,7 +391,7 @@ export function OrganizeModal({ isOpen, onClose, spaceId, spaceName, onItemSaved
               onPaste={handlePaste}
               placeholder={spaceName ? `Add to ${spaceName}…` : 'Type, paste, or attach…'}
               rows={1}
-              className="flex-1 px-3.5 py-[10px] bg-secondary/60 border border-border/40 focus:border-primary/30 focus:outline-none rounded-2xl resize-none text-[14px] leading-[1.45] placeholder:text-muted-foreground/40 transition-colors overflow-hidden"
+              className="flex-1 px-3.5 py-[10px] bg-secondary/60 border border-border/40 focus:border-primary/30 focus:outline-none rounded-2xl resize-none text-[14px] leading-[1.45] placeholder:text-muted-foreground/50 transition-colors overflow-hidden"
               style={{ minHeight: '40px', maxHeight: '120px' }}
             />
           )}
