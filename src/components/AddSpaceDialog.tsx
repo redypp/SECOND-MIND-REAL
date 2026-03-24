@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Plus, Search, ArrowLeft, ImagePlus, X, Shuffle } from 'lucide-react';
 import { useSpaces } from '@/contexts/SpacesContext';
-import { showErrorPopup } from '@/contexts/ErrorPopupContext';
 import { useTutorial } from '@/contexts/TutorialContext';
 import { ARCHIVE_CATEGORIES, ARCHIVE_GROUPS, unsplashSourceUrl, getGifKeywordForName, type ArchiveCategory } from '@/data/archiveCategories';
 import { autoAssignGif } from '@/lib/gifService';
@@ -51,11 +50,10 @@ export function AddSpaceDialog({ variant = 'card', trigger, navigateAfterCreate 
   const [name, setName] = useState('');
   const [image, setImage] = useState<string | undefined>();
   const [isCustom, setIsCustom] = useState(false);
-  const [isCreating, setIsCreating] = useState(false);
   const [imageError, setImageError] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { addSpace, addSpaceAsync, updateSpaceGif, spaces } = useSpaces();
+  const { addSpace, updateSpaceGif, spaces } = useSpaces();
   const navigate = useNavigate();
   const { reportTutorialAction } = useTutorial();
 
@@ -88,7 +86,6 @@ export function AddSpaceDialog({ variant = 'card', trigger, navigateAfterCreate 
       setName('');
       setImage(undefined);
       setIsCustom(false);
-      setIsCreating(false);
       setImageError(false);
     }
   };
@@ -143,53 +140,28 @@ export function AddSpaceDialog({ variant = 'card', trigger, navigateAfterCreate 
   };
 
   // ── create the archive ────────────────────────────────────────────────────
-  const handleSubmit = async () => {
-    if (isCreating || !name.trim()) return;
-    setIsCreating(true);
+  const handleSubmit = () => {
+    if (!name.trim()) return;
 
-    try {
-      const spaceName = name.trim();
-      const finalImage = resolvedImage;
-      const autoColor = finalImage ? undefined : pickColor(spaceName);
+    const spaceName = name.trim();
+    const finalImage = resolvedImage;
+    const autoColor = finalImage ? undefined : pickColor(spaceName);
 
-      // Attempt to auto-assign a GIF background in parallel with space creation.
-      // Silently skips if VITE_GIPHY_API_KEY is not configured.
-      const gifKeyword = getGifKeywordForName(spaceName);
-      const autoGifPromise = autoAssignGif(gifKeyword);
+    // Attempt to auto-assign a GIF background in parallel with space creation.
+    // Silently skips if VITE_GIPHY_API_KEY is not configured.
+    const gifKeyword = getGifKeywordForName(spaceName);
+    const autoGifPromise = autoAssignGif(gifKeyword);
 
-      if (navigateAfterCreate) {
-        const timeoutMs = 15000;
-        const timeoutPromise = new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error('Request timed out. Please check your connection and try again.')), timeoutMs)
-        );
-        const newId = await Promise.race([
-          addSpaceAsync(spaceName, finalImage, autoColor),
-          timeoutPromise,
-        ]);
-        if (newId) {
-          // Attach GIF background non-blocking after creation (best-effort)
-          autoGifPromise.then((autoGif) => {
-            if (autoGif) updateSpaceGif(newId, autoGif);
-          });
-          handleOpenChange(false);
-          localStorage.setItem('secondmind_tutorial_space_id', newId);
-          reportTutorialAction('add-collection');
-          navigate(`/space/${newId}`);
-        }
-      } else {
-        const newId = addSpace(spaceName, finalImage, autoColor);
-        // Attach GIF background non-blocking (best-effort, no API delay on the UI)
-        autoGifPromise.then((autoGif) => {
-          if (autoGif) updateSpaceGif(newId, autoGif);
-        });
-        reportTutorialAction('add-collection');
-        handleOpenChange(false);
-      }
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to create archive. Please try again.';
-      showErrorPopup(message);
-    } finally {
-      setIsCreating(false);
+    const newId = addSpace(spaceName, finalImage, autoColor);
+    // Attach GIF background non-blocking (best-effort, no API delay on the UI)
+    autoGifPromise.then((autoGif) => {
+      if (autoGif) updateSpaceGif(newId, autoGif);
+    });
+    reportTutorialAction('add-collection');
+    handleOpenChange(false);
+    if (navigateAfterCreate) {
+      localStorage.setItem('secondmind_tutorial_space_id', newId);
+      navigate(`/space/${newId}`);
     }
   };
 
@@ -482,10 +454,10 @@ export function AddSpaceDialog({ variant = 'card', trigger, navigateAfterCreate 
               <Button
                 type="button"
                 onClick={handleSubmit}
-                disabled={!name.trim() || isCreating}
+                disabled={!name.trim()}
                 className="w-full h-11 rounded-xl text-[15px] font-medium"
               >
-                {isCreating ? 'Creating…' : 'Create Archive'}
+                Create Archive
               </Button>
             </div>
           </>
