@@ -1,15 +1,15 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Loader2, User, LogOut, Lightbulb, Moon, Sun, Sunrise, Pencil, Check, X, RotateCcw, Mail, Mic, Database, CheckCircle2, AlertCircle, RefreshCw, MapPin, Navigation } from 'lucide-react';
+import { ArrowLeft, Loader2, User, LogOut, Lightbulb, Moon, Sun, Sunrise, Pencil, Check, X, RotateCcw, Mail, Mic, MapPin, Navigation } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Switch } from '@/components/ui/switch';
 import { FeatureTour } from '@/components/FeatureTour';
 import { useTutorial } from '@/contexts/TutorialContext';
 import { DailyBriefingModal } from '@/components/DailyBriefing';
 import { useAISettings } from '@/contexts/AISettingsContext';
-import { useSupabaseHealth } from '@/hooks/useSupabaseHealth';
 
 export default function SettingsPage() {
   const navigate = useNavigate();
@@ -17,8 +17,6 @@ export default function SettingsPage() {
   const { user, profile, signOut, updateProfile } = useAuth();
   const { resetOnboarding } = useTutorial();
   const { settings: aiSettings, updateSettings: updateAISettings } = useAISettings();
-
-  const { result: healthResult, checking: healthChecking, check: checkHealth, projectId } = useSupabaseHealth();
 
   const [showTour, setShowTour] = useState(false);
   const [showBriefing, setShowBriefing] = useState(false);
@@ -125,7 +123,7 @@ export default function SettingsPage() {
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <h1 className="text-xl font-semibold">Settings</h1>
+          <h1 className="text-2xl font-black">Settings</h1>
         </div>
       </div>
 
@@ -277,22 +275,10 @@ export default function SettingsPage() {
                   Automatically submit your message once voice transcription finishes
                 </p>
               </div>
-              <button
-                onClick={() => updateAISettings({ voiceAutoSend: !aiSettings.voiceAutoSend })}
-                className={[
-                  'relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors duration-200 focus:outline-none',
-                  aiSettings.voiceAutoSend ? 'bg-primary' : 'bg-muted-foreground/25',
-                ].join(' ')}
-                role="switch"
-                aria-checked={aiSettings.voiceAutoSend}
-              >
-                <span
-                  className={[
-                    'inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform duration-200',
-                    aiSettings.voiceAutoSend ? 'translate-x-6' : 'translate-x-1',
-                  ].join(' ')}
-                />
-              </button>
+              <Switch
+                checked={aiSettings.voiceAutoSend}
+                onCheckedChange={(checked) => updateAISettings({ voiceAutoSend: checked })}
+              />
             </div>
           </Card>
         </section>
@@ -334,61 +320,6 @@ export default function SettingsPage() {
                 <p className="text-xs text-muted-foreground">Redo the full guided setup from the beginning</p>
               </div>
             </button>
-          </Card>
-        </section>
-        {/* Database Connection */}
-        <section className="space-y-4">
-          <h2 className="text-lg font-semibold flex items-center gap-2">
-            <Database className="w-5 h-5 text-primary" />
-            Database Connection
-          </h2>
-          <Card className="p-4 space-y-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium">Project</p>
-                <p className="text-xs text-muted-foreground font-mono">{projectId}.supabase.co</p>
-              </div>
-              <Button variant="outline" size="sm" onClick={checkHealth} disabled={healthChecking}>
-                {healthChecking
-                  ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  : <RefreshCw className="w-3.5 h-3.5" />}
-                <span className="ml-1.5">Check</span>
-              </Button>
-            </div>
-
-            {healthResult && (
-              <div className="space-y-2 pt-2 border-t border-border/50">
-                <div className="flex items-center gap-2">
-                  {healthResult.serverReachable
-                    ? <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
-                    : <AlertCircle className="w-4 h-4 text-destructive shrink-0" />}
-                  <span className="text-sm">{healthResult.serverReachable ? 'Server reachable' : 'Server unreachable'}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  {healthResult.dataAccessible
-                    ? <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
-                    : <AlertCircle className="w-4 h-4 text-destructive shrink-0" />}
-                  <span className="text-sm">
-                    {healthResult.dataAccessible
-                      ? `Your data accessible (${healthResult.spacesCount ?? '?'} spaces, ${healthResult.itemsCount ?? '?'} items)`
-                      : 'Your data inaccessible — session may be expired'}
-                  </span>
-                </div>
-                <div className="grid grid-cols-2 gap-1">
-                  {healthResult.tables.map(t => (
-                    <div key={t.name} className="flex items-center gap-1.5">
-                      {t.accessible
-                        ? <CheckCircle2 className="w-3 h-3 text-green-500 shrink-0" />
-                        : <AlertCircle className="w-3 h-3 text-destructive shrink-0" />}
-                      <span className="text-xs text-muted-foreground truncate">{t.name}</span>
-                    </div>
-                  ))}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Last checked {healthResult.checkedAt.toLocaleTimeString()}
-                </p>
-              </div>
-            )}
           </Card>
         </section>
       </div>

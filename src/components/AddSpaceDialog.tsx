@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo } from 'react';
+import { useState, useRef, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -38,7 +38,14 @@ export function AddSpaceDialog({ variant = 'card', trigger, navigateAfterCreate 
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<Step>('pick');
   const [query, setQuery] = useState('');
+  const [deferredQuery, setDeferredQuery] = useState('');
   const [activeGroup, setActiveGroup] = useState<string | null>(null);
+
+  // Debounce query so the image grid doesn't re-render on every keystroke
+  useEffect(() => {
+    const timer = setTimeout(() => setDeferredQuery(query), 180);
+    return () => clearTimeout(timer);
+  }, [query]);
 
   // confirm step state
   const [name, setName] = useState('');
@@ -60,7 +67,7 @@ export function AddSpaceDialog({ variant = 'card', trigger, navigateAfterCreate 
   );
 
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
+    const q = deferredQuery.trim().toLowerCase();
     if (!q) return [];
     return ARCHIVE_CATEGORIES.filter((c) => {
       if (existingNames.has(c.name.toLowerCase())) return false;
@@ -68,7 +75,7 @@ export function AddSpaceDialog({ variant = 'card', trigger, navigateAfterCreate 
       const matchesGroup = !activeGroup || c.group === activeGroup;
       return matchesQuery && matchesGroup;
     });
-  }, [query, activeGroup, existingNames]);
+  }, [deferredQuery, activeGroup, existingNames]);
 
   // ── reset all state when dialog closes ────────────────────────────────────
   const handleOpenChange = (val: boolean) => {
@@ -76,6 +83,7 @@ export function AddSpaceDialog({ variant = 'card', trigger, navigateAfterCreate 
     if (!val) {
       setStep('pick');
       setQuery('');
+      setDeferredQuery('');
       setActiveGroup(null);
       setName('');
       setImage(undefined);
@@ -267,11 +275,11 @@ export function AddSpaceDialog({ variant = 'card', trigger, navigateAfterCreate 
 
             {/* Category grid / idle state */}
             <div className="overflow-y-auto flex-1 px-4 pb-4">
-              {!query.trim() ? (
+              {!deferredQuery.trim() ? (
                 /* Idle — prompt the user to start typing */
                 <div className="flex flex-col items-center justify-center py-12 gap-2 text-center">
                   <p className="text-muted-foreground text-[14px]">Start typing to see recommendations</p>
-                  <p className="text-muted-foreground/50 text-[12px]">or use "Custom title" below</p>
+                  <p className="text-muted-foreground/65 text-[13px]">or use "Custom title" below</p>
                 </div>
               ) : filtered.length > 0 ? (
                 <div className="grid grid-cols-3 gap-3">
@@ -279,7 +287,7 @@ export function AddSpaceDialog({ variant = 'card', trigger, navigateAfterCreate 
                     <button
                       key={cat.id}
                       onClick={() => selectCategory(cat)}
-                      className="relative aspect-square rounded-xl overflow-hidden group text-left"
+                      className="relative aspect-square rounded-xl overflow-hidden group text-left touch-manipulation"
                     >
                       <img
                         src={cat.photoUrl}

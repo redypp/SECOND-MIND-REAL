@@ -431,7 +431,7 @@ export default function AskPage() {
       {/* ── Header ── */}
       <div className="flex items-center px-4 pt-3 pb-2 shrink-0">
         <div className="flex-1" />
-        <p className="text-[10px] font-black tracking-[0.28em] text-foreground/20 uppercase select-none">
+        <p className="text-[11px] font-black tracking-[0.28em] text-foreground/40 uppercase select-none">
           Second Mind
         </p>
         <div className="flex-1 flex justify-end">
@@ -467,7 +467,7 @@ export default function AskPage() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.045, duration: 0.18 }}
                     onClick={() => handleSend(q)}
-                    className="w-full text-left text-[13px] px-4 py-3 rounded-2xl bg-muted/25 hover:bg-muted/50 text-foreground/55 hover:text-foreground/80 transition-all active:scale-[0.985] touch-manipulation leading-snug"
+                    className="w-full text-left text-[13px] px-4 py-3 rounded-2xl bg-muted/40 hover:bg-muted/60 text-foreground/65 hover:text-foreground/90 transition-all active:scale-[0.985] touch-manipulation leading-snug"
                   >
                     {q}
                   </motion.button>
@@ -485,7 +485,7 @@ export default function AskPage() {
               >
                 {message.role === 'user' ? (
                   /* User — minimal muted pill */
-                  <div className="max-w-[80%] bg-muted/40 rounded-2xl rounded-br-md px-4 py-2.5">
+                  <div className="max-w-[80%] bg-muted/60 rounded-2xl rounded-br-md px-4 py-2.5">
                     <p className="text-[14px] leading-relaxed text-foreground/85">{message.content}</p>
                   </div>
                 ) : (
@@ -530,7 +530,7 @@ export default function AskPage() {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ duration: 0.15 }}
-                        className="pl-3 border-l border-primary/20 space-y-3"
+                        className="pl-3 border-l border-primary/40 space-y-3"
                       >
                         {/* Content — plain text during stream, Markdown when done */}
                         <div className="text-[14px] leading-relaxed text-foreground/90">
@@ -599,7 +599,7 @@ export default function AskPage() {
               initial={{ opacity: 0, y: 4 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 4 }}
-              className="flex items-start gap-2 mb-2.5 px-3 py-2.5 rounded-xl bg-destructive/8 border border-destructive/15"
+              className="flex items-start gap-2 mb-2.5 px-3 py-2.5 rounded-xl bg-destructive/10 border border-destructive/25"
             >
               <AlertCircle className="w-3.5 h-3.5 text-destructive/60 mt-0.5 shrink-0" />
               <p className="text-[12px] text-destructive/70 leading-snug flex-1">

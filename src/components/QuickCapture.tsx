@@ -20,12 +20,14 @@ export function QuickCapture({ isOpen, onClose }: QuickCaptureProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { capture, isProcessing } = useIntelligentCapture();
 
-  // Focus textarea when opened
+  // Focus textarea when opened — wait for animation to settle before focusing
   useEffect(() => {
     if (isOpen) {
       setSaveState('idle');
       setSavedResult(null);
-      setTimeout(() => textareaRef.current?.focus(), 50);
+      // Delay focus until after the entry animation completes to avoid keyboard
+      // jank on mobile (keyboard appearing mid-animation causes layout thrash)
+      setTimeout(() => textareaRef.current?.focus(), 300);
     }
   }, [isOpen]);
 
@@ -55,10 +57,7 @@ export function QuickCapture({ isOpen, onClose }: QuickCaptureProps) {
     if (!text.trim() && images.length === 0) return;
     if (saveState !== 'idle') return;
 
-    // Phase 1: Show "Saved" immediately — zero-friction, no blocking
-    setSaveState('saved');
-
-    // Phase 2: Start AI enrichment in background, then show result briefly
+    // Start AI enrichment — show spinner while waiting
     setSaveState('enriching');
     const result = await capture(text, images.length > 0 ? images : undefined, 'text');
 
@@ -195,15 +194,18 @@ export function QuickCapture({ isOpen, onClose }: QuickCaptureProps) {
               value={text}
               onChange={(e) => {
                 setText(e.target.value);
-                e.target.style.height = 'auto';
-                e.target.style.height = e.target.scrollHeight + 'px';
+                // Use rAF to avoid synchronous layout reflow on every keystroke
+                const el = e.target;
+                requestAnimationFrame(() => {
+                  el.style.height = 'auto';
+                  el.style.height = el.scrollHeight + 'px';
+                });
               }}
               onKeyDown={handleKeyDown}
               placeholder="Dump anything here — thoughts, ideas, plans, reminders..."
-              autoFocus
               rows={4}
               disabled={isBusy}
-              className="w-full px-4 py-3 rounded-xl bg-card border-2 border-border text-foreground placeholder:text-muted-foreground/40 text-[15px] focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none overflow-hidden leading-relaxed disabled:opacity-60"
+              className="w-full px-4 py-3 rounded-xl bg-card border-2 border-border text-foreground placeholder:text-muted-foreground/50 text-[15px] focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none overflow-hidden leading-relaxed disabled:opacity-60"
             />
 
             {/* Attached images */}
@@ -245,10 +247,10 @@ export function QuickCapture({ isOpen, onClose }: QuickCaptureProps) {
             )}
 
             {/* Keyboard hint / processing status */}
-            <p className="text-xs text-muted-foreground/40 text-center pt-4">
+            <p className="text-xs text-muted-foreground/55 text-center pt-4">
               {saveState === 'enriching'
                 ? 'Saved · AI organizing in background…'
-                : 'Save first, AI organizes automatically · ⌘↵'}
+                : 'AI will organize this automatically after saving'}
             </p>
           </div>
         )}

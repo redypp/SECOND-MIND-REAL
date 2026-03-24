@@ -82,7 +82,6 @@ async function migrateLocalHabits(userId: string): Promise<void> {
       .limit(1);
 
     if (existingHabits && existingHabits.length > 0) {
-      console.log('[Habits] User already has cloud habits — skipping localStorage migration');
       return;
     }
 
@@ -126,9 +125,7 @@ async function migrateLocalHabits(userId: string): Promise<void> {
       }
     }
 
-    console.log(`[Habits] Migrated ${habitIdMap.size} habits and entries to cloud for user ${userId}`);
   } catch (err) {
-    console.warn('[Habits] Migration from localStorage failed:', err);
     // The per-user flag is already set and unscoped keys already cleared — safe to proceed.
   }
 }
@@ -172,7 +169,6 @@ export default function HabitsPage({ embedded = false, onBack }: HabitsPageProps
   // Fetch habits and entries from cloud
   const fetchData = useCallback(async () => {
     if (!user) {
-      console.log('[Habits] No authenticated user — clearing habits state');
       setHabits([]);
       setEntries([]);
       setLoading(false);
@@ -195,8 +191,6 @@ export default function HabitsPage({ embedded = false, onBack }: HabitsPageProps
     // Record which user we are loading for, before any async work.
     loadedForUserRef.current = user.id;
     setLoading(true);
-
-    console.log(`[Habits] Fetching for user=${user.id} source=supabase/habits`);
 
     try {
       // Migrate localStorage data first (only once per user session)
@@ -238,11 +232,6 @@ export default function HabitsPage({ embedded = false, onBack }: HabitsPageProps
         date: e.date,
         status: e.status as 'done' | 'partial' | 'missed',
       }));
-
-      console.log(
-        `[Habits] Loaded ${habits.length} habits, ${entries.length} entries ` +
-        `for user=${user.id} from supabase public.habits / public.habit_entries`
-      );
 
       setHabits(habits);
       setEntries(entries);
@@ -301,15 +290,8 @@ export default function HabitsPage({ embedded = false, onBack }: HabitsPageProps
   const addHabit = async () => {
     if (!newHabitName.trim()) return;
 
-    // ── Diagnostic header ────────────────────────────────────────────────────
-    console.log('[Habits:addHabit] ── create-habit diagnostics ──────────────');
-    console.log('[Habits:addHabit] Supabase URL  :', import.meta.env.VITE_SUPABASE_URL);
-    console.log('[Habits:addHabit] target table  : public.habits');
-    console.log('[Habits:addHabit] auth user id  :', user ? user.id : 'NULL — not authenticated');
-
     // Guard: unauthenticated users get a visible error, not a silent no-op.
     if (!user) {
-      console.error('[Habits:addHabit] Aborted — no authenticated user');
       showErrorPopup('You must be signed in to add a habit.');
       return;
     }
@@ -320,16 +302,12 @@ export default function HabitsPage({ embedded = false, onBack }: HabitsPageProps
       name: newHabitName.trim(),
       position,
     };
-    console.log('[Habits:addHabit] insert payload:', JSON.stringify(insertPayload));
-
     try {
       const { data, error } = await supabase
         .from('habits')
         .insert(insertPayload)
         .select()
         .single();
-
-      console.log('[Habits:addHabit] insert response → data:', data, '| error:', error);
 
       if (error) throw error;
 
@@ -349,8 +327,6 @@ export default function HabitsPage({ embedded = false, onBack }: HabitsPageProps
         .select('id, name, user_id, position')
         .eq('id', data.id)
         .single();
-
-      console.log('[Habits:addHabit] post-insert verify → data:', verifyData, '| error:', verifyError);
 
       if (verifyError || !verifyData) {
         throw new Error(

@@ -486,7 +486,7 @@ export default function SpaceDetail() {
             <motion.button
               whileTap={{ scale: 0.95 }}
               onClick={() => setShowOrganizeModal(true)}
-              className="inline-flex items-center gap-2 px-5 py-3 bg-primary text-primary-foreground font-medium shadow-lg shadow-primary/30 hover:bg-primary/90 transition-all touch-manipulation"
+              className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-primary text-primary-foreground font-medium shadow-lg shadow-primary/30 hover:bg-primary/90 transition-all touch-manipulation"
             >
               <Plus className="w-5 h-5" />
               Add something
