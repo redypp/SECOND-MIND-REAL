@@ -12,11 +12,11 @@ interface CollectionsPageProps {
 }
 
 // Each archive card is exactly 1/7 of usable viewport height — matching Life cards.
-// Usable height = 100dvh minus: header (~52px), main top padding (8px),
-// bottom-nav clearance (40px), and cumulative gap between 7 cards (6 × 6px = 36px).
-// Total overhead = 136px = 8.5rem — cards fill the screen naturally with 7 archives
+// Usable height = 100dvh minus: header (52px), bottom clearance (12px),
+// and cumulative gap between 7 cards (6 × 4px = 24px) + safe bottom.
+// Total fixed overhead = 88px = 5.5rem — cards fill the screen naturally with 7 archives
 // and scroll gracefully beyond that.
-const CARD_HEIGHT = 'calc((100dvh - 8.5rem - var(--app-safe-bottom)) / 7)';
+const CARD_HEIGHT = 'calc((100dvh - 5.5rem - var(--app-safe-bottom, 0px)) / 7)';
 
 export default function CollectionsPage({ embedded = false }: CollectionsPageProps) {
   const navigate = useNavigate();
@@ -43,7 +43,7 @@ export default function CollectionsPage({ embedded = false }: CollectionsPagePro
       style={{ overscrollBehavior: 'none' }}
     >
       {/* Header */}
-      <header className="relative flex items-center pl-0 pr-0 pt-2 flex-shrink-0 min-h-[52px]">
+      <header className="relative flex items-center pl-0 pr-0 flex-shrink-0 min-h-[52px]">
         <div className="flex-1 min-w-0 overflow-hidden">
           <MarqueeHeader text="ARCHIVE" />
         </div>
@@ -51,7 +51,7 @@ export default function CollectionsPage({ embedded = false }: CollectionsPagePro
 
       {/* Content */}
       <main
-        className="flex-1 min-h-0 flex flex-col px-0 pt-2 pb-[calc(2.5rem+var(--app-safe-bottom))] gap-1.5 overflow-y-auto"
+        className="flex-1 min-h-0 flex flex-col px-0 pb-[calc(var(--app-safe-bottom,0px)+12px)] gap-1 overflow-y-auto"
         style={{ overscrollBehavior: 'none' }}
       >
         {!hasSpaces ? (
