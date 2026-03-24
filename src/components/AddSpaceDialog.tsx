@@ -219,7 +219,7 @@ export function AddSpaceDialog({ variant = 'card', trigger, navigateAfterCreate 
       </DialogTrigger>
 
       <DialogContent
-        className="sm:max-w-lg rounded-2xl p-0 overflow-hidden gap-0 max-h-[90dvh] flex flex-col [&>button:last-child]:hidden"
+        className="sm:max-w-lg rounded-2xl p-0 overflow-hidden gap-0 flex flex-col [&>button:last-child]:hidden max-h-[90svh] top-4 translate-y-0 sm:top-[50%] sm:translate-y-[-50%]"
         style={{ display: 'flex', flexDirection: 'column' }}
       >
         {/* ── STEP 1: Pick a category ─────────────────────────────────────── */}
@@ -239,6 +239,7 @@ export function AddSpaceDialog({ variant = 'card', trigger, navigateAfterCreate 
                   onChange={(e) => { setQuery(e.target.value); setActiveGroup(null); }}
                   placeholder="Search archives…"
                   className="pl-9 bg-secondary border-0 h-10 rounded-xl text-[14px] shadow-input focus-visible:ring-2"
+                  inputMode="search"
                   autoFocus
                 />
               </div>
