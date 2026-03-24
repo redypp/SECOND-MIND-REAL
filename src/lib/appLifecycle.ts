@@ -27,7 +27,7 @@ let sessionValidUntil: number | null = null;
 const listeners = new Set<LifecycleListener>();
 
 // Constants
-const WARM_RESUME_THRESHOLD_MS = 2 * 60 * 60 * 1000; // 2 hours
+const WARM_RESUME_THRESHOLD_MS = 24 * 60 * 60 * 1000; // 24 hours
 const SESSION_BUFFER_MS = 5 * 60 * 1000; // 5 minutes before expiry
 const IOS_PROCESS_KILL_THRESHOLD_MS = 60 * 1000; // 1 minute - likely process was killed
 const HEALTH_CHECK_DELAY_MS = 300; // Wait for WebView to repaint
@@ -36,30 +36,47 @@ const HEALTH_CHECK_DELAY_MS = 300; // Wait for WebView to repaint
  * Check if we can do a warm resume (skip loader)
  */
 export function canWarmResume(): boolean {
-  // Must have completed initial load at least once
+  // Must have completed initial load at least once (in-memory or persisted in
+  // localStorage so it survives iOS WebView process kills).
   if (!hasCompletedInitialLoad) {
-    logLifecycle('Cold start: initial load not complete');
-    return false;
+    try {
+      const storedTs = localStorage.getItem('sm_boot_ts');
+      if (!storedTs) {
+        logLifecycle('Cold start: no stored boot timestamp');
+        return false;
+      }
+      const elapsed = Date.now() - parseInt(storedTs, 10);
+      if (elapsed >= WARM_RESUME_THRESHOLD_MS) {
+        logLifecycle('Cold start: stored boot too old', { elapsed });
+        return false;
+      }
+      // Restore in-memory flag so subsequent calls are fast.
+      hasCompletedInitialLoad = true;
+      logLifecycle('Warm resume: restored from localStorage', { elapsed });
+    } catch {
+      logLifecycle('Cold start: localStorage unavailable');
+      return false;
+    }
   }
-  
+
   // Check how long we were in background
   if (lastBackgroundTime) {
     const backgroundDuration = Date.now() - lastBackgroundTime;
     if (backgroundDuration >= WARM_RESUME_THRESHOLD_MS) {
-      logLifecycle('Cold start: background exceeded threshold', { 
+      logLifecycle('Cold start: background exceeded threshold', {
         duration: backgroundDuration,
-        threshold: WARM_RESUME_THRESHOLD_MS 
+        threshold: WARM_RESUME_THRESHOLD_MS
       });
       return false;
     }
   }
-  
+
   // Check if session would have expired
   if (sessionValidUntil && Date.now() > sessionValidUntil - SESSION_BUFFER_MS) {
     logLifecycle('Cold start: session may have expired');
     return false;
   }
-  
+
   logLifecycle('Warm resume allowed');
   return true;
 }
@@ -70,6 +87,7 @@ export function canWarmResume(): boolean {
 export function markInitialLoadComplete(): void {
   hasCompletedInitialLoad = true;
   lastActiveTime = Date.now();
+  try { localStorage.setItem('sm_boot_ts', Date.now().toString()); } catch {}
   logLifecycle('Initial load marked complete');
 }
 
@@ -79,6 +97,7 @@ export function markInitialLoadComplete(): void {
 export function resetInitialLoad(): void {
   hasCompletedInitialLoad = false;
   sessionValidUntil = null;
+  try { localStorage.removeItem('sm_boot_ts'); } catch {}
   logLifecycle('Initial load reset');
 }
 
@@ -168,7 +187,7 @@ function showRecoveryOverlay(): void {
     `;
     // Spinner
     const spinner = document.createElement('div');
-    spinner.style.cssText = 'width:36px;height:36px;border-radius:50%;border:3px solid var(--muted, #e5e5e5);border-top-color:var(--primary, #e03e3e);animation:spin 0.8s linear infinite;';
+    spinner.style.cssText = 'width:32px;height:32px;border-radius:50%;border:2px solid var(--muted-foreground,#555);border-top-color:var(--foreground,#fff);animation:spin 0.9s linear infinite;';
     const style = document.createElement('style');
     style.textContent = '@keyframes spin{to{transform:rotate(360deg)}}';
     overlay.appendChild(spinner);
@@ -285,10 +304,14 @@ function handleBlur(): void {
 
 // Handle page unload/beforeunload - save state
 function handleBeforeUnload(): void {
-  // Save last active time to sessionStorage for potential recovery
   try {
-    sessionStorage.setItem('sm_last_active', Date.now().toString());
+    const ts = Date.now().toString();
+    sessionStorage.setItem('sm_last_active', ts);
     sessionStorage.setItem('sm_had_session', hasCompletedInitialLoad ? '1' : '0');
+    // Also persist to localStorage so warm resume survives WebView process kills.
+    if (hasCompletedInitialLoad) {
+      localStorage.setItem('sm_boot_ts', ts);
+    }
   } catch {
     // Ignore storage errors
   }

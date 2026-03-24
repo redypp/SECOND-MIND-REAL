@@ -47,6 +47,7 @@ const SESSION_TIMEOUT_MS = 4_000;
 const LOCK_AUTO_RELEASE_MS = 10_000;
 
 // --- State ---
+let overlayLogoUrl: string | null = null;
 let resumeLock = false;
 let lockTimer: ReturnType<typeof setTimeout> | null = null;
 let backgroundedAt: number | null = null;
@@ -59,6 +60,11 @@ function log(tag: string, data?: Record<string, unknown>) {
 
 function notify(event: ResumeEvent) {
   listeners.forEach(l => { try { l(event); } catch {} });
+}
+
+/** Call once at app startup with the hashed asset URL of the splash logo. */
+export function setOverlayLogoUrl(url: string): void {
+  overlayLogoUrl = url;
 }
 
 export function onResume(cb: ResumeCallback): () => void {
@@ -122,19 +128,23 @@ function showReconnectingOverlay() {
     overlay.id = 'resume-reconnecting-overlay';
     overlay.style.cssText = `
       position:fixed;inset:0;z-index:99999;
-      display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
+      display:flex;align-items:center;justify-content:center;
       background:var(--background, #0a0a0a);
       opacity:0;transition:opacity 0.15s ease;
     `;
-    const spinner = document.createElement('div');
-    spinner.style.cssText = 'width:32px;height:32px;border-radius:50%;border:3px solid var(--muted, #333);border-top-color:var(--primary, #e03e3e);animation:rspin 0.7s linear infinite;';
-    const text = document.createElement('p');
-    text.style.cssText = 'color:var(--muted-foreground, #999);font-size:13px;margin:0;';
-    text.textContent = 'Reconnecting\u2026';
     const style = document.createElement('style');
     style.textContent = '@keyframes rspin{to{transform:rotate(360deg)}}';
-    overlay.appendChild(spinner);
-    overlay.appendChild(text);
+    if (overlayLogoUrl) {
+      const img = document.createElement('img');
+      img.src = overlayLogoUrl;
+      img.alt = '';
+      img.style.cssText = 'width:80px;height:80px;object-fit:contain;animation:rspin 1.2s linear infinite;select:none;pointer-events:none;';
+      overlay.appendChild(img);
+    } else {
+      const spinner = document.createElement('div');
+      spinner.style.cssText = 'width:32px;height:32px;border-radius:50%;border:2px solid var(--muted-foreground,#555);border-top-color:var(--foreground,#fff);animation:rspin 0.9s linear infinite;';
+      overlay.appendChild(spinner);
+    }
     overlay.appendChild(style);
     document.body.appendChild(overlay);
     requestAnimationFrame(() => { overlay.style.opacity = '1'; });

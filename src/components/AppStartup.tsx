@@ -20,7 +20,7 @@ import {
   resetInitialLoad,
   subscribeLifecycle,
 } from '@/lib/appLifecycle';
-import { initResumeHandler, onResume } from '@/lib/resumeHandler';
+import { initResumeHandler, onResume, setOverlayLogoUrl } from '@/lib/resumeHandler';
 
 type StartupPhase = 
   | 'immediate'      // First render - no async yet
@@ -109,6 +109,7 @@ export function AppStartup({ children, onInitialize, onLogout, isDataReady }: Ap
   useEffect(() => {
     if (hasInitializedLifecycle.current) return;
     hasInitializedLifecycle.current = true;
+    setOverlayLogoUrl(splashLogo);
     initAppLifecycle();
     logStartup('start');
   }, []);
