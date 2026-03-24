@@ -96,12 +96,12 @@
     --tracking-normal: -0.011em;
     --tracking-tight: -0.022em;
 
-    --app-safe-top-min: 0px;
+    --app-safe-top-min: env(safe-area-inset-top, 0px);
     /* Prefer Despia's injected --safe-area-top; fall back to native env() in browser */
     --app-safe-top: max(var(--safe-area-top, env(safe-area-inset-top, 0px)), var(--app-safe-top-min));
     --app-safe-top-legacy: max(constant(safe-area-inset-top), var(--app-safe-top-min));
-    /* Bottom inset: prefer Despia's --safe-area-bottom; fall back to native env() */
-    --app-safe-bottom: var(--safe-area-bottom, env(safe-area-inset-bottom, 0px));
+    /* Bottom inset: always take the larger of the framework value and env() so home indicator is never clipped */
+    --app-safe-bottom: max(var(--safe-area-bottom, env(safe-area-inset-bottom, 0px)), env(safe-area-inset-bottom, 0px));
   }
 
   /* Blu theme — bold deep blue (original light theme) */
