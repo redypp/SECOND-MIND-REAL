@@ -89,14 +89,14 @@ export default function LifePage({ embedded = false, onNavigateToSection }: Life
       style={{ overscrollBehavior: 'none', touchAction: 'pan-x' }}
     >
       {/* Scrolling marquee header */}
-      <div className="relative flex items-center pl-0 pr-0 pt-2 flex-shrink-0 min-h-[52px]">
+      <div className="relative flex items-center pl-0 pr-0 flex-shrink-0 min-h-[52px]">
         <div className="flex-1 min-w-0 overflow-hidden">
           <MarqueeHeader text="LIFE" />
         </div>
       </div>
 
       {/* Section cards — evenly fill remaining height */}
-      <main className="flex-1 min-h-0 flex flex-col px-0 pt-2 pb-[calc(max(var(--app-safe-bottom),6px)+36px)] gap-1.5">
+      <main className="flex-1 min-h-0 flex flex-col px-0 pb-[calc(max(var(--app-safe-bottom),6px)+16px)] gap-1">
         {sections.map((section, i) => (
           <motion.button
             key={section.id}
