@@ -349,7 +349,18 @@ export default function AskPage() {
           m.id === messageId ? { ...m, actions: m.actions?.filter(a => a !== action) } : m
         ));
       } else if (action.type === 'schedule_event') {
-        navigate('/daily-plan');
+        await addItemAsync({
+          subCategory: 'scheduling',
+          title: action.payload.title || 'New event',
+          scheduledDate: action.payload.date,
+          scheduledTime: action.payload.time,
+          blocks: action.payload.content
+            ? [{ id: crypto.randomUUID(), type: 'text' as const, content: action.payload.content }]
+            : [],
+        });
+        setMessages(prev => prev.map(m =>
+          m.id === messageId ? { ...m, actions: m.actions?.filter(a => a !== action) } : m
+        ));
       } else {
         navigate('/collections');
       }

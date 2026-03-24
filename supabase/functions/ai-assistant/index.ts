@@ -53,6 +53,8 @@ interface Item {
   content?: string;
   blocks: any[];
   spaceIds: string[];
+  keywords?: string[];
+  aiSummary?: string;
   scheduledDate?: string;
   scheduledTime?: string;
   createdAt?: string;
@@ -65,6 +67,12 @@ interface ConversationMessage {
   content: string;
 }
 
+interface UserProfile {
+  name?: string;
+  location?: string;
+  birthday?: string;
+}
+
 interface AssistantRequest {
   type: RequestType;
   input: string;
@@ -74,6 +82,7 @@ interface AssistantRequest {
     currentTime: string;
     conversationHistory?: ConversationMessage[];
     answer?: string; // For ask_action_suggestions: the AI's previous answer
+    profile?: UserProfile;
   };
 }
 
@@ -154,6 +163,8 @@ function validateAndSanitizeInput(rawInput: unknown): { valid: false; error: str
       items: Array.isArray(b.items) ? b.items.slice(0, 50) : undefined
     })) : [],
     spaceIds: Array.isArray(i.spaceIds) ? i.spaceIds.slice(0, 20).map((id: any) => String(id).slice(0, 100)) : [],
+    keywords: Array.isArray(i.keywords) ? i.keywords.slice(0, 20).map((k: any) => String(k).slice(0, 100)) : [],
+    aiSummary: i.aiSummary ? String(i.aiSummary).slice(0, 500) : undefined,
     scheduledDate: i.scheduledDate ? String(i.scheduledDate).slice(0, 20) : undefined,
     scheduledTime: i.scheduledTime ? String(i.scheduledTime).slice(0, 10) : undefined,
     createdAt: i.createdAt ? String(i.createdAt).slice(0, 50) : undefined,
@@ -175,6 +186,17 @@ function validateAndSanitizeInput(rawInput: unknown): { valid: false; error: str
   // Pass through optional answer field for ask_action_suggestions
   const answer = context.answer ? String(context.answer).slice(0, 5000) : undefined;
 
+  // Pass through optional profile for personalisation
+  let sanitizedProfile: UserProfile | undefined;
+  if (context.profile && typeof context.profile === 'object') {
+    const p = context.profile as any;
+    sanitizedProfile = {
+      ...(p.name ? { name: String(p.name).slice(0, 200) } : {}),
+      ...(p.location ? { location: String(p.location).slice(0, 200) } : {}),
+      ...(p.birthday ? { birthday: String(p.birthday).slice(0, 20) } : {}),
+    };
+  }
+
   return {
     valid: true,
     data: {
@@ -186,6 +208,7 @@ function validateAndSanitizeInput(rawInput: unknown): { valid: false; error: str
         currentTime: String(context.currentTime).slice(0, 100),
         ...(sanitizedHistory !== undefined ? { conversationHistory: sanitizedHistory } : {}),
         ...(answer !== undefined ? { answer } : {}),
+        ...(sanitizedProfile !== undefined ? { profile: sanitizedProfile } : {}),
       }
     }
   };
@@ -320,11 +343,11 @@ serve(async (req) => {
     // ============================================================
     if (type === "ask_question" || type === "find_connections" || type === "semantic_search") {
       try {
-        // Fetch items and spaces in parallel (saves one full DB round-trip vs sequential)
-        const [itemsResult, spacesResult] = await Promise.all([
+        // Fetch items, spaces, and profile in parallel
+        const [itemsResult, spacesResult, profileResult] = await Promise.all([
           supabase
             .from("items")
-            .select("id, title, sub_category, content, blocks, space_ids, scheduled_date, scheduled_time, keywords, created_at, updated_at")
+            .select("id, title, sub_category, content, blocks, space_ids, scheduled_date, scheduled_time, keywords, ai_summary, created_at, updated_at")
             .eq("user_id", userId)
             .is("deleted_at", null)
             .order("created_at", { ascending: false })
@@ -334,10 +357,16 @@ serve(async (req) => {
             .select("id, name, item_count")
             .eq("user_id", userId)
             .is("deleted_at", null),
+          supabase
+            .from("profiles")
+            .select("full_name, location, birthday")
+            .eq("user_id", userId)
+            .maybeSingle(),
         ]);
 
         const { data: dbItems, error: itemsErr } = itemsResult;
         const { data: dbSpaces, error: spacesErr } = spacesResult;
+        const { data: dbProfile } = profileResult;
 
         if (!itemsErr && dbItems && dbItems.length > 0) {
           context.items = dbItems.map((row: any) => ({
@@ -347,6 +376,8 @@ serve(async (req) => {
             content: row.content || "",
             blocks: row.blocks || [],
             spaceIds: row.space_ids || [],
+            keywords: row.keywords || [],
+            aiSummary: row.ai_summary || undefined,
             scheduledDate: row.scheduled_date,
             scheduledTime: row.scheduled_time,
             createdAt: row.created_at,
@@ -361,6 +392,15 @@ serve(async (req) => {
             name: row.name,
             itemCount: row.item_count || 0,
           }));
+        }
+
+        // Merge server-fetched profile (overrides client-sent, more authoritative)
+        if (dbProfile) {
+          context.profile = {
+            name: dbProfile.full_name || undefined,
+            location: (dbProfile as any).location || undefined,
+            birthday: dbProfile.birthday || undefined,
+          };
         }
 
         // Fetch imported source content for items
@@ -471,6 +511,14 @@ TONE
 - Your success is measured by whether the user: Remembers more, Thinks more clearly, Makes better decisions faster
 
 Current time: ${context.currentTime}
+${context.profile ? `
+═══════════════════════════════════════════════════════════════
+USER PROFILE
+═══════════════════════════════════════════════════════════════
+${context.profile.name ? `Name: ${context.profile.name}` : ''}
+${context.profile.location ? `Location: ${context.profile.location}` : ''}
+${context.profile.birthday ? `Birthday: ${context.profile.birthday}` : ''}
+Address the user by their first name naturally when it fits. Factor in their location for local events, time zones, and relevant context.` : ''}
 
 USER'S COMPLETE KNOWLEDGE BASE:
 ${searchableContent}
@@ -617,6 +665,12 @@ RESPONSE TYPES — detect and adapt:
    - Surface connections they might have missed
    - Highlight what seems most important based on recency and volume
    - Frame insights as observations: "Looking at what you've saved…"
+
+5. CAPTURE / TELLING (e.g. "I have a meeting on Friday", "remind me to call John", "I need to buy groceries", "just so you know I'm going to…"):
+   - The user is telling you something new, not asking a question
+   - Acknowledge it briefly and confirm what you've noted: "Got it — I've noted that down as an event on Friday."
+   - Be concise (1-2 sentences max) — the action chips below will handle the actual saving
+   - Do NOT ask clarifying questions unless the event/task is completely ambiguous
 
 STRICT RULES:
 - NEVER include raw UUIDs, item IDs, or technical identifiers in responses
@@ -1664,28 +1718,56 @@ RULES:
       // ASK ACTION SUGGESTIONS — Follow-up actions after an Ask response
       // ============================================================
       const previousAnswer = context.answer || "";
+      const now = new Date(context.currentTime);
+      const todayISO = now.toISOString().slice(0, 10);
+      const dayOfWeek = now.getDay(); // 0=Sun, 1=Mon ... 6=Sat
+      // Helper to get ISO date for a named day relative to today
+      const daysUntil = (target: number) => ((target - dayOfWeek + 7) % 7) || 7;
+      const nextMonday = new Date(now); nextMonday.setDate(now.getDate() + daysUntil(1));
+      const nextTuesday = new Date(now); nextTuesday.setDate(now.getDate() + daysUntil(2));
+      const nextWednesday = new Date(now); nextWednesday.setDate(now.getDate() + daysUntil(3));
+      const nextThursday = new Date(now); nextThursday.setDate(now.getDate() + daysUntil(4));
+      const nextFriday = new Date(now); nextFriday.setDate(now.getDate() + daysUntil(5));
+      const nextSaturday = new Date(now); nextSaturday.setDate(now.getDate() + daysUntil(6));
+      const nextSunday = new Date(now); nextSunday.setDate(now.getDate() + daysUntil(0));
+      const tomorrow = new Date(now); tomorrow.setDate(now.getDate() + 1);
+
       systemPrompt = `You are analyzing a Q&A exchange from a personal knowledge assistant to suggest concrete follow-up actions.
 
-The user asked: "${input}"
-The assistant answered: "${previousAnswer.slice(0, 1000)}"
+TODAY IS: ${todayISO} (${['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][dayOfWeek]})
 
-USER'S CONTEXT:
-${context.spaces.map(s => `- Space: "${s.name}" (${s.itemCount} items)`).join('\n')}
+RELATIVE DATE REFERENCE (use these exact ISO dates in payload.date):
+- "today" → ${todayISO}
+- "tomorrow" → ${tomorrow.toISOString().slice(0,10)}
+- "Monday" / "next Monday" → ${nextMonday.toISOString().slice(0,10)}
+- "Tuesday" / "next Tuesday" → ${nextTuesday.toISOString().slice(0,10)}
+- "Wednesday" / "next Wednesday" → ${nextWednesday.toISOString().slice(0,10)}
+- "Thursday" / "next Thursday" → ${nextThursday.toISOString().slice(0,10)}
+- "Friday" / "next Friday" → ${nextFriday.toISOString().slice(0,10)}
+- "Saturday" / "next Saturday" → ${nextSaturday.toISOString().slice(0,10)}
+- "Sunday" / "next Sunday" → ${nextSunday.toISOString().slice(0,10)}
 
-Based on this exchange, suggest 0–3 concrete actions the user could take right now. Only suggest actions that add genuine value — do not suggest actions just to have something.
+The user said: "${input}"
+The assistant responded: "${previousAnswer.slice(0, 1000)}"
+
+USER'S SPACES:
+${context.spaces.map(s => `- "${s.name}" (${s.itemCount} items)`).join('\n')}
+
+Based on this exchange, suggest 0–3 concrete actions. Prioritise actions that directly reflect what the user told you (events they mentioned, tasks they need to do). Only suggest actions that add genuine value.
 
 Available action types:
 - "create_task": Something explicitly actionable the user should do (e.g., research, write, call, buy)
-- "schedule_event": Something that should be put on the calendar with a date/time
+- "schedule_event": Something with a specific date/time — ALWAYS resolve relative dates to ISO format using the reference above and extract the event title from what the user said
 - "add_to_archive": New knowledge or insight worth saving to their notes
-- "view_related": Point to a specific existing item relevant to the conversation (only if you can reference an exact item from their archive)
+- "view_related": Point to a specific existing item (only if you can reference an exact title from their archive)
 
-Be conservative and selective:
-- If the answer was purely factual/informational ("You have 3 tasks"), suggest nothing or at most one action
-- If the user was planning something, suggest creating the task or scheduling it
-- If new knowledge emerged, suggest archiving it
-- For "view_related", only use if you can reference a specific item title from their data
-- Never fabricate item IDs or titles that don't exist in context`;
+CRITICAL for schedule_event:
+- Set payload.title to the event name the user mentioned (e.g. "Team meeting", "Doctor appointment")
+- Set payload.date to the resolved ISO date (e.g. "2026-03-28" not "Friday")
+- Set payload.time to HH:MM if the user mentioned a time, otherwise leave empty
+
+Be conservative: if the answer was purely factual, suggest nothing or at most one action.
+Never fabricate item IDs or titles that don't exist in context.`;
 
       tools = [
         {
@@ -1944,6 +2026,8 @@ function buildSearchableContent(context: AssistantRequest["context"]): string {
     if (spaces.length) lines.push(`Collection: ${spaces.join(", ")}`);
     if (item.scheduledDate) lines.push(`Date: ${item.scheduledDate}${item.scheduledTime ? ` at ${item.scheduledTime}` : ''}`);
     if (item.createdAt) lines.push(`Saved: ${item.createdAt.slice(0, 10)}`);
+    if (item.keywords?.length) lines.push(`Tags: ${item.keywords.join(", ")}`);
+    if (item.aiSummary) lines.push(`Summary: ${item.aiSummary}`);
     // Include more content per item for richer retrieval
     const contentSnippet = fullContent.slice(0, 800);
     lines.push(`Content: ${contentSnippet}${fullContent.length > 800 ? '…' : ''}`);
