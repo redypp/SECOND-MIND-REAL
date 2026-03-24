@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Loader2, User, LogOut, Lightbulb, Moon, Sun, Sunrise, Pencil, Check, X, RotateCcw, Mail, Mic, MapPin, Navigation } from 'lucide-react';
+import {
+  ArrowLeft, Loader2, User, LogOut, Lightbulb, Moon, Sun, Sunrise, Pencil,
+  Check, X, RotateCcw, Mail, Mic, MapPin, Navigation, ChevronRight,
+} from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { FeatureTour } from '@/components/FeatureTour';
 import { useTutorial } from '@/contexts/TutorialContext';
@@ -57,7 +58,6 @@ export default function SettingsPage() {
       async (pos) => {
         try {
           const { latitude, longitude } = pos.coords;
-          // Nominatim reverse geocoding — free, no API key, privacy-respecting
           const res = await fetch(
             `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&zoom=10`,
             { headers: { 'Accept-Language': 'en' } }
@@ -102,7 +102,6 @@ export default function SettingsPage() {
     }
   };
 
-  // Show feature tour
   if (showTour) {
     return (
       <FeatureTour
@@ -112,219 +111,268 @@ export default function SettingsPage() {
     );
   }
 
+  const themeLabel = theme === 'day' ? 'Day' : theme === 'night' ? 'Night' : 'Blu';
+  const ThemeIcon = theme === 'day' ? Sun : theme === 'night' ? Moon : Sunrise;
+
   return (
     <div className="min-h-screen bg-background safe-area-top-ios">
       {/* Header */}
-      <div className="sticky safe-sticky-top z-10 bg-background/80 backdrop-blur-xl border-b border-border/50">
-        <div className="flex items-center gap-3 px-4 py-4">
+      <div className="sticky safe-sticky-top z-10 bg-background/80 backdrop-blur-xl border-b border-border/30">
+        <div className="flex items-center px-4 py-4 relative">
           <button
             onClick={() => navigate(-1)}
             className="p-2 -ml-2 rounded-full hover:bg-accent/50 transition-colors"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="w-5 h-5 text-foreground" />
           </button>
-          <h1 className="text-2xl font-black">Settings</h1>
+          <h1 className="absolute left-1/2 -translate-x-1/2 text-base font-semibold tracking-tight">
+            Settings
+          </h1>
         </div>
       </div>
 
-      <div className="p-4 space-y-6 pb-24">
-        {/* Profile Section */}
-        <section className="space-y-4">
-          <Card className="p-4 space-y-4">
-            {isEditingProfile ? (
-              <>
-                <div className="space-y-3">
-                  <div>
-                    <label className="text-xs text-muted-foreground mb-1 block">Name</label>
-                    <input
-                      value={editName}
-                      onChange={(e) => setEditName(e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg bg-accent/50 border border-border/50 text-sm focus:outline-none focus:border-primary/40"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs text-muted-foreground mb-1 block">Birthday</label>
-                    <input
-                      type="date"
-                      value={editBirthday}
-                      onChange={(e) => setEditBirthday(e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg bg-accent/50 border border-border/50 text-sm focus:outline-none focus:border-primary/40"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs text-muted-foreground mb-1 block">Location</label>
-                    <div className="flex gap-2">
-                      <input
-                        value={editLocation}
-                        onChange={(e) => { setEditLocation(e.target.value); setLocationError(''); }}
-                        placeholder="City, Country"
-                        className="flex-1 px-3 py-2 rounded-lg bg-accent/50 border border-border/50 text-sm focus:outline-none focus:border-primary/40"
-                      />
-                      <button
-                        type="button"
-                        onClick={autoDetectLocation}
-                        disabled={isDetectingLocation}
-                        title="Auto-detect my location"
-                        className="px-3 py-2 rounded-lg bg-accent/50 border border-border/50 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors disabled:opacity-50"
-                      >
-                        {isDetectingLocation
-                          ? <Loader2 className="w-4 h-4 animate-spin" />
-                          : <Navigation className="w-4 h-4" />}
-                      </button>
-                    </div>
-                    {locationError
-                      ? <p className="text-xs text-destructive mt-1">{locationError}</p>
-                      : <p className="text-xs text-muted-foreground mt-1">Only your city name is saved — precise coordinates are never stored.</p>
-                    }
-                  </div>
-                  <div className="flex items-center gap-3 p-3 rounded-lg bg-accent/30">
-                    <Mail className="w-4 h-4 text-muted-foreground" />
-                    <div className="flex-1">
-                      <p className="text-xs text-muted-foreground">Email</p>
-                      <p className="text-sm">{user?.email || 'Not available'}</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <Button variant="outline" onClick={cancelEditProfile} className="flex-1" size="sm">
-                    <X className="w-3.5 h-3.5 mr-1" /> Cancel
-                  </Button>
-                  <Button onClick={saveProfile} disabled={isSavingProfile} className="flex-1" size="sm">
-                    {isSavingProfile ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> : <Check className="w-3.5 h-3.5 mr-1" />}
-                    Save
-                  </Button>
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-accent flex items-center justify-center">
-                    <User className="w-6 h-6 text-muted-foreground" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-base font-medium truncate">{profile?.full_name || 'User'}</h3>
-                    <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
-                    {profile?.location && (
-                      <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
-                        <MapPin className="w-3 h-3 shrink-0" />
-                        {profile.location}
-                      </p>
-                    )}
-                  </div>
-                </div>
+      <div className="px-4 pt-4 pb-32 space-y-3">
 
+        {/* Profile Card */}
+        {isEditingProfile ? (
+          <div className="rounded-2xl bg-card border border-border/40 overflow-hidden">
+            <div className="px-4 py-4 space-y-3">
+              <div>
+                <label className="text-xs text-muted-foreground mb-1.5 block">Name</label>
+                <input
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-background border border-border/50 text-sm focus:outline-none focus:border-primary/50 transition-colors"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground mb-1.5 block">Birthday</label>
+                <input
+                  type="date"
+                  value={editBirthday}
+                  onChange={(e) => setEditBirthday(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-background border border-border/50 text-sm focus:outline-none focus:border-primary/50 transition-colors"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground mb-1.5 block">Location</label>
                 <div className="flex gap-2">
-                  <Button variant="outline" onClick={startEditProfile} className="flex-1" size="sm">
-                    <Pencil className="w-3.5 h-3.5 mr-1" /> Edit Profile
-                  </Button>
-                  <Button variant="outline" onClick={handleSignOut} className="flex-1" size="sm">
-                    <LogOut className="w-3.5 h-3.5 mr-1" /> Sign Out
-                  </Button>
-                </div>
-              </>
-            )}
-          </Card>
-        </section>
-
-        {/* Appearance Section */}
-        <section className="space-y-4">
-          <h2 className="text-lg font-semibold flex items-center gap-2">
-            {theme === 'day' ? <Sun className="w-5 h-5 text-primary" /> : theme === 'blu' ? <Sunrise className="w-5 h-5 text-primary" /> : <Moon className="w-5 h-5 text-primary" />}
-            Appearance
-          </h2>
-          <Card className="p-4">
-            <div className="grid grid-cols-3 gap-2">
-              {([
-                { id: 'day' as const, label: 'Day', icon: Sun, bg: 'hsl(0 0% 98%)', fg: 'hsl(0 0% 10%)' },
-                { id: 'night' as const, label: 'Night', icon: Moon, bg: 'hsl(0 0% 4%)', fg: 'hsl(0 0% 95%)' },
-                { id: 'blu' as const, label: 'Blu', icon: Sunrise, bg: 'hsl(240 100% 25%)', fg: 'hsl(0 0% 100%)' },
-              ]).map(opt => {
-                const Icon = opt.icon;
-                const isActive = theme === opt.id;
-                return (
+                  <input
+                    value={editLocation}
+                    onChange={(e) => { setEditLocation(e.target.value); setLocationError(''); }}
+                    placeholder="City, Country"
+                    className="flex-1 px-3.5 py-2.5 rounded-xl bg-background border border-border/50 text-sm focus:outline-none focus:border-primary/50 transition-colors"
+                  />
                   <button
-                    key={opt.id}
-                    onClick={() => setTheme(opt.id)}
-                    className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${isActive ? 'border-primary ring-2 ring-primary/30' : 'border-border'}`}
+                    type="button"
+                    onClick={autoDetectLocation}
+                    disabled={isDetectingLocation}
+                    title="Auto-detect my location"
+                    className="px-3.5 py-2.5 rounded-xl bg-background border border-border/50 text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors disabled:opacity-50"
                   >
-                    <div
-                      className="w-10 h-10 rounded-lg flex items-center justify-center"
-                      style={{ background: opt.bg }}
-                    >
-                      <Icon className="w-5 h-5" style={{ color: opt.fg }} />
-                    </div>
-                    <span className="text-xs font-semibold">{opt.label}</span>
+                    {isDetectingLocation
+                      ? <Loader2 className="w-4 h-4 animate-spin" />
+                      : <Navigation className="w-4 h-4" />}
                   </button>
-                );
-              })}
+                </div>
+                {locationError
+                  ? <p className="text-xs text-destructive mt-1.5">{locationError}</p>
+                  : <p className="text-xs text-muted-foreground mt-1.5">Only your city name is saved — precise coordinates are never stored.</p>
+                }
+              </div>
+              <div className="flex items-center gap-3 p-3 rounded-xl bg-background/60">
+                <Mail className="w-4 h-4 text-muted-foreground shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-muted-foreground">Email</p>
+                  <p className="text-sm truncate">{user?.email || 'Not available'}</p>
+                </div>
+              </div>
             </div>
-          </Card>
-        </section>
-
-        {/* Voice Input */}
-        <section className="space-y-4">
-          <h2 className="text-lg font-semibold flex items-center gap-2">
-            <Mic className="w-5 h-5 text-primary" />
-            Voice Input
-          </h2>
-          <Card className="p-2 divide-y divide-border/50">
-            <div className="flex items-center gap-3 px-3 py-3">
-              <div className="flex-1">
-                <p className="text-sm font-medium">Auto-send after speaking</p>
-                <p className="text-xs text-muted-foreground">
-                  Automatically submit your message once voice transcription finishes
+            <div className="flex border-t border-border/40">
+              <button
+                onClick={cancelEditProfile}
+                className="flex-1 flex items-center justify-center gap-1.5 py-3.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent/30 transition-colors border-r border-border/40"
+              >
+                <X className="w-4 h-4" /> Cancel
+              </button>
+              <button
+                onClick={saveProfile}
+                disabled={isSavingProfile}
+                className="flex-1 flex items-center justify-center gap-1.5 py-3.5 text-sm font-medium text-primary hover:bg-primary/5 transition-colors disabled:opacity-50"
+              >
+                {isSavingProfile
+                  ? <Loader2 className="w-4 h-4 animate-spin" />
+                  : <Check className="w-4 h-4" />}
+                Save
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button
+            onClick={startEditProfile}
+            className="w-full rounded-2xl bg-card border border-border/40 px-4 py-4 flex items-center gap-3.5 hover:bg-accent/20 transition-colors text-left"
+          >
+            <div className="w-14 h-14 rounded-full bg-accent flex items-center justify-center shrink-0">
+              <User className="w-7 h-7 text-muted-foreground" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-base font-semibold truncate">{profile?.full_name || 'User'}</p>
+              <p className="text-sm text-muted-foreground truncate">{user?.email}</p>
+              {profile?.location && (
+                <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                  <MapPin className="w-3 h-3 shrink-0" />
+                  {profile.location}
                 </p>
-              </div>
-              <Switch
-                checked={aiSettings.voiceAutoSend}
-                onCheckedChange={(checked) => updateAISettings({ voiceAutoSend: checked })}
-              />
+              )}
             </div>
-          </Card>
-        </section>
+            <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+          </button>
+        )}
 
-        {/* Help & Onboarding */}
-        <section className="space-y-4">
-          <h2 className="text-lg font-semibold flex items-center gap-2">
-            <Lightbulb className="w-5 h-5 text-amber-500" />
-            Help & Onboarding
-          </h2>
-          <Card className="p-2 divide-y divide-border/50">
-            <button
-              onClick={() => setShowBriefing(true)}
-              className="w-full flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-accent/50 transition-colors text-left"
-            >
-              <Sunrise className="w-4 h-4 text-primary shrink-0" />
-              <div className="flex-1">
-                <p className="text-sm font-medium">Daily Brief</p>
-                <p className="text-xs text-muted-foreground">Your personalised morning summary</p>
-              </div>
-            </button>
-            <button
-              onClick={() => setShowTour(true)}
-              className="w-full flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-accent/50 transition-colors text-left"
-            >
-              <Lightbulb className="w-4 h-4 text-amber-500 shrink-0" />
-              <div className="flex-1">
-                <p className="text-sm font-medium">Feature Tour</p>
-                <p className="text-xs text-muted-foreground">Explore what Second Mind can do</p>
-              </div>
-            </button>
-            <button
-              onClick={() => { resetOnboarding(); navigate('/'); }}
-              className="w-full flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-accent/50 transition-colors text-left"
-            >
-              <RotateCcw className="w-4 h-4 text-primary shrink-0" />
-              <div className="flex-1">
-                <p className="text-sm font-medium">Restart Onboarding</p>
-                <p className="text-xs text-muted-foreground">Redo the full guided setup from the beginning</p>
-              </div>
-            </button>
-          </Card>
-        </section>
+        {/* Appearance & Voice Section */}
+        <div className="rounded-2xl bg-card border border-border/40 overflow-hidden divide-y divide-border/40">
+          {/* Theme row — expands inline */}
+          <ThemeRowExpanded theme={theme} setTheme={setTheme} />
+
+          {/* Voice auto-send */}
+          <div className="flex items-center gap-3.5 px-4 py-3.5">
+            <div className="w-8 h-8 rounded-lg bg-accent/60 flex items-center justify-center shrink-0">
+              <Mic className="w-4 h-4 text-foreground" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium">Auto-send after speaking</p>
+              <p className="text-xs text-muted-foreground">Submit message when voice transcription finishes</p>
+            </div>
+            <Switch
+              checked={aiSettings.voiceAutoSend}
+              onCheckedChange={(checked) => updateAISettings({ voiceAutoSend: checked })}
+            />
+          </div>
+        </div>
+
+        {/* Help & Onboarding Section */}
+        <div className="rounded-2xl bg-card border border-border/40 overflow-hidden divide-y divide-border/40">
+          <button
+            onClick={() => setShowBriefing(true)}
+            className="w-full flex items-center gap-3.5 px-4 py-3.5 hover:bg-accent/30 transition-colors text-left"
+          >
+            <div className="w-8 h-8 rounded-lg bg-accent/60 flex items-center justify-center shrink-0">
+              <Sunrise className="w-4 h-4 text-primary" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-medium">Daily Brief</p>
+              <p className="text-xs text-muted-foreground">Your personalised morning summary</p>
+            </div>
+            <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+          </button>
+
+          <button
+            onClick={() => setShowTour(true)}
+            className="w-full flex items-center gap-3.5 px-4 py-3.5 hover:bg-accent/30 transition-colors text-left"
+          >
+            <div className="w-8 h-8 rounded-lg bg-accent/60 flex items-center justify-center shrink-0">
+              <Lightbulb className="w-4 h-4 text-amber-500" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-medium">Feature Tour</p>
+              <p className="text-xs text-muted-foreground">Explore what Second Mind can do</p>
+            </div>
+            <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+          </button>
+
+          <button
+            onClick={() => { resetOnboarding(); navigate('/'); }}
+            className="w-full flex items-center gap-3.5 px-4 py-3.5 hover:bg-accent/30 transition-colors text-left"
+          >
+            <div className="w-8 h-8 rounded-lg bg-accent/60 flex items-center justify-center shrink-0">
+              <RotateCcw className="w-4 h-4 text-foreground" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-medium">Restart Onboarding</p>
+              <p className="text-xs text-muted-foreground">Redo the full guided setup from the beginning</p>
+            </div>
+            <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+          </button>
+        </div>
+
+        {/* Sign Out */}
+        <div className="rounded-2xl bg-card border border-border/40 overflow-hidden">
+          <button
+            onClick={handleSignOut}
+            className="w-full flex items-center justify-center gap-2 px-4 py-4 text-sm font-semibold text-red-500 hover:bg-red-500/5 transition-colors"
+          >
+            <LogOut className="w-4 h-4" />
+            Sign Out
+          </button>
+        </div>
       </div>
 
       <DailyBriefingModal isOpen={showBriefing} onClose={() => setShowBriefing(false)} />
+    </div>
+  );
+}
+
+/* ─── Appearance sub-component ───────────────────────────────────────── */
+type Theme = 'day' | 'night' | 'blu';
+
+function ThemeRowExpanded({
+  theme,
+  setTheme,
+}: {
+  theme: Theme;
+  setTheme: (t: Theme) => void;
+}) {
+  const [open, setOpen] = useState(false);
+
+  const ThemeIcon = theme === 'day' ? Sun : theme === 'night' ? Moon : Sunrise;
+  const themeLabel = theme === 'day' ? 'Day' : theme === 'night' ? 'Night' : 'Blu';
+
+  const options: { id: Theme; label: string; icon: typeof Sun; bg: string; fg: string }[] = [
+    { id: 'day', label: 'Day', icon: Sun, bg: 'hsl(0 0% 98%)', fg: 'hsl(0 0% 10%)' },
+    { id: 'night', label: 'Night', icon: Moon, bg: 'hsl(0 0% 4%)', fg: 'hsl(0 0% 95%)' },
+    { id: 'blu', label: 'Blu', icon: Sunrise, bg: 'hsl(240 100% 25%)', fg: 'hsl(0 0% 100%)' },
+  ];
+
+  return (
+    <div>
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center gap-3.5 px-4 py-3.5 hover:bg-accent/30 transition-colors text-left"
+      >
+        <div className="w-8 h-8 rounded-lg bg-accent/60 flex items-center justify-center shrink-0">
+          <ThemeIcon className="w-4 h-4 text-foreground" />
+        </div>
+        <div className="flex-1">
+          <p className="text-sm font-medium">Appearance</p>
+          <p className="text-xs text-muted-foreground">{themeLabel}</p>
+        </div>
+        <ChevronRight
+          className={`w-4 h-4 text-muted-foreground shrink-0 transition-transform duration-200 ${open ? 'rotate-90' : ''}`}
+        />
+      </button>
+      {open && (
+        <div className="px-4 pb-4 pt-1 grid grid-cols-3 gap-2 border-t border-border/40">
+          {options.map((opt) => {
+            const Icon = opt.icon;
+            const isActive = theme === opt.id;
+            return (
+              <button
+                key={opt.id}
+                onClick={() => { setTheme(opt.id); setOpen(false); }}
+                className={`flex flex-col items-center gap-2 py-3 rounded-xl border-2 transition-all ${isActive ? 'border-primary ring-2 ring-primary/20' : 'border-border/50 hover:border-border'}`}
+              >
+                <div
+                  className="w-9 h-9 rounded-lg flex items-center justify-center"
+                  style={{ background: opt.bg }}
+                >
+                  <Icon className="w-4 h-4" style={{ color: opt.fg }} />
+                </div>
+                <span className="text-xs font-semibold">{opt.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
