@@ -26,7 +26,49 @@
       "Skill(codebase-ref:*)",
       "Bash(grep -l \"habits\" /Users/reidpet/Desktop/secondminded-main/supabase/migrations/*.sql)",
       "Skill(fix-bug)",
-      "Skill(fix-bug:*)"
+      "Skill(fix-bug:*)",
+      "Bash(curl -s https://api.github.com/repos/redypp/SECOND-MIND-REAL/deployments)",
+      "Bash(grep -n \"bg-white\\\\|bg-\\\\[#fff\\\\]\\\\|bg-\\\\[white\\\\]\\\\|backgroundColor.*white\\\\|background.*#fff\\\\|background.*white\" src/pages/*.tsx src/components/*.tsx src/layouts/*.tsx)",
+      "Bash(find /Users/reidpet/Desktop/secondminded-main -name capacitor.config* -o -name Info.plist -o -name *.xcodeproj)",
+      "Bash(curl -s \"https://api.vercel.com/v6/deployments?app=second-mind-real&limit=3\")",
+      "Bash(curl -sI https://second-mind-real.vercel.app/)",
+      "Bash(curl -s \"https://second-mind-real.vercel.app/\")",
+      "Bash(find /Users/reidpet/Desktop/secondminded-main -maxdepth 3 -type f \\\\\\(-name *.plist -o -name *.xml -o -name *capacitor* -o -name *despia* \\\\\\))",
+      "Bash(find /Users/reidpet/Desktop/secondminded-main -maxdepth 3 -name index.html -o -name capacitor.config.* -o -name despia.*)",
+      "Bash(grep -r \"Despia\\\\|despia\\\\|autoInjectSafeArea\" /Users/reidpet/Desktop/secondminded-main --include=*.tsx --include=*.ts --include=*.json)",
+      "Bash(grep -r \"capacitor\\\\|Capacitor\" /Users/reidpet/Desktop/secondminded-main/src --include=*.tsx --include=*.ts)",
+      "WebFetch(domain:setup.despia.com)",
+      "Bash(find /Users/reidpet/Desktop/secondminded-main/src -type f -name *[Ss]etting* -o -name *[Pp]rofile*)",
+      "Bash(supabase --version)",
+      "Bash(supabase db:*)",
+      "Skill(update-config)",
+      "Skill(update-config:*)",
+      "Bash(npx supabase:*)",
+      "Bash(npx tsc:*)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:9999)",
+      "Bash(git -C /Users/reidpet/Desktop/secondminded-main add src/components/AddSpaceDialog.tsx)",
+      "Bash(git -C:*)",
+      "Bash(git -C /Users/reidpet/Desktop/secondminded-main push origin main)",
+      "Bash(find /Users/reidpet/Desktop/secondminded-main/src -type f \\\\\\(-name *.tsx -o -name *.ts \\\\\\))",
+      "Bash(npx vite:*)",
+      "Bash(ruby --version)",
+      "Bash(git checkout:*)",
+      "Bash(gh pr:*)",
+      "Bash(gh auth:*)"
+    ]
+  },
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd /Users/reidpet/Desktop/secondminded-main && git add src/ supabase/migrations/ && git diff --cached --quiet || (git commit -m \"Auto-save: $(date '+%Y-%m-%d %H:%M')\" && git push origin main)",
+            "timeout": 30,
+            "statusMessage": "Saving and pushing changes..."
+          }
+        ]
+      }
     ]
   }
 }
