@@ -27,6 +27,7 @@ interface Profile {
   user_id: string;
   full_name: string;
   birthday: string | null;
+  location: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -56,7 +57,7 @@ interface AuthContextType {
   signUp: (email: string, password: string, fullName: string, phoneNumber?: string) => Promise<{ error: Error | null; session: Session | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
-  updateProfile: (updates: { full_name?: string; birthday?: string }) => Promise<{ error: Error | null }>;
+  updateProfile: (updates: { full_name?: string; birthday?: string; location?: string }) => Promise<{ error: Error | null }>;
   isOnboardingComplete: boolean;
   /** True once a profile fetch attempt has completed for the current user (even if result is null).
    *  Guards against premature onboarding redirects while profile is still loading. */
@@ -601,7 +602,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setDataLoaded(true); // No user = nothing to load
   };
 
-  const updateProfile = async (updates: { full_name?: string; birthday?: string }) => {
+  const updateProfile = async (updates: { full_name?: string; birthday?: string; location?: string }) => {
     if (!user) return { error: new Error('Not authenticated') };
 
     const { error } = await supabase
