@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSpaces } from '@/contexts/SpacesContext';
-import { Folder, Plus, ArrowLeft, Pencil, Trash2, ImagePlus, Pin, Check, X, Settings, Crosshair, Sparkles, Loader2, LayoutList, LayoutGrid, Film } from 'lucide-react';
+import { Folder, Plus, ArrowLeft, Pencil, Trash2, ImagePlus, Pin, Check, X, Settings, Crosshair, Sparkles, Loader2, LayoutList, LayoutGrid } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AddMemoryPanel } from '@/components/AddMemoryPanel';
@@ -10,7 +10,6 @@ import { FreeformCanvas } from '@/components/FreeformCanvas';
 import { GroupedArchiveView } from '@/components/GroupedArchiveView';
 import { UnifiedArchiveView } from '@/components/UnifiedArchiveView';
 import { EditNoteModal } from '@/components/EditNoteModal';
-import { GifPickerSheet } from '@/components/GifPickerSheet';
 import { showErrorPopup } from '@/contexts/ErrorPopupContext';
 import { useTutorial } from '@/contexts/TutorialContext';
 import { Item, GroupAssignments } from '@/types';
@@ -26,7 +25,6 @@ export default function SpaceDetail() {
 
   const [showAddMemoryPanel, setShowAddMemoryPanel] = useState(false);
   const [showOrganizeModal, setShowOrganizeModal] = useState(false);
-  const [showGifPicker, setShowGifPicker] = useState(false);
   const [editingItem, setEditingItem] = useState<Item | null>(null);
   const [swipeProgress, setSwipeProgress] = useState(0);
   const [slidingOut, setSlidingOut] = useState(false);
@@ -405,10 +403,6 @@ export default function SpaceDetail() {
               <DropdownMenuItem onClick={() => coverInputRef.current?.click()} className="rounded-lg px-3 py-2.5 gap-3">
                 <ImagePlus className="w-4 h-4" /> Change cover
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setShowGifPicker(true)} className="rounded-lg px-3 py-2.5 gap-3">
-                <Film className="w-4 h-4" />
-                {space.gifBackground ? 'Change GIF' : 'Add GIF background'}
-              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => { if (id) { space.isPinned ? unpinSpace(id) : pinSpace(id); } }} className="rounded-lg px-3 py-2.5 gap-3">
                 <Pin className={`w-4 h-4 ${space.isPinned ? 'fill-primary text-primary' : ''}`} />
                 {space.isPinned ? 'Unpin' : 'Pin'}
@@ -538,16 +532,6 @@ export default function SpaceDetail() {
         spaceId={id}
         spaceName={space.name}
         onItemSaved={() => reportTutorialAction('add-archive-item')}
-      />
-
-      <GifPickerSheet
-        isOpen={showGifPicker}
-        onClose={() => setShowGifPicker(false)}
-        spaceName={space.name}
-        currentGif={space.gifBackground}
-        onSelect={(gifUrl) => {
-          if (id) updateSpaceGif(id, gifUrl);
-        }}
       />
 
       <AddMemoryPanel
