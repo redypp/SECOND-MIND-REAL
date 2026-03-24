@@ -4,10 +4,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Eye, EyeOff, ArrowRight, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { showErrorPopup } from '@/contexts/ErrorPopupContext';
+import { supabase } from '@/integrations/supabase/client';
 import { z } from 'zod';
 import splashLogo from '@/assets/splash-logo.png';
 
-/* ── Validation ───────────────────────────────────────────────────────── */
+/* ── Validation ────────────────────────────────────────────────────── */
 const signUpSchema = z.object({
   fullName: z.string().trim().min(2, 'Name must be at least 2 characters').max(100, 'Name is too long'),
   email: z.string().trim().email('Invalid email address'),
@@ -20,7 +21,7 @@ const signInSchema = z.object({
   password: z.string().min(1, 'Password is required'),
 });
 
-/* ── Field ────────────────────────────────────────────────────────────── */
+/* ── Input field ───────────────────────────────────────────────────── */
 function Field({
   label, type = 'text', value, onChange, error, right,
 }: {
@@ -39,11 +40,14 @@ function Field({
           placeholder={label}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className={`w-full px-4 py-3.5 rounded-2xl text-sm bg-white/[0.06] border ${
-            error ? 'border-red-500/60' : 'border-white/10'
-          } text-foreground placeholder:text-white/30 focus:outline-none focus:border-white/30 transition-colors ${
-            right ? 'pr-12' : ''
-          }`}
+          style={{
+            background: 'rgba(255,255,255,0.07)',
+            border: error ? '1px solid rgba(239,68,68,0.6)' : '1px solid rgba(255,255,255,0.11)',
+            color: '#fff',
+          }}
+          className={`w-full px-4 py-3.5 rounded-2xl text-sm placeholder:text-white/30 focus:outline-none transition-colors ${right ? 'pr-12' : ''}`}
+          onFocus={e => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.3)')}
+          onBlur={e => (e.currentTarget.style.borderColor = error ? 'rgba(239,68,68,0.6)' : 'rgba(255,255,255,0.11)')}
         />
         {right && (
           <div className="absolute right-3.5 top-1/2 -translate-y-1/2">{right}</div>
@@ -54,7 +58,53 @@ function Field({
   );
 }
 
-/* ── Main ─────────────────────────────────────────────────────────────── */
+/* ── OAuth button ──────────────────────────────────────────────────── */
+function OAuthButton({
+  onClick, loading, children,
+}: {
+  onClick: () => void;
+  loading: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={loading}
+      style={{
+        background: 'rgba(255,255,255,0.07)',
+        border: '1px solid rgba(255,255,255,0.11)',
+        color: '#fff',
+      }}
+      className="flex-1 flex items-center justify-center gap-2.5 py-3.5 rounded-2xl text-sm font-medium hover:bg-white/10 active:scale-[0.97] transition-all disabled:opacity-50"
+    >
+      {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : children}
+    </button>
+  );
+}
+
+/* ── Google SVG ────────────────────────────────────────────────────── */
+function GoogleIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+      <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
+      <path d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" fill="#34A853"/>
+      <path d="M3.964 10.707A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.707V4.961H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.039l3.007-2.332z" fill="#FBBC05"/>
+      <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.961L3.964 7.293C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
+    </svg>
+  );
+}
+
+/* ── Apple SVG ─────────────────────────────────────────────────────── */
+function AppleIcon() {
+  return (
+    <svg width="16" height="18" viewBox="0 0 814 1000" fill="white">
+      <path d="M788.1 340.9c-5.8 4.5-108.2 62.2-108.2 190.5 0 148.4 130.3 200.9 134.2 202.2-.6 3.2-20.7 71.9-68.7 141.9-42.8 61.6-87.5 123.1-155.5 123.1s-85.5-39.5-164-39.5c-76 0-103.7 40.8-165.9 40.8s-105-57.8-155.5-127.4C46 790.7 0 663 0 541.8c0-207.8 107.4-318.1 211.4-343.3 43.5-11.5 97.5-16 148.5-16 47.6 0 109.5 16.3 154 16.3 45.5 0 119.7-18 168.7-18zm-202.5-71.9c-22.2 26.9-59.1 47.9-97.7 47.9-4.9 0-9.7-.5-14.3-1.5 1-38.1 18.8-79.5 41.6-107.4 22.2-26.9 60.9-46.7 94.2-47.9 1 40.4-14.7 79.5-23.8 108.9z"/>
+    </svg>
+  );
+}
+
+/* ── Main ──────────────────────────────────────────────────────────── */
 export default function AuthPage() {
   const [mode, setMode] = useState<'signin' | 'signup'>('signin');
   const [email, setEmail] = useState('');
@@ -63,6 +113,8 @@ export default function AuthPage() {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [appleLoading, setAppleLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [logoReady, setLogoReady] = useState(false);
 
@@ -73,11 +125,28 @@ export default function AuthPage() {
     if (user) navigate('/', { replace: true });
   }, [user, navigate]);
 
-  // Trigger logo animation after a short delay so it feels intentional
   useEffect(() => {
     const t = setTimeout(() => setLogoReady(true), 80);
     return () => clearTimeout(t);
   }, []);
+
+  const handleOAuth = async (provider: 'google' | 'apple') => {
+    const setProviderLoading = provider === 'google' ? setGoogleLoading : setAppleLoading;
+    setProviderLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: `${window.location.origin}/`,
+        },
+      });
+      if (error) showErrorPopup(error.message);
+    } catch {
+      showErrorPopup('OAuth sign-in failed. Please try again.');
+    } finally {
+      setProviderLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -138,55 +207,57 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col overflow-hidden safe-area-top-ios">
-
+    // Always dark — auth is a brand-first screen regardless of user theme
+    <div
+      className="min-h-screen flex flex-col overflow-hidden safe-area-top-ios"
+      style={{ background: '#080808' }}
+    >
       {/* ── Hero ── */}
-      <div className="flex-1 flex flex-col items-center justify-center pt-16 pb-8 px-6">
-
-        {/* Glow behind logo */}
+      <div className="flex-1 flex flex-col items-center justify-center pt-16 pb-6 px-6">
+        {/* Logo */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.2 }}
+          initial={{ opacity: 0, scale: 0.3 }}
           animate={logoReady ? { opacity: 1, scale: 1 } : {}}
-          transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
           className="relative mb-8"
         >
-          {/* Outer pulse ring — fires once then fades */}
+          {/* Outer pulse ring */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.6 }}
-            animate={logoReady ? { opacity: [0, 0.35, 0], scale: [0.6, 1.6, 2] } : {}}
-            transition={{ delay: 0.5, duration: 1.4, ease: 'easeOut' }}
-            className="absolute inset-0 rounded-full bg-foreground/20 pointer-events-none"
+            initial={{ opacity: 0, scale: 0.5 }}
+            animate={logoReady ? { opacity: [0, 0.3, 0], scale: [0.5, 1.8, 2.2] } : {}}
+            transition={{ delay: 0.45, duration: 1.5, ease: 'easeOut' }}
+            className="absolute inset-0 rounded-full pointer-events-none"
+            style={{ background: 'rgba(255,255,255,0.15)' }}
           />
           {/* Inner pulse ring */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.7 }}
-            animate={logoReady ? { opacity: [0, 0.2, 0], scale: [0.7, 1.3, 1.5] } : {}}
-            transition={{ delay: 0.6, duration: 1.1, ease: 'easeOut' }}
-            className="absolute inset-0 rounded-full bg-foreground/20 pointer-events-none"
+            initial={{ opacity: 0, scale: 0.6 }}
+            animate={logoReady ? { opacity: [0, 0.2, 0], scale: [0.6, 1.4, 1.7] } : {}}
+            transition={{ delay: 0.55, duration: 1.1, ease: 'easeOut' }}
+            className="absolute inset-0 rounded-full pointer-events-none"
+            style={{ background: 'rgba(255,255,255,0.12)' }}
           />
-
-          {/* Logo */}
           <motion.img
             src={splashLogo}
             alt="Second Mind"
-            initial={{ opacity: 0, scale: 0.4, filter: 'blur(12px)' }}
+            initial={{ opacity: 0, scale: 0.4, filter: 'blur(14px)' }}
             animate={logoReady ? { opacity: 1, scale: 1, filter: 'blur(0px)' } : {}}
-            transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: 0.85, ease: [0.16, 1, 0.3, 1] }}
             className="w-24 h-24 rounded-full relative z-10"
           />
         </motion.div>
 
         {/* Wordmark */}
         <motion.div
-          initial={{ opacity: 0, y: 12 }}
+          initial={{ opacity: 0, y: 14 }}
           animate={logoReady ? { opacity: 1, y: 0 } : {}}
-          transition={{ delay: 0.55, duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ delay: 0.5, duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
           className="text-center"
         >
-          <h1 className="text-2xl font-bold tracking-widest text-foreground uppercase">
+          <h1 className="text-2xl font-bold tracking-widest uppercase" style={{ color: '#fff' }}>
             Second Mind
           </h1>
-          <p className="text-white/40 text-xs tracking-wider mt-1 uppercase">
+          <p className="text-xs tracking-wider mt-1 uppercase" style={{ color: 'rgba(255,255,255,0.35)' }}>
             A digital extension of your brain
           </p>
         </motion.div>
@@ -196,26 +267,46 @@ export default function AuthPage() {
       <motion.div
         initial={{ opacity: 0, y: 60 }}
         animate={logoReady ? { opacity: 1, y: 0 } : {}}
-        transition={{ delay: 0.7, duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
-        className="px-5 pb-10 space-y-4"
+        transition={{ delay: 0.65, duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
+        className="px-5 pb-12 space-y-4"
       >
+        {/* OAuth buttons */}
+        <div className="flex gap-3">
+          <OAuthButton onClick={() => handleOAuth('google')} loading={googleLoading}>
+            <GoogleIcon />
+            <span>Google</span>
+          </OAuthButton>
+          <OAuthButton onClick={() => handleOAuth('apple')} loading={appleLoading}>
+            <AppleIcon />
+            <span>Apple</span>
+          </OAuthButton>
+        </div>
+
+        {/* Divider */}
+        <div className="flex items-center gap-3">
+          <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.1)' }} />
+          <span className="text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>or</span>
+          <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.1)' }} />
+        </div>
+
         {/* Tab switch */}
-        <div className="flex items-center justify-center gap-6 mb-2">
+        <div className="flex items-center justify-center gap-6">
           {(['signin', 'signup'] as const).map((m) => (
             <button
               key={m}
               onClick={() => switchMode(m)}
-              className={`text-sm font-semibold pb-1 border-b-2 transition-all ${
-                mode === m
-                  ? 'text-foreground border-foreground'
-                  : 'text-white/30 border-transparent hover:text-white/60'
-              }`}
+              className="text-sm font-semibold pb-1 border-b-2 transition-all"
+              style={{
+                color: mode === m ? '#fff' : 'rgba(255,255,255,0.3)',
+                borderColor: mode === m ? '#fff' : 'transparent',
+              }}
             >
               {m === 'signin' ? 'Sign In' : 'Sign Up'}
             </button>
           ))}
         </div>
 
+        {/* Fields */}
         <form onSubmit={handleSubmit} className="space-y-3">
           <AnimatePresence initial={false}>
             {mode === 'signup' && (
@@ -227,30 +318,13 @@ export default function AuthPage() {
                 transition={{ duration: 0.25, ease: 'easeInOut' }}
                 className="space-y-3 overflow-hidden"
               >
-                <Field
-                  label="Full name"
-                  value={fullName}
-                  onChange={setFullName}
-                  error={errors.fullName}
-                />
-                <Field
-                  label="Phone number (optional)"
-                  type="tel"
-                  value={phoneNumber}
-                  onChange={setPhoneNumber}
-                  error={errors.phoneNumber}
-                />
+                <Field label="Full name" value={fullName} onChange={setFullName} error={errors.fullName} />
+                <Field label="Phone number (optional)" type="tel" value={phoneNumber} onChange={setPhoneNumber} error={errors.phoneNumber} />
               </motion.div>
             )}
           </AnimatePresence>
 
-          <Field
-            label="Email address"
-            type="email"
-            value={email}
-            onChange={setEmail}
-            error={errors.email}
-          />
+          <Field label="Email address" type="email" value={email} onChange={setEmail} error={errors.email} />
 
           <Field
             label="Password"
@@ -262,7 +336,8 @@ export default function AuthPage() {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="text-white/30 hover:text-white/70 transition-colors"
+                className="transition-colors"
+                style={{ color: 'rgba(255,255,255,0.35)' }}
               >
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
@@ -272,7 +347,8 @@ export default function AuthPage() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full flex items-center justify-center gap-2 py-4 mt-2 rounded-2xl bg-foreground text-background text-sm font-semibold hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50"
+            className="w-full flex items-center justify-center gap-2 py-4 mt-1 rounded-2xl text-sm font-semibold active:scale-[0.98] transition-all disabled:opacity-50"
+            style={{ background: '#fff', color: '#080808' }}
           >
             {isLoading ? (
               <Loader2 className="w-4 h-4 animate-spin" />
