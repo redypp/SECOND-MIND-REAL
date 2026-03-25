@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
 import { Plus, X, Check, Trash2, ChevronLeft, ChevronRight, GripVertical, Settings2, Pencil, Minus, ArrowLeft } from 'lucide-react';
+import { SecondMindLoader } from '@/components/SecondMindLoader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { BottomNavigation } from '@/components/BottomNavigation';
@@ -531,7 +532,7 @@ export default function HabitsPage({ embedded = false, onBack }: HabitsPageProps
     return (
       <div className={`h-screen flex flex-col bg-background overflow-hidden w-full max-w-md mx-auto ${embedded ? 'pb-12' : 'pb-20'}`}>
         <div className="flex-1 flex items-center justify-center">
-          <div className="w-8 h-8 rounded-full border-[3px] border-muted border-t-primary animate-spin" />
+          <SecondMindLoader size={32} />
         </div>
         {!embedded && <BottomNavigation />}
       </div>

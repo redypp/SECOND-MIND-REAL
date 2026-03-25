@@ -9,8 +9,8 @@ import {
   History,
   Zap,
   Clock,
-  Loader2,
 } from 'lucide-react';
+import { SecondMindLoader } from '@/components/SecondMindLoader';
 import { NotificationInbox } from '@/components/NotificationInbox';
 import { useNotificationPreferences } from '@/hooks/useNotificationPreferences';
 import { usePushRegistration } from '@/hooks/usePushRegistration';
@@ -112,7 +112,7 @@ function SettingsTab({
   if (prefsLoading) {
     return (
       <div className="flex items-center justify-center py-16">
-        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+        <SecondMindLoader size={28} />
       </div>
     );
   }

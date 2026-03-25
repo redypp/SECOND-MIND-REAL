@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { CornerDownLeft, ArrowLeft } from 'lucide-react';
+import { SecondMindLoader } from '@/components/SecondMindLoader';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -26,7 +27,11 @@ export default function JournalPage({ embedded = false, onBack }: JournalPagePro
 
   // Load the single journal document
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
     (async () => {
       const { data } = await supabase
         .from('journal_entries')
@@ -320,7 +325,7 @@ export default function JournalPage({ embedded = false, onBack }: JournalPagePro
         <div className="max-w-2xl mx-auto px-5">
           {loading ? (
             <div className="flex items-center justify-center py-20">
-              <div className="w-5 h-5 border-2 border-muted-foreground/30 border-t-foreground rounded-full animate-spin" />
+              <SecondMindLoader size={28} />
             </div>
           ) : (
             <>

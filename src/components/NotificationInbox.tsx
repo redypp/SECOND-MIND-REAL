@@ -9,8 +9,8 @@ import {
   HelpCircle,
   CheckSquare,
   Clock,
-  Loader2,
 } from 'lucide-react';
+import { SecondMindLoader } from '@/components/SecondMindLoader';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -56,11 +56,14 @@ const priorityStyles = {
 export function NotificationInbox() {
   const { user } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [unreadCount, setUnreadCount] = useState(0);
 
   const fetchNotifications = useCallback(async () => {
-    if (!user) return;
+    if (!user) {
+      setIsLoading(false);
+      return;
+    }
 
     setIsLoading(true);
     try {
@@ -145,7 +148,7 @@ export function NotificationInbox() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-16">
-        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+        <SecondMindLoader size={28} />
       </div>
     );
   }
