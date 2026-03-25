@@ -2,7 +2,6 @@ import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSpaces } from '@/contexts/SpacesContext';
 import { Folder, Plus, ArrowLeft, Pencil, Trash2, ImagePlus, Pin, Check, X, Settings, Crosshair, Sparkles, Loader2, LayoutList, LayoutGrid } from 'lucide-react';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AddMemoryPanel } from '@/components/AddMemoryPanel';
 import { OrganizeModal } from '@/components/OrganizeModal';
@@ -31,6 +30,7 @@ export default function SpaceDetail() {
   const [isEditingName, setIsEditingName] = useState(false);
   const [editedName, setEditedName] = useState('');
   const [isOrganizing, setIsOrganizing] = useState(false);
+  const [showSettingsPanel, setShowSettingsPanel] = useState(false);
   // organizedGroups is only populated by an explicit user-initiated Re-organize action.
   // It is never auto-computed — the default view is always a flat chronological feed.
   const [organizedGroups, setOrganizedGroups] = useState<{ label: string; item_ids: string[] }[] | null>(null);
@@ -385,52 +385,15 @@ export default function SpaceDetail() {
             </motion.button>
           )}
 
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <motion.button
-                data-tutorial="archive-settings"
-                whileTap={{ scale: 0.95 }}
-                className="w-10 h-10 rounded-full bg-secondary/60 flex items-center justify-center hover:bg-secondary transition-all touch-manipulation"
-                aria-label="Archive settings"
-              >
-                <Settings className="w-5 h-5 text-foreground/70" />
-              </motion.button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" sideOffset={8} collisionPadding={{ right: 0 }} className="w-52 rounded-xl p-1.5 shadow-lg border border-border/50 bg-popover z-[9999]" style={{ marginRight: '-16px' }}>
-              <DropdownMenuItem onClick={() => { setEditedName(space.name); setIsEditingName(true); }} className="rounded-lg px-3 py-2.5 gap-3">
-                <Pencil className="w-4 h-4" /> Rename
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => coverInputRef.current?.click()} className="rounded-lg px-3 py-2.5 gap-3">
-                <ImagePlus className="w-4 h-4" /> Change cover
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => { if (id) { space.isPinned ? unpinSpace(id) : pinSpace(id); } }} className="rounded-lg px-3 py-2.5 gap-3">
-                <Pin className={`w-4 h-4 ${space.isPinned ? 'fill-primary text-primary' : ''}`} />
-                {space.isPinned ? 'Unpin' : 'Pin'}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => handleOrganizeArchive(false)}
-                disabled={isOrganizing || items.length === 0}
-                className="rounded-lg px-3 py-2.5 gap-3"
-              >
-                {isOrganizing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-                {isOrganizing ? 'Organizing...' : 'Organize'}
-              </DropdownMenuItem>
-              {viewMode === 'canvas' && sortedItems.length > 0 && (
-                <DropdownMenuItem
-                  onClick={() => goHomeRef.current?.()}
-                  className="rounded-lg px-3 py-2.5 gap-3"
-                >
-                  <Crosshair className="w-4 h-4" /> Center view
-                </DropdownMenuItem>
-              )}
-              <DropdownMenuItem
-                onClick={() => { if (id) { deleteSpace(id); navigate('/archive', { replace: true }); } }}
-                className="rounded-lg px-3 py-2.5 gap-3 text-destructive focus:text-destructive"
-              >
-                <Trash2 className="w-4 h-4" /> Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <motion.button
+            data-tutorial="archive-settings"
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setShowSettingsPanel(true)}
+            className="w-10 h-10 rounded-full bg-secondary/60 flex items-center justify-center hover:bg-secondary transition-all touch-manipulation"
+            aria-label="Archive settings"
+          >
+            <Settings className="w-5 h-5 text-foreground/70" />
+          </motion.button>
 
           <input ref={coverInputRef} type="file" accept="image/*" onChange={(e) => {
             const file = e.target.files?.[0];
@@ -540,6 +503,118 @@ export default function SpaceDetail() {
         onClose={() => setShowAddMemoryPanel(false)}
         onAddItem={handleAddItem}
       />
+
+      {/* ── Archive settings side panel ── */}
+      <AnimatePresence>
+        {showSettingsPanel && (
+          <motion.div
+            className="fixed inset-0 z-[9999]"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            {/* Backdrop */}
+            <div
+              className="absolute inset-0 bg-black/50"
+              onClick={() => setShowSettingsPanel(false)}
+            />
+
+            {/* Panel */}
+            <motion.div
+              className="absolute top-0 right-0 bottom-0 w-[72%] flex flex-col overflow-hidden"
+              style={{
+                background: space.color
+                  ? `linear-gradient(160deg, ${space.color} 0%, ${space.color}dd 100%)`
+                  : 'hsl(0 0% 10%)',
+              }}
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+            >
+              {/* Options — anchored to bottom */}
+              <div className="flex-1 flex flex-col justify-end px-7 pb-4 pt-16">
+                <p className="text-[10px] uppercase tracking-[0.2em] font-semibold text-white/50 mb-2">Manage</p>
+
+                <motion.button
+                  whileTap={{ scale: 0.97 }}
+                  className="text-left py-1.5"
+                  onClick={() => { setEditedName(space.name); setIsEditingName(true); setShowSettingsPanel(false); }}
+                >
+                  <p className="text-[clamp(2rem,8vw,2.8rem)] font-black uppercase tracking-tighter leading-none text-white">Rename</p>
+                </motion.button>
+
+                <motion.button
+                  whileTap={{ scale: 0.97 }}
+                  className="text-left py-1.5"
+                  onClick={() => { coverInputRef.current?.click(); setShowSettingsPanel(false); }}
+                >
+                  <p className="text-[clamp(2rem,8vw,2.8rem)] font-black uppercase tracking-tighter leading-none text-white">Cover</p>
+                </motion.button>
+
+                <motion.button
+                  whileTap={{ scale: 0.97 }}
+                  className="text-left py-1.5"
+                  onClick={() => { if (id) { space.isPinned ? unpinSpace(id) : pinSpace(id); } setShowSettingsPanel(false); }}
+                >
+                  <p className="text-[clamp(2rem,8vw,2.8rem)] font-black uppercase tracking-tighter leading-none text-white">
+                    {space.isPinned ? 'Unpin' : 'Pin'}
+                  </p>
+                </motion.button>
+
+                {items.length > 0 && (
+                  <motion.button
+                    whileTap={{ scale: 0.97 }}
+                    className="text-left py-1.5"
+                    onClick={() => { handleOrganizeArchive(false); setShowSettingsPanel(false); }}
+                    disabled={isOrganizing}
+                  >
+                    <p className="text-[clamp(2rem,8vw,2.8rem)] font-black uppercase tracking-tighter leading-none text-white">
+                      {isOrganizing ? 'Working…' : 'Organize'}
+                    </p>
+                  </motion.button>
+                )}
+
+                {viewMode === 'canvas' && sortedItems.length > 0 && (
+                  <motion.button
+                    whileTap={{ scale: 0.97 }}
+                    className="text-left py-1.5"
+                    onClick={() => { goHomeRef.current?.(); setShowSettingsPanel(false); }}
+                  >
+                    <p className="text-[clamp(2rem,8vw,2.8rem)] font-black uppercase tracking-tighter leading-none text-white">Center</p>
+                  </motion.button>
+                )}
+
+                <div className="mt-5 pt-4 border-t border-white/15">
+                  <p className="text-[10px] uppercase tracking-[0.2em] font-semibold text-white/50 mb-1">Danger</p>
+                  <motion.button
+                    whileTap={{ scale: 0.97 }}
+                    className="text-left py-1.5"
+                    onClick={() => { if (id) { deleteSpace(id); navigate('/archive', { replace: true }); } }}
+                  >
+                    <p className="text-[clamp(2rem,8vw,2.8rem)] font-black uppercase tracking-tighter leading-none text-white/60">Delete</p>
+                  </motion.button>
+                </div>
+              </div>
+
+              {/* Close button */}
+              <div
+                className="px-7 flex justify-end"
+                style={{ paddingBottom: 'calc(max(var(--app-safe-bottom, 0px), 24px) + 8px)' }}
+              >
+                <motion.button
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => setShowSettingsPanel(false)}
+                  className="w-11 h-11 rounded-full bg-white/20 flex items-center justify-center"
+                >
+                  <X className="w-5 h-5 text-white" />
+                </motion.button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
