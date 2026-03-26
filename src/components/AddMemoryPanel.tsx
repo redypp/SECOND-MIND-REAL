@@ -443,7 +443,7 @@ export function AddMemoryPanel({ spaceId, isOpen, onClose, onAddItem }: AddMemor
                 value={img.caption}
                 onChange={(e) => updateImageCaption(index, e.target.value)}
                 placeholder="Add caption (optional)"
-                className="w-full px-3 py-2 rounded-lg bg-background/50 border border-border/50 text-sm focus:outline-none focus:ring-1 focus:ring-primary/30"
+                className="w-full px-3 py-2 rounded-lg bg-background/50 border border-border/50 text-base md:text-sm focus:outline-none focus:ring-1 focus:ring-primary/30"
               />
             </div>
           </div>
@@ -564,14 +564,14 @@ export function AddMemoryPanel({ spaceId, isOpen, onClose, onAddItem }: AddMemor
             onChange={(e) => setCurrentUrl(e.target.value)}
             placeholder="https://example.com"
             autoFocus
-            className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground placeholder:text-muted-foreground/50 text-[15px] focus:outline-none focus:ring-2 focus:ring-primary/30"
+            className="w-full px-4 py-3 rounded-xl bg-background border border-border text-foreground placeholder:text-muted-foreground/50 text-base focus:outline-none focus:ring-2 focus:ring-primary/30"
           />
           <input
             type="text"
             value={currentUrlTitle}
             onChange={(e) => setCurrentUrlTitle(e.target.value)}
             placeholder="Custom title (optional)"
-            className="w-full px-4 py-2.5 rounded-xl bg-background border border-border text-foreground placeholder:text-muted-foreground/50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+            className="w-full px-4 py-2.5 rounded-xl bg-background border border-border text-foreground placeholder:text-muted-foreground/50 text-base md:text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
           />
           <Button
             onClick={addUrl}
@@ -657,7 +657,7 @@ export function AddMemoryPanel({ spaceId, isOpen, onClose, onAddItem }: AddMemor
                           value={header}
                           onChange={(e) => updateHeader(colIndex, e.target.value)}
                           placeholder={`Header ${colIndex + 1}`}
-                          className="w-full px-4 py-3 bg-transparent text-sm font-medium text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:bg-primary/5"
+                          className="w-full px-4 py-3 bg-transparent text-base md:text-sm font-medium text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:bg-primary/5"
                         />
                         {tableHeaders.length > 1 && (
                           <button
@@ -681,7 +681,7 @@ export function AddMemoryPanel({ spaceId, isOpen, onClose, onAddItem }: AddMemor
                             value={cell}
                             onChange={(e) => updateCell(rowIndex, colIndex, e.target.value)}
                             placeholder="—"
-                            className="w-full px-4 py-3 bg-transparent text-sm text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:bg-primary/5"
+                            className="w-full px-4 py-3 bg-transparent text-base md:text-sm text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:bg-primary/5"
                           />
                         </td>
                       ))}

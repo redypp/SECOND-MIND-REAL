@@ -108,10 +108,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   if (!user && !loading && authReady) appReadyRef.current = false;
   const appReady = appReadyRef.current;
 
-  // Check if onboarding is complete (has full_name and birthday)
-  const isOnboardingComplete = Boolean(
-    profile?.full_name?.trim() && profile?.birthday
-  );
+  // Check if onboarding is complete (has full_name)
+  // birthday is collected during onboarding but must not gate existing users who skipped it
+  const isOnboardingComplete = Boolean(profile?.full_name?.trim());
 
   // ─── In-flight guard: serializes concurrent getSession calls ───────────────
   // Multiple systems (initializeAuth, onAuthStateChange, sessionMonitor) can

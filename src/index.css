@@ -537,3 +537,45 @@ html[data-chamber-open] .page-indicators,
 html[data-chamber-open] nav[class*="z-50"] {
   display: none !important;
 }
+
+/* ─── iOS Mobile Scroll Optimizations ────────────────────────────────────── */
+
+/* Contain overscroll on all scrollable containers so inner scrolling
+   doesn't bleed into the parent page — eliminates iOS "bounce past" glitch */
+.overflow-y-auto,
+.overflow-y-scroll,
+.overflow-auto,
+.overflow-scroll {
+  overscroll-behavior-y: contain;
+  /* Momentum scrolling on older iOS (no-op on iOS 13+ but harmless) */
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Prevent horizontal bounce/bleed on the root page level */
+html, body {
+  overscroll-behavior: none;
+}
+
+/* Minimum touch target: Apple recommends 44×44px for interactive elements.
+   Applied to small icon buttons and navigation items. */
+.touch-target-44 {
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Horizontally scrolling pill nav (archive category nav, etc.) */
+.scroll-x-snap {
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+}
+
+/* Prevent text selection on interactive cards/buttons (common iOS annoyance) */
+button, [role="button"] {
+  -webkit-user-select: none;
+  user-select: none;
+}

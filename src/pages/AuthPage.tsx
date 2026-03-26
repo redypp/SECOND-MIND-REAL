@@ -45,7 +45,7 @@ function Field({
             border: error ? '1px solid rgba(239,68,68,0.6)' : '1px solid rgba(255,255,255,0.11)',
             color: '#fff',
           }}
-          className={`w-full px-4 py-3.5 rounded-2xl text-sm placeholder:text-white/30 focus:outline-none transition-colors ${right ? 'pr-12' : ''}`}
+          className={`w-full px-4 py-3.5 rounded-2xl text-base placeholder:text-white/30 focus:outline-none transition-colors ${right ? 'pr-12' : ''}`}
           onFocus={e => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.3)')}
           onBlur={e => (e.currentTarget.style.borderColor = error ? 'rgba(239,68,68,0.6)' : 'rgba(255,255,255,0.11)')}
         />

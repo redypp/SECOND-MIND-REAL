@@ -113,7 +113,7 @@ export function UnifiedArchiveView({ items, onDeleteItem }: UnifiedArchiveViewPr
   }, []);
 
   return (
-    <div ref={scrollContainerRef} className="h-full overflow-y-auto overscroll-contain">
+    <div ref={scrollContainerRef} className="h-full overflow-y-auto overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
       {/* Sticky horizontal section navigation — shown only when there are 2+ categories */}
       {showNav && (
         <div
