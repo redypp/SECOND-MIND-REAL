@@ -54,7 +54,9 @@
       "Bash(ruby --version)",
       "Bash(git checkout:*)",
       "Bash(gh pr:*)",
-      "Bash(gh auth:*)"
+      "Bash(gh auth:*)",
+      "Bash(git pull:*)",
+      "Bash(grep -E \"\\\\.\\(tsx?|jsx?\\)$\")"
     ]
   },
   "hooks": {
