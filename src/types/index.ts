@@ -71,6 +71,8 @@ export interface Item {
   canvasScale?: number;
   // Version for optimistic locking
   version?: number;
+  // AI-generated classification tags — first element is the semantic category
+  aiTags?: string[];
   // Legacy fields for backwards compatibility
   type?: 'note' | 'link' | 'image' | 'video';
   content?: string;

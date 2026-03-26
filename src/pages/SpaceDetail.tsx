@@ -189,12 +189,42 @@ export default function SpaceDetail() {
     }
   }, [isOrganizing, items, space, spaces, id, saveGroupAssignments]);
 
+  // Fire background AI classification for images and links, updating aiTags after save.
+  const classifyMediaItem = useCallback(async (itemId: string, item: Parameters<typeof addItemAsync>[0], spaceName: string) => {
+    const mediaBlock = item.blocks?.find(b => b.type === 'media');
+    if (!mediaBlock || mediaBlock.type !== 'media') return;
+
+    const isImage = mediaBlock.mediaType === 'image' || mediaBlock.mediaType === 'video';
+    const isLink = mediaBlock.mediaType === 'link';
+    if (!isImage && !isLink) return;
+
+    try {
+      const body = isImage
+        ? { type: 'image' as const, imageUrl: mediaBlock.url, spaceName }
+        : { type: 'link' as const, linkUrl: mediaBlock.url, linkTitle: item.title, spaceName };
+
+      const { data, error } = await supabase.functions.invoke('classify-media', { body });
+
+      if (!error && data?.success && data?.category) {
+        const tags: string[] = [data.category, ...(data.tags ?? [])];
+        // Update local state immediately so the category reflects without reload
+        updateItem(itemId, { aiTags: tags });
+      }
+    } catch (err) {
+      console.warn('[SpaceDetail] classify-media failed (non-critical):', err);
+    }
+  }, [updateItem]);
+
   const handleAddItem = useCallback(async (item: Parameters<typeof addItemAsync>[0]) => {
     const newItemId = await addItemAsync(item);
     if (!newItemId) {
       showErrorPopup('Failed to add item. Please try again.');
       return;
     }
+
+    // Background media classification (non-blocking)
+    const spaceName = space?.name ?? '';
+    classifyMediaItem(newItemId, item, spaceName);
 
     // Auto-route the new item into the best existing group when in grouped mode
     if (organizedGroups && organizedGroups.length > 0 && id) {
@@ -232,7 +262,7 @@ export default function SpaceDetail() {
       };
       saveGroupAssignments(id, assignments);
     }
-  }, [addItemAsync, organizedGroups, id, sortedItems.length, saveGroupAssignments]);
+  }, [addItemAsync, organizedGroups, id, sortedItems.length, saveGroupAssignments, space, classifyMediaItem]);
 
   if (!space) {
     return (

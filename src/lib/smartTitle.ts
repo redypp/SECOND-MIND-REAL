@@ -98,10 +98,15 @@ export function getSmartTitle(item: Item): string {
 
 /**
  * Assign a smart display category label for grouping in archives.
- * Priority: structural type → subCategory → content keyword analysis.
+ * Priority: AI tags → structural type → subCategory → content keyword analysis.
  */
 export function getSmartCategory(item: Item): string {
   const mediaBlock = item.blocks?.find(b => b.type === 'media');
+
+  // AI-classified category takes priority for media items
+  if (item.aiTags && item.aiTags.length > 0 && mediaBlock?.type === 'media') {
+    return item.aiTags[0];
+  }
 
   // Structural: media type takes priority
   if (mediaBlock?.type === 'media') {

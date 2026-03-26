@@ -52,6 +52,7 @@ function dbItemToItem(dbItem: DbItem): Item {
     canvasY: dbItem.canvas_y ?? undefined,
     canvasZ: dbItem.canvas_z ?? undefined,
     canvasScale: dbItem.canvas_scale ?? undefined,
+    aiTags: dbItem.ai_tags || undefined,
     createdAt: new Date(dbItem.created_at),
     updatedAt: dbItem.updated_at ? new Date(dbItem.updated_at) : undefined,
     version: dbItem.version,
@@ -79,7 +80,7 @@ interface SpacesContextType {
   duplicateSpace: (id: string) => void;
   addItem: (item: Omit<Item, 'id' | 'createdAt'>) => string;
    addItemAsync: (item: Omit<Item, 'id' | 'createdAt'>) => Promise<string | null>;
-  updateItem: (id: string, updates: Partial<Pick<Item, 'title' | 'content' | 'subCategory' | 'spaceIds' | 'blocks' | 'color' | 'scheduledDate' | 'scheduledTime' | 'keywords'>>) => void;
+  updateItem: (id: string, updates: Partial<Pick<Item, 'title' | 'content' | 'subCategory' | 'spaceIds' | 'blocks' | 'color' | 'scheduledDate' | 'scheduledTime' | 'keywords' | 'aiTags'>>) => void;
   updateItemPosition: (id: string, position: { x: number; y: number; z?: number; scale?: number }) => void;
   deleteItem: (id: string) => void;
   getItemsBySpaceId: (spaceId: string) => Item[];
@@ -1593,7 +1594,7 @@ export function SpacesProvider({ children }: { children: ReactNode }) {
      }
    };
 
-  const updateItem = (id: string, updates: Partial<Pick<Item, 'title' | 'content' | 'subCategory' | 'spaceIds' | 'blocks' | 'color' | 'scheduledDate' | 'scheduledTime' | 'keywords'>>) => {
+  const updateItem = (id: string, updates: Partial<Pick<Item, 'title' | 'content' | 'subCategory' | 'spaceIds' | 'blocks' | 'color' | 'scheduledDate' | 'scheduledTime' | 'keywords' | 'aiTags'>>) => {
     const updatedAt = new Date();
     const nowIso = updatedAt.toISOString();
     setItems(prev => prev.map(item =>
@@ -1611,6 +1612,7 @@ export function SpacesProvider({ children }: { children: ReactNode }) {
       if (updates.scheduledDate !== undefined) dbUpdates.scheduled_date = updates.scheduledDate;
       if (updates.scheduledTime !== undefined) dbUpdates.scheduled_time = updates.scheduledTime;
       if (updates.keywords !== undefined) dbUpdates.keywords = updates.keywords;
+      if (updates.aiTags !== undefined) dbUpdates.ai_tags = updates.aiTags;
 
       // Update local cache immediately so restarts reflect the latest content
       try {
