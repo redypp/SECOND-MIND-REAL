@@ -18,7 +18,7 @@ const defaultSettings: AISettings = {
   notificationFrequency: 5,
   chamberEnabled: true,
   autoConnections: true,
-  isPremiumUnlocked: true, // AI features enabled via Lovable AI
+  isPremiumUnlocked: true,
   aiButtonHidden: false,
   voiceAutoSend: false,
 };
