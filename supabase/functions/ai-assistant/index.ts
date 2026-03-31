@@ -450,8 +450,59 @@ serve(async (req) => {
     let toolChoice: any = undefined;
     let noStream = false;
 
-    const contextSummary = buildFullContextSummary(context);
-    const searchableContent = buildSearchableContent(context);
+    // ── Per-task model routing ─────────────────────────────────────────────
+    // Haiku: fast structured tasks that don't need deep reasoning
+    // Sonnet: recall, search, planning, multi-step reasoning
+    const HAIKU_TYPES = new Set<RequestType>([
+      "life_subheadings", "smart_rewrite", "process_input", "get_suggestions",
+      "ask_action_suggestions", "journal_prompts", "organize_note", "intelligent_capture",
+    ]);
+    const selectedModel = HAIKU_TYPES.has(type) ? "claude-haiku-4-5-20251001" : "claude-sonnet-4-6";
+
+    // ── Per-task max_tokens ────────────────────────────────────────────────
+    const MAX_TOKENS: Partial<Record<RequestType, number>> = {
+      life_subheadings: 200,
+      smart_rewrite: 500,
+      process_input: 600,
+      get_suggestions: 400,
+      ask_action_suggestions: 450,
+      journal_prompts: 600,
+      organize_note: 900,
+      intelligent_capture: 900,
+      ask_question: 2048,
+      semantic_search: 1500,
+      find_connections: 1500,
+      daily_digest: 1500,
+      decision_helper: 1500,
+      generate_insight: 1000,
+      organize_dump: 2000,
+      organize_all: 2000,
+      organize_archive: 2000,
+      auto_organize: 2000,
+    };
+    const selectedMaxTokens = MAX_TOKENS[type] ?? 2048;
+
+    // ── Per-task temperature ───────────────────────────────────────────────
+    // 0 = deterministic/accurate for structured extraction
+    // 0.3-0.6 = slight creativity for conversational/generative tasks
+    const TEMPERATURE: Partial<Record<RequestType, number>> = {
+      ask_question: 0.5,
+      journal_prompts: 0.6,
+      decision_helper: 0.5,
+      daily_digest: 0.3,
+      generate_insight: 0.3,
+    };
+    const selectedTemperature = TEMPERATURE[type] ?? 0;
+
+    // ── Build context strings lazily — only for types that need them ────────
+    // Avoid computing a large string index for tasks that ignore it
+    const NEEDS_FULL_CONTEXT = new Set<RequestType>([
+      "ask_question", "find_connections", "semantic_search", "organize_all",
+      "organize_archive", "daily_digest", "decision_helper", "generate_insight",
+      "get_suggestions", "journal_prompts", "organize_dump",
+    ]);
+    const contextSummary = NEEDS_FULL_CONTEXT.has(type) ? buildFullContextSummary(context) : "";
+    const searchableContent = NEEDS_FULL_CONTEXT.has(type) ? buildSearchableContent(context) : "";
 
     // ============================================================
     // SECOND MIND SYSTEM PROMPT FOUNDATION
@@ -526,8 +577,16 @@ ${searchableContent}
 SPACES/CATEGORIES:
 ${context.spaces.map(s => `- "${s.name}" (${s.itemCount} items)`).join('\n')}`;
 
+    // Lightweight version — just identity + time + profile + spaces, no full knowledge base.
+    // Use this for tasks that operate on a single note or only need space routing.
+    const secondMindCoreLite = `You are Second Mind — a personal thinking and memory assistant.
+Current time: ${context.currentTime}${context.profile?.name ? `\nUser: ${context.profile.name}` : ''}
+
+SPACES/CATEGORIES:
+${context.spaces.map(s => `- "${s.name}" (${s.itemCount} items)`).join('\n')}`;
+
     if (type === "process_input") {
-      systemPrompt = `${secondMindCore}
+      systemPrompt = `${secondMindCoreLite}
 
 When processing user input, you must:
 1. Classify into type: idea, task, note, person, link, decision, or question
@@ -1022,29 +1081,20 @@ Do NOT suggest a new space unless none of the existing ones remotely match.`;
       const noteContent = input.split('|||')[1]?.trim() || input;
 
       if (rewriteMode === "bullets") {
-        systemPrompt = `${secondMindCore}
-
-Transform the user's brain dump into a clean, scannable bullet list.
-Rules:
+        systemPrompt = `Transform the note into a clean, scannable bullet list.
 - Each bullet = one clear point or idea
 - Keep the user's voice and intent
 - Remove filler words and redundancy
 - 3-8 bullets max
-- Start each bullet with a verb or noun, no dashes in output (tool handles formatting)`;
+- Prefix each bullet with "• ", no extra dashes`;
       } else if (rewriteMode === "actions") {
-        systemPrompt = `${secondMindCore}
-
-Transform the user's note into a clear list of actionable next steps.
-Rules:
+        systemPrompt = `Transform the note into a clear list of actionable next steps.
 - Each action starts with a strong verb (Do, Write, Call, Research, Buy, etc.)
-- Extract the implied tasks, not just what was written
+- Extract implied tasks, not just what was written
 - 3-6 action steps max
-- Ordered by priority/urgency if possible`;
+- Ordered by priority/urgency`;
       } else {
-        systemPrompt = `${secondMindCore}
-
-Compress the user's note into a tight 1-3 sentence summary.
-Rules:
+        systemPrompt = `Compress the note into a tight 1-3 sentence summary.
 - Capture the core idea in plain language
 - Cut everything redundant
 - Keep the user's original intent and tone
@@ -1377,9 +1427,19 @@ STRICT RULES:
       ];
       toolChoice = { type: "function", function: { name: "organize_dump" } };
     } else if (type === "journal_prompts") {
-      systemPrompt = `${secondMindCore}
+      // Build a focused context: recent notes/ideas + journal entries only
+      const recentItems = [...context.items]
+        .sort((a: any, b: any) => (b.createdAt || '').localeCompare(a.createdAt || ''))
+        .slice(0, 15)
+        .map(i => `- ${i.title || i.content?.slice(0, 60) || 'untitled'} [${i.subCategory}]`)
+        .join('\n');
 
-You are generating personalized journal prompts for the user based on everything you know about them — their spaces, notes, ideas, tasks, decisions, and patterns.
+      systemPrompt = `${secondMindCoreLite}
+
+RECENT NOTES & IDEAS:
+${recentItems || 'None yet.'}
+
+You are generating personalized journal prompts for the user based on their spaces, notes, and ideas.
 
 RULES:
 - Generate exactly 3 prompts
@@ -1537,7 +1597,7 @@ Write one subheading per section using only the facts above.`;
       // ============================================================
       // INTELLIGENT CAPTURE — "dump anything, it organizes itself"
       // ============================================================
-      systemPrompt = `${secondMindCore}
+      systemPrompt = `${secondMindCoreLite}
 
 The user has dumped raw content — text, a thought, a photo description, a voice note transcript, or a mix. Your job is to transform this messy input into a clean, structured knowledge entry.
 
@@ -1833,8 +1893,9 @@ Never fabricate item IDs or titles that don't exist in context.`;
 
     // Build Anthropic request body
     const anthropicBody: any = {
-      model: "claude-sonnet-4-6",
-      max_tokens: 4096,
+      model: selectedModel,
+      max_tokens: selectedMaxTokens,
+      temperature: selectedTemperature,
       system: systemPrompt,
       messages: [
         ...historyMessages,
