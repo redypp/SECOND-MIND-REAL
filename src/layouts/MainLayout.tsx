@@ -91,7 +91,8 @@ export default function MainLayout() {
   // Handle navigating into an archive space
   const handleNavigateToSpace = useCallback((spaceId: string) => {
     setArchiveSubPage(spaceId);
-    window.history.replaceState(null, '', `/space/${spaceId}`);
+    // Do NOT call window.history.replaceState here — React Router v7 intercepts
+    // replaceState and treats /space/:id as an overlay route, hiding MainLayout.
   }, []);
 
   // Handle back from space detail to archive list
@@ -104,7 +105,6 @@ export default function MainLayout() {
       setArchiveSubPage(null);
       setIsAnimatingOutArchive(false);
       setArchiveSwipeDx(0);
-      window.history.replaceState(null, '', '/archive');
     }, 350);
   }, []);
 
