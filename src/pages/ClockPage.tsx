@@ -334,7 +334,7 @@ export default function ClockPage({ embedded = false, onBack }: ClockPageProps) 
     setQuickAddError('');
   }, []);
 
-  const rootClassName = `${embedded ? 'relative w-full h-full' : 'fixed inset-0'} flex flex-col bg-background overflow-hidden page-transition ${!embedded ? 'safe-area-top-ios' : ''}`;
+  const rootClassName = `${embedded ? 'relative w-full h-full' : 'fixed inset-0'} flex flex-col bg-background overflow-hidden ${!embedded ? 'safe-area-top-ios' : ''}`;
 
   return (
     <div
