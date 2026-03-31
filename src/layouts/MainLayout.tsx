@@ -414,8 +414,11 @@ export default function MainLayout() {
           <div
             className="absolute inset-0"
             style={{
+              // When fully visible (swipeDx===0), omit the transform entirely so that
+              // position:fixed children (modals, overlays) are not trapped in a new
+              // stacking context and can correctly cover the viewport.
               transform: lifeSubPage
-                ? `translateX(${swipeDx}px)`
+                ? swipeDx > 0 ? `translateX(${swipeDx}px)` : undefined
                 : 'translateX(100%)',
               transition: (isSwiping.current && !isAnimatingOut) ? 'none' : 'transform 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
               pointerEvents: (lifeSubPage && !isAnimatingOut) ? 'auto' : 'none',
@@ -460,8 +463,11 @@ export default function MainLayout() {
           <div
             className="absolute inset-0"
             style={{
+              // When fully visible (archiveSwipeDx===0), omit the transform so that
+              // position:fixed children (OrganizeModal, etc.) are not trapped in a
+              // new stacking context and can correctly cover the viewport.
               transform: archiveSubPage
-                ? `translateX(${archiveSwipeDx}px)`
+                ? archiveSwipeDx > 0 ? `translateX(${archiveSwipeDx}px)` : undefined
                 : 'translateX(100%)',
               transition: (isArchiveSwiping.current && !isAnimatingOutArchive) ? 'none' : 'transform 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
               pointerEvents: (archiveSubPage && !isAnimatingOutArchive) ? 'auto' : 'none',

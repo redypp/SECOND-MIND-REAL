@@ -295,7 +295,7 @@ export function OnboardingTutorial() {
                         className="flex flex-col items-center gap-2 p-3 rounded-xl bg-secondary/50"
                       >
                         <span className="text-xl">{section.icon}</span>
-                        <span className="text-[10px] text-muted-foreground leading-tight text-center">{section.label}</span>
+                        <span className="text-[12px] text-muted-foreground leading-tight text-center">{section.label}</span>
                       </motion.div>
                     ))}
                   </div>
@@ -450,7 +450,7 @@ export function OnboardingTutorial() {
                 </motion.div>
                 <div>
                   <p className="text-sm font-medium text-foreground">Nice work!</p>
-                  <p className="text-xs text-muted-foreground">Moving to the next section…</p>
+                  <p className="text-sm text-muted-foreground">Moving to the next section…</p>
                 </div>
               </div>
             </motion.div>
@@ -483,7 +483,7 @@ export function OnboardingTutorial() {
                       }`}
                     />
                   ))}
-                  <span className="text-[10px] text-muted-foreground shrink-0 ml-1">
+                  <span className="text-[13px] text-muted-foreground shrink-0 ml-1">
                     {config.stepNumber}/{config.totalSteps}
                   </span>
                   <button
@@ -503,10 +503,10 @@ export function OnboardingTutorial() {
                     exit={{ opacity: 0, y: -4 }}
                     transition={{ duration: 0.18 }}
                   >
-                    <h3 className="text-sm font-semibold text-foreground leading-tight">
+                    <h3 className="text-[15px] font-semibold text-foreground leading-tight">
                       {config.title}
                     </h3>
-                    <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
+                    <p className="text-sm text-muted-foreground mt-0.5 leading-relaxed">
                       {config.description}
                     </p>
 
@@ -522,7 +522,7 @@ export function OnboardingTutorial() {
                       </button>
                     ) : (
                       /* Action step — instruction pill */
-                      <div className="mt-2.5 flex items-center gap-1.5 text-xs text-foreground/60 bg-foreground/5 rounded-lg px-3 py-2">
+                      <div className="mt-2.5 flex items-center gap-1.5 text-sm text-foreground/60 bg-foreground/5 rounded-lg px-3 py-2">
                         <ArrowRight className="w-3 h-3 shrink-0" />
                         <span>{config.instruction}</span>
                       </div>

@@ -162,7 +162,10 @@ export function AddSpaceDialog({ variant = 'card', trigger, navigateAfterCreate 
     handleOpenChange(false);
     localStorage.setItem('secondmind_tutorial_space_id', newId);
     if (onAfterCreate) {
-      onAfterCreate(newId);
+      // Delay slightly so the dialog close animation (200ms) fully completes
+      // before navigating into the new space — prevents the overlay from
+      // blocking interaction with the just-opened SpaceDetail.
+      setTimeout(() => onAfterCreate(newId), 220);
     } else if (navigateAfterCreate) {
       navigate(`/space/${newId}`);
     }
