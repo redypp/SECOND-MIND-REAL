@@ -4,8 +4,9 @@
     {
       "name": "splash",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--", "--port", "9999"],
-      "port": 9999
+      "runtimeArgs": ["run", "dev"],
+      "port": 8080,
+      "autoPort": false
     }
   ]
 }

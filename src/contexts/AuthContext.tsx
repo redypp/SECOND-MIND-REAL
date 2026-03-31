@@ -332,19 +332,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Use the already-fetched profile if user ID matches, otherwise re-fetch quickly
         if (cachedUserId === existingSession.user.id && profileData) {
           setProfile(profileData);
-        } else if (cachedUserId !== existingSession.user.id) {
-          // User ID mismatch — fetch correct profile (with 3s timeout)
+        } else {
+          // Either user ID mismatch OR cachedUserId was null (JWT expired in localStorage)
+          // OR the parallel profile fetch timed out — fetch/retry the profile now.
           try {
-            const correctProfile = await Promise.race([
+            let resolvedProfile = await Promise.race([
               fetchProfileOnce(existingSession.user.id),
-              new Promise<null>((resolve) => setTimeout(() => resolve(null), 3000)),
+              new Promise<null>((resolve) => setTimeout(() => resolve(null), 5000)),
             ]);
-            setProfile(correctProfile);
+            // Retry once if null — handles LockManager contention or slow network
+            if (!resolvedProfile) {
+              await new Promise(r => setTimeout(r, 1500));
+              resolvedProfile = await fetchProfile(existingSession.user.id);
+            }
+            setProfile(resolvedProfile);
           } catch {
             setProfile(null);
           }
-        } else {
-          setProfile(profileData);
         }
         // Mark profile fetch as complete so onboarding check can be evaluated.
         // This must happen before authReady=true so ProtectedRoute never sees
@@ -444,7 +448,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           try {
             // Use fetchProfileOnce to share any in-flight fetch already started by
             // initializeAuth, preventing concurrent requests and lock contention.
-            const profileData = await fetchProfileOnce(currentSession.user.id);
+            let profileData = await fetchProfileOnce(currentSession.user.id);
+            // Retry once if null — handles LockManager contention on first attempt
+            if (!profileData) {
+              await new Promise(r => setTimeout(r, 1500));
+              profileData = await fetchProfile(currentSession.user.id);
+            }
             setProfile(profileData);
           } catch (err) {
             console.error('[Auth] Unexpected error fetching profile in auth state change:', err);
@@ -606,8 +615,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const { error } = await supabase
       .from('profiles')
-      .update(updates)
-      .eq('user_id', user.id);
+      .upsert({ user_id: user.id, ...updates }, { onConflict: 'user_id' });
 
     if (!error) {
       // Refresh profile data

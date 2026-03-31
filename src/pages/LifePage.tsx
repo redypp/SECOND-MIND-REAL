@@ -96,11 +96,11 @@ export default function LifePage({ embedded = false, onNavigateToSection }: Life
       </div>
 
       {/* Section cards — evenly fill remaining height */}
-      <main className="flex-1 min-h-0 flex flex-col px-0 gap-1" style={{ paddingBottom: 'calc(var(--app-safe-bottom, 0px) + 12px)' }}>
+      <main className="flex-1 min-h-0 flex flex-col px-0" style={{ paddingBottom: 'calc(var(--app-safe-bottom, 0px) + 12px)' }}>
         {sections.map((section, i) => (
           <motion.button
             key={section.id}
-            className="flex-1 w-full text-left relative"
+            className="flex-1 w-full relative"
             style={{ minHeight: 0 }}
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
@@ -113,33 +113,16 @@ export default function LifePage({ embedded = false, onNavigateToSection }: Life
               className={`w-full h-full relative overflow-hidden life-section-card${section.isAsk ? ' life-section-ask' : ''}`}
               data-depth={section.isAsk ? undefined : getDepth(i)}
             >
-              {section.id === 'settings' ? (
-                /* Settings — keep current compact style */
-                <div className="w-full h-full flex items-center px-5 gap-4">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-2xl font-black tracking-tight leading-none life-section-label">
-                      {section.label}
-                    </p>
-                    <p className="text-sm mt-1 leading-tight font-semibold life-section-meta">
-                      {section.meta}
-                    </p>
-                  </div>
-                  <ChevronRight className="w-4 h-4 life-section-chevron flex-shrink-0" />
-                </div>
-              ) : (
-                /* Editorial bold layout for all other sections */
-                <>
-                  <div className="absolute inset-0 flex flex-col justify-end px-5 pb-2.5">
-                    <p className="text-[clamp(2.4rem,9vw,3.5rem)] font-black tracking-tighter leading-none uppercase life-section-label">
-                      {section.label}
-                    </p>
-                    <p className="text-[10px] mt-1 uppercase tracking-[0.12em] font-semibold life-section-meta">
-                      {section.meta}
-                    </p>
-                  </div>
-                  <ChevronRight className="absolute top-1/2 -translate-y-1/2 right-4 w-3.5 h-3.5 life-section-chevron" />
-                </>
-              )}
+              {/* Unified centered layout for all sections */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center">
+                <p className="text-[clamp(1.8rem,7vw,2.8rem)] font-black tracking-tighter leading-none uppercase life-section-label">
+                  {section.label}
+                </p>
+                <p className="text-[10px] mt-1.5 uppercase tracking-[0.14em] font-medium life-section-meta">
+                  {section.meta}
+                </p>
+              </div>
+              <ChevronRight className="absolute top-1/2 -translate-y-1/2 right-4 w-3.5 h-3.5 life-section-chevron" />
             </div>
           </motion.button>
         ))}
