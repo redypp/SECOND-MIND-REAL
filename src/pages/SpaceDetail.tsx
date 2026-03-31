@@ -15,8 +15,15 @@ import { Item, GroupAssignments } from '@/types';
 import { supabase } from '@/integrations/supabase/app-client';
 import { getSmartCategory } from '@/lib/smartTitle';
 
-export default function SpaceDetail() {
-  const { id } = useParams<{ id: string }>();
+interface SpaceDetailProps {
+  embedded?: boolean;
+  spaceId?: string;
+  onBack?: () => void;
+}
+
+export default function SpaceDetail({ embedded = false, spaceId: propSpaceId, onBack }: SpaceDetailProps = {}) {
+  const { id: paramId } = useParams<{ id: string }>();
+  const id = propSpaceId ?? paramId;
   const navigate = useNavigate();
 
   const { reportTutorialAction } = useTutorial();
@@ -62,12 +69,13 @@ export default function SpaceDetail() {
   }, []);
 
   const animateOut = useCallback(() => {
+    if (embedded) { onBack?.(); return; }
     if (slidingOut) return;
     setSlidingOut(true);
     setTimeout(() => {
       navigate('/archive', { replace: true });
     }, 280);
-  }, [navigate, slidingOut]);
+  }, [embedded, onBack, navigate, slidingOut]);
 
   const handleSwipeTouchEnd = useCallback((e: React.TouchEvent) => {
     if (!swipeTouchRef.current) return;
@@ -276,7 +284,7 @@ export default function SpaceDetail() {
             This archive may have been deleted.
           </p>
           <button
-            onClick={() => navigate('/archive', { replace: true })}
+            onClick={() => embedded ? onBack?.() : navigate('/archive', { replace: true })}
             className="inline-flex items-center gap-1.5 text-[14px] text-primary font-medium hover:underline"
           >
             Back to archives
@@ -290,18 +298,21 @@ export default function SpaceDetail() {
 
   return (
     <div
-      className="fixed inset-0 bg-background safe-area-top-ios flex flex-col overflow-hidden"
-      style={{
+      className={embedded
+        ? "relative w-full h-full bg-background safe-area-top-ios flex flex-col overflow-hidden"
+        : "fixed inset-0 bg-background safe-area-top-ios flex flex-col overflow-hidden"
+      }
+      style={!embedded ? {
         transform: slidingOut
           ? `translateX(100%)`
           : swipeProgress > 0
             ? `translateX(${swipeProgress * SWIPE_THRESHOLD}px)`
             : undefined,
         transition: (swipeProgress === 0 || slidingOut) ? 'transform 0.28s cubic-bezier(0.4, 0, 0.2, 1)' : 'none',
-      }}
-      onTouchStart={handleSwipeTouchStart}
-      onTouchMove={handleSwipeTouchMove}
-      onTouchEnd={handleSwipeTouchEnd}
+      } : undefined}
+      onTouchStart={!embedded ? handleSwipeTouchStart : undefined}
+      onTouchMove={!embedded ? handleSwipeTouchMove : undefined}
+      onTouchEnd={!embedded ? handleSwipeTouchEnd : undefined}
     >
       {/* Swipe-back indicator */}
       {swipeProgress > 0 && (
@@ -621,7 +632,7 @@ export default function SpaceDetail() {
                   <motion.button
                     whileTap={{ scale: 0.97 }}
                     className="text-left py-1.5"
-                    onClick={() => { if (id) { deleteSpace(id); navigate('/archive', { replace: true }); } }}
+                    onClick={() => { if (id) { deleteSpace(id); embedded ? onBack?.() : navigate('/archive', { replace: true }); } }}
                   >
                     <p className="text-[clamp(2rem,8vw,2.8rem)] font-black uppercase tracking-tighter leading-none text-white/60">Delete</p>
                   </motion.button>

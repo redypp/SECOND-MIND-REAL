@@ -9,6 +9,7 @@ import { MarqueeHeader } from '@/components/MarqueeHeader';
 
 interface CollectionsPageProps {
   embedded?: boolean;
+  onNavigateToSpace?: (spaceId: string) => void;
 }
 
 // Each archive card is exactly 1/7 of usable viewport height — matching Life cards.
@@ -18,7 +19,7 @@ interface CollectionsPageProps {
 // and scroll gracefully beyond that.
 const CARD_HEIGHT = 'calc((100dvh - 5.5rem - var(--app-safe-bottom, 0px)) / 7)';
 
-export default function CollectionsPage({ embedded = false }: CollectionsPageProps) {
+export default function CollectionsPage({ embedded = false, onNavigateToSpace }: CollectionsPageProps) {
   const navigate = useNavigate();
   const { spaces, deleteSpace } = useSpaces();
   const [selectedCollectionId, setSelectedCollectionId] = useState<string | null>(null);
@@ -51,7 +52,7 @@ export default function CollectionsPage({ embedded = false }: CollectionsPagePro
 
       {/* Content */}
       <main
-        className="flex-1 min-h-0 flex flex-col px-0 pb-[calc(var(--app-safe-bottom,0px)+12px)] gap-1 overflow-y-auto"
+        className="flex-1 min-h-0 flex flex-col px-0 pb-[calc(var(--app-safe-bottom,0px)+12px)] overflow-y-auto"
         style={{ overscrollBehavior: 'none' }}
       >
         {!hasSpaces ? (
@@ -109,6 +110,8 @@ export default function CollectionsPage({ embedded = false }: CollectionsPagePro
                   onClick={() => {
                     if (selectedCollectionId === space.id) {
                       setSelectedCollectionId(null);
+                    } else if (onNavigateToSpace) {
+                      onNavigateToSpace(space.id);
                     } else {
                       navigate(`/space/${space.id}`);
                     }
@@ -142,10 +145,10 @@ export default function CollectionsPage({ embedded = false }: CollectionsPagePro
                   </div>
 
                   {/* Title */}
-                  <div className="absolute inset-0 flex items-center px-5">
+                  <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-6">
                     <span
-                      className="text-white uppercase text-3xl font-black tracking-tight leading-none"
-                      style={{ textShadow: '0 2px 16px rgba(0,0,0,0.7), 0 0 4px rgba(0,0,0,0.4)' }}
+                      className="text-white uppercase text-[clamp(1.8rem,7vw,2.8rem)] font-black tracking-tighter leading-none"
+                      style={{ textShadow: '0 2px 16px rgba(0,0,0,0.5), 0 0 4px rgba(0,0,0,0.3)' }}
                     >
                       {space.name}
                     </span>

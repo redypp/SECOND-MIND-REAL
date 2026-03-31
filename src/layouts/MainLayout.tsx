@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import LifePage from '@/pages/LifePage';
 import ArchivePage from '@/pages/ArchivePage';
+import SpaceDetail from '@/pages/SpaceDetail';
 import ClockPage from '@/pages/ClockPage';
 import TodoPage from '@/pages/TodoPage';
 import HabitsPage from '@/pages/HabitsPage';
@@ -36,7 +37,16 @@ export default function MainLayout() {
   const [lifeSubPage, setLifeSubPage] = useState<string | null>(null);
   const [isAnimatingOut, setIsAnimatingOut] = useState(false);
 
-  // Edge-swipe state
+  // Active archive sub-page: null = show archive list, else spaceId
+  const [archiveSubPage, setArchiveSubPage] = useState<string | null>(null);
+  const [isAnimatingOutArchive, setIsAnimatingOutArchive] = useState(false);
+  const archiveSwipeTouchId = useRef<number | null>(null);
+  const archiveSwipeStartX = useRef(0);
+  const archiveSwipeStartY = useRef(0);
+  const [archiveSwipeDx, setArchiveSwipeDx] = useState(0);
+  const isArchiveSwiping = useRef(false);
+
+  // Edge-swipe state (life sub-pages)
   const swipeTouchId = useRef<number | null>(null);
   const swipeStartX = useRef(0);
   const swipeStartY = useRef(0);
@@ -77,6 +87,68 @@ export default function MainLayout() {
       window.history.replaceState(null, '', '/');
     }, 350);
   }, []);
+
+  // Handle navigating into an archive space
+  const handleNavigateToSpace = useCallback((spaceId: string) => {
+    setArchiveSubPage(spaceId);
+    window.history.replaceState(null, '', `/space/${spaceId}`);
+  }, []);
+
+  // Handle back from space detail to archive list
+  const handleBackToArchive = useCallback(() => {
+    isArchiveSwiping.current = false;
+    archiveSwipeTouchId.current = null;
+    setIsAnimatingOutArchive(true);
+    setArchiveSwipeDx(window.innerWidth);
+    setTimeout(() => {
+      setArchiveSubPage(null);
+      setIsAnimatingOutArchive(false);
+      setArchiveSwipeDx(0);
+      window.history.replaceState(null, '', '/archive');
+    }, 350);
+  }, []);
+
+  // Edge-swipe handlers for ARCHIVE sub-pages
+  const onArchiveSubPageTouchStart = useCallback((e: React.TouchEvent) => {
+    if (!archiveSubPage) return;
+    const touch = e.changedTouches[0];
+    if (touch.clientX > EDGE_ZONE) return;
+    archiveSwipeTouchId.current = touch.identifier;
+    archiveSwipeStartX.current = touch.clientX;
+    archiveSwipeStartY.current = touch.clientY;
+    isArchiveSwiping.current = false;
+  }, [archiveSubPage]);
+
+  const onArchiveSubPageTouchMove = useCallback((e: React.TouchEvent) => {
+    if (archiveSwipeTouchId.current === null) return;
+    const touch = Array.from(e.changedTouches).find(t => t.identifier === archiveSwipeTouchId.current);
+    if (!touch) return;
+    const dx = touch.clientX - archiveSwipeStartX.current;
+    const dy = Math.abs(touch.clientY - archiveSwipeStartY.current);
+    if (!isArchiveSwiping.current && dy > 10 && dy > dx) {
+      archiveSwipeTouchId.current = null;
+      setArchiveSwipeDx(0);
+      return;
+    }
+    if (dx > 8) {
+      isArchiveSwiping.current = true;
+      setArchiveSwipeDx(Math.min(dx, window.innerWidth));
+    }
+  }, []);
+
+  const onArchiveSubPageTouchEnd = useCallback(() => {
+    if (!isArchiveSwiping.current) {
+      archiveSwipeTouchId.current = null;
+      return;
+    }
+    if (archiveSwipeDx >= SWIPE_THRESHOLD) {
+      handleBackToArchive();
+    } else {
+      setArchiveSwipeDx(0);
+      isArchiveSwiping.current = false;
+      archiveSwipeTouchId.current = null;
+    }
+  }, [archiveSwipeDx, handleBackToArchive]);
 
   // Edge-swipe handlers for LIFE sub-pages
   const onSubPageTouchStart = useCallback((e: React.TouchEvent) => {
@@ -305,7 +377,7 @@ export default function MainLayout() {
       {/* Swipeable pages container — locked when a sub-page is open to prevent Archive bleed */}
       <div
         ref={containerRef}
-        className={`flex h-full overflow-y-hidden snap-x snap-mandatory scrollbar-hide bg-background ${lifeSubPage ? 'overflow-x-hidden' : 'overflow-x-scroll'}`}
+        className={`flex h-full overflow-y-hidden snap-x snap-mandatory scrollbar-hide bg-background ${(lifeSubPage || archiveSubPage) ? 'overflow-x-hidden' : 'overflow-x-scroll'}`}
         style={{ WebkitOverflowScrolling: 'touch', overscrollBehaviorX: 'none' }}
       >
         {/* Page 1: LIFE */}
@@ -354,15 +426,53 @@ export default function MainLayout() {
         </div>
 
         {/* Page 2: ARCHIVE */}
-        <div className="min-w-full h-full snap-start snap-always flex-shrink-0 overflow-hidden w-full"
+        <div className="min-w-full h-full snap-start snap-always flex-shrink-0 overflow-hidden w-full relative bg-background"
           style={{ overscrollBehavior: 'none' }}
         >
-          <ArchivePage embedded />
+          {/* Archive list — parallax shifts left during sub-page back-swipe */}
+          <div
+            className="absolute inset-0"
+            style={{
+              transform: (() => {
+                if (!archiveSubPage) return 'translateX(0)';
+                if (isArchiveSwiping.current && archiveSwipeDx > 0) {
+                  const offset = -window.innerWidth * 0.3 + archiveSwipeDx * 0.3;
+                  return `translateX(${offset}px)`;
+                }
+                if (isAnimatingOutArchive) return 'translateX(0)';
+                return 'translateX(-30%)';
+              })(),
+              transition: isArchiveSwiping.current ? 'none' : 'transform 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
+              pointerEvents: (archiveSubPage && !isAnimatingOutArchive) ? 'none' : 'auto',
+            }}
+          >
+            <ArchivePage embedded onNavigateToSpace={handleNavigateToSpace} />
+          </div>
+
+          {/* Space detail — slides in from right */}
+          <div
+            className="absolute inset-0"
+            style={{
+              transform: archiveSubPage
+                ? `translateX(${archiveSwipeDx}px)`
+                : 'translateX(100%)',
+              transition: (isArchiveSwiping.current && !isAnimatingOutArchive) ? 'none' : 'transform 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
+              pointerEvents: (archiveSubPage && !isAnimatingOutArchive) ? 'auto' : 'none',
+            }}
+            onTouchStart={onArchiveSubPageTouchStart}
+            onTouchMove={onArchiveSubPageTouchMove}
+            onTouchEnd={onArchiveSubPageTouchEnd}
+            onTouchCancel={onArchiveSubPageTouchEnd}
+          >
+            {archiveSubPage && (
+              <SpaceDetail embedded spaceId={archiveSubPage} onBack={handleBackToArchive} />
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Page indicators — hidden when inside a LIFE sub-page */}
-      {!lifeSubPage && (
+      {/* Page indicators — hidden when inside a sub-page */}
+      {!lifeSubPage && !archiveSubPage && (
         <PageIndicators
           currentIndex={currentIndex}
           totalPages={2}
