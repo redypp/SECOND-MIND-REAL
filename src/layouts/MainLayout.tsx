@@ -219,6 +219,13 @@ export default function MainLayout() {
       setLifeSubPage(null);
     }
 
+    // Navigating back to archive root — clear any stale archive sub-page state
+    if (path === '/archive' || path === '/collections') {
+      setArchiveSubPage(null);
+      setIsAnimatingOutArchive(false);
+      setArchiveSwipeDx(0);
+    }
+
     const newIndex = getTopIndex(path);
     if (newIndex !== currentIndex && !isScrollingRef.current) {
       setCurrentIndex(newIndex);

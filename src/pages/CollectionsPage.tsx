@@ -89,7 +89,11 @@ export default function CollectionsPage({ embedded = false, onNavigateToSpace }:
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
             >
-              <AddSpaceDialog variant="button" navigateAfterCreate />
+              <AddSpaceDialog
+                variant="button"
+                navigateAfterCreate={!onNavigateToSpace}
+                onAfterCreate={onNavigateToSpace}
+              />
             </motion.div>
           </motion.div>
         ) : (
@@ -188,7 +192,11 @@ export default function CollectionsPage({ embedded = false, onNavigateToSpace }:
               animate={{ opacity: 1 }}
               transition={{ delay: 0.05, duration: 0.25 }}
             >
-              <AddSpaceDialog variant="button" navigateAfterCreate />
+              <AddSpaceDialog
+                variant="button"
+                navigateAfterCreate={!onNavigateToSpace}
+                onAfterCreate={onNavigateToSpace}
+              />
             </motion.div>
           </>
         )}

@@ -29,11 +29,12 @@ interface AddSpaceDialogProps {
   variant?: 'card' | 'button';
   trigger?: React.ReactNode;
   navigateAfterCreate?: boolean;
+  onAfterCreate?: (id: string) => void;
 }
 
 type Step = 'pick' | 'confirm';
 
-export function AddSpaceDialog({ variant = 'card', trigger, navigateAfterCreate = false }: AddSpaceDialogProps) {
+export function AddSpaceDialog({ variant = 'card', trigger, navigateAfterCreate = false, onAfterCreate }: AddSpaceDialogProps) {
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<Step>('pick');
   const [query, setQuery] = useState('');
@@ -159,8 +160,10 @@ export function AddSpaceDialog({ variant = 'card', trigger, navigateAfterCreate 
     });
     reportTutorialAction('add-collection');
     handleOpenChange(false);
-    if (navigateAfterCreate) {
-      localStorage.setItem('secondmind_tutorial_space_id', newId);
+    localStorage.setItem('secondmind_tutorial_space_id', newId);
+    if (onAfterCreate) {
+      onAfterCreate(newId);
+    } else if (navigateAfterCreate) {
       navigate(`/space/${newId}`);
     }
   };
