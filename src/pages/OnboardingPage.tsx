@@ -121,7 +121,7 @@ export default function OnboardingPage() {
             <h1 className="text-2xl font-bold text-foreground mb-2">
               What's your name?
             </h1>
-            <p className="text-muted-foreground text-sm mb-8">
+            <p className="text-muted-foreground text-[15px] mb-8">
               We'll personalize your Second Mind experience
             </p>
 
@@ -137,7 +137,7 @@ export default function OnboardingPage() {
                   autoFocus
                 />
                 {errors.fullName && (
-                  <p className="text-destructive text-xs mt-2">{errors.fullName}</p>
+                  <p className="text-destructive text-sm mt-2">{errors.fullName}</p>
                 )}
               </div>
 
@@ -168,7 +168,7 @@ export default function OnboardingPage() {
             <h1 className="text-2xl font-bold text-foreground mb-2">
               When's your birthday, {getFirstName()}?
             </h1>
-            <p className="text-muted-foreground text-sm mb-8">
+            <p className="text-muted-foreground text-[15px] mb-8">
               We'll remember it and celebrate with you
             </p>
 
@@ -182,7 +182,7 @@ export default function OnboardingPage() {
                   max={new Date().toISOString().split('T')[0]}
                 />
                 {errors.birthday && (
-                  <p className="text-destructive text-xs mt-2">{errors.birthday}</p>
+                  <p className="text-destructive text-sm mt-2">{errors.birthday}</p>
                 )}
               </div>
 
@@ -222,7 +222,7 @@ export default function OnboardingPage() {
             <h1 className="text-2xl font-bold text-foreground mb-2">
               Where are you based?
             </h1>
-            <p className="text-muted-foreground text-sm mb-8">
+            <p className="text-muted-foreground text-[15px] mb-8">
               Second Mind uses your location to surface relevant events, news, and opportunities near you
             </p>
 
@@ -238,7 +238,7 @@ export default function OnboardingPage() {
                   autoFocus
                 />
                 {errors.location && (
-                  <p className="text-destructive text-xs mt-2">{errors.location}</p>
+                  <p className="text-destructive text-sm mt-2">{errors.location}</p>
                 )}
               </div>
 
