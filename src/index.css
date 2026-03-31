@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+/* No external font imports — using system Helvetica Neue stack */
 
 @tailwind base;
 @tailwind components;
@@ -89,8 +89,8 @@
     --chart-4: 0 60% 30%;
     --chart-5: 350 89% 60%;
 
-    --font-sans: 'Space Mono', 'Courier New', monospace;
-    --font-display: 'Space Mono', 'Courier New', monospace;
+    --font-sans: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    --font-display: 'Helvetica Neue', Helvetica, Arial, sans-serif;
 
     --spacing: 0.25rem;
     --tracking-normal: -0.011em;
@@ -289,10 +289,10 @@
   body {
     @apply bg-background text-foreground;
     font-feature-settings: normal;
-    font-weight: 400;
+    font-weight: 500;
     font-size: 0.875rem;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.04em;
     touch-action: pan-y pinch-zoom;
     overflow-x: hidden;
     overscroll-behavior-x: none;

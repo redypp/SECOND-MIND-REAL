@@ -15,14 +15,16 @@ export default {
   	extend: {
   		fontFamily: {
   			sans: [
-  				'Space Mono',
-  				'Courier New',
-  				'monospace'
+  				'Helvetica Neue',
+  				'Helvetica',
+  				'Arial',
+  				'sans-serif'
   			],
   			serif: [
-  				'Space Mono',
-  				'Courier New',
-  				'monospace'
+  				'Helvetica Neue',
+  				'Helvetica',
+  				'Arial',
+  				'sans-serif'
   			],
   			mono: [
   				'Space Mono',
