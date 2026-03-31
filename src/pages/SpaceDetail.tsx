@@ -299,7 +299,7 @@ export default function SpaceDetail({ embedded = false, spaceId: propSpaceId, on
   return (
     <div
       className={embedded
-        ? "relative w-full h-full bg-background safe-area-top-ios flex flex-col overflow-hidden"
+        ? "relative w-full h-full bg-background flex flex-col overflow-hidden"
         : "fixed inset-0 bg-background safe-area-top-ios flex flex-col overflow-hidden"
       }
       style={!embedded ? {
