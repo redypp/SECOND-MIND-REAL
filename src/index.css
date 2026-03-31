@@ -6,16 +6,16 @@
 
 @layer base {
   :root {
-    /* Day (light) theme — clean white */
+    /* Day (light) theme — pure white */
     color-scheme: light;
-    --background: 0 0% 98%;
-    --foreground: 0 0% 10%;
+    --background: 0 0% 100%;
+    --foreground: 0 0% 7%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 10%;
+    --card: 0 0% 99%;
+    --card-foreground: 0 0% 7%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 10%;
+    --popover-foreground: 0 0% 7%;
 
     --primary: 0 85% 50%;
     --primary-foreground: 0 0% 100%;
@@ -27,14 +27,14 @@
     --red-rose: 350 89% 60%;
     --red-berry: 335 78% 42%;
 
-    --secondary: 0 0% 93%;
-    --secondary-foreground: 0 0% 20%;
+    --secondary: 0 0% 95%;
+    --secondary-foreground: 0 0% 18%;
 
-    --muted: 0 0% 93%;
-    --muted-foreground: 0 0% 35%;
+    --muted: 0 0% 94%;
+    --muted-foreground: 0 0% 42%;
 
-    --accent: 0 0% 93%;
-    --accent-foreground: 0 0% 10%;
+    --accent: 0 0% 94%;
+    --accent-foreground: 0 0% 7%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
@@ -46,7 +46,7 @@
     --input: 0 0% 88%;
     --ring: 0 85% 50%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
 
     --important-bg: 0 0% 12%;
     --important-fg: 0 0% 100%;
@@ -61,17 +61,17 @@
     --overlay: 0 0% 0% / 0.3;
 
     --shadow-2xs: 0 1px 2px 0 hsl(0 0% 0% / 0.04);
-    --shadow-xs: 0 1px 3px 0 hsl(0 0% 0% / 0.06);
-    --shadow-sm: 0 2px 4px 0 hsl(0 0% 0% / 0.06);
-    --shadow-md: 0 4px 8px -2px hsl(0 0% 0% / 0.08);
-    --shadow-lg: 0 12px 24px -4px hsl(0 0% 0% / 0.1);
-    --shadow-xl: 0 20px 40px -8px hsl(0 0% 0% / 0.12);
-    --shadow-2xl: 0 32px 64px -12px hsl(0 0% 0% / 0.15);
+    --shadow-xs: 0 1px 3px 0 hsl(0 0% 0% / 0.06), 0 1px 2px 0 hsl(0 0% 0% / 0.03);
+    --shadow-sm: 0 2px 6px 0 hsl(0 0% 0% / 0.06), 0 1px 2px 0 hsl(0 0% 0% / 0.04);
+    --shadow-md: 0 4px 12px -2px hsl(0 0% 0% / 0.08), 0 2px 4px 0 hsl(0 0% 0% / 0.04);
+    --shadow-lg: 0 12px 28px -4px hsl(0 0% 0% / 0.12), 0 4px 8px -2px hsl(0 0% 0% / 0.05);
+    --shadow-xl: 0 24px 48px -8px hsl(0 0% 0% / 0.14), 0 8px 16px -4px hsl(0 0% 0% / 0.07);
+    --shadow-2xl: 0 40px 80px -12px hsl(0 0% 0% / 0.16), 0 12px 24px -6px hsl(0 0% 0% / 0.09);
 
-    --shadow-soft: 0 2px 8px -2px hsl(0 0% 0% / 0.06);
-    --shadow-card: 0 2px 8px -2px hsl(0 0% 0% / 0.08);
-    --shadow-elevated: 0 8px 24px -4px hsl(0 0% 0% / 0.12);
-    --shadow-input: 0 1px 2px 0 hsl(0 0% 0% / 0.04);
+    --shadow-soft: 0 2px 8px -2px hsl(0 0% 0% / 0.06), 0 1px 2px 0 hsl(0 0% 0% / 0.03);
+    --shadow-card: 0 2px 10px -2px hsl(0 0% 0% / 0.08), 0 1px 3px 0 hsl(0 0% 0% / 0.04);
+    --shadow-elevated: 0 8px 24px -4px hsl(0 0% 0% / 0.12), 0 3px 8px -2px hsl(0 0% 0% / 0.06);
+    --shadow-input: 0 1px 3px 0 hsl(0 0% 0% / 0.04), inset 0 1px 2px 0 hsl(0 0% 0% / 0.02);
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 0 0% 10%;
@@ -288,11 +288,10 @@
 
   body {
     @apply bg-background text-foreground;
-    font-feature-settings: normal;
-    font-weight: 500;
+    font-feature-settings: 'kern' 1, 'liga' 1;
+    font-weight: 400;
     font-size: 0.875rem;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.01em;
     touch-action: pan-y pinch-zoom;
     overflow-x: hidden;
     overscroll-behavior-x: none;
@@ -356,11 +355,11 @@
     transform: translateY(0);
   }
 
-  /* Premium glass effect */
+  /* Premium glass effect — Apple UIBlurEffect style */
   .glass {
-    background: hsl(var(--background) / 0.8);
-    backdrop-filter: blur(20px) saturate(180%);
-    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    background: hsl(var(--background) / 0.82);
+    backdrop-filter: blur(40px) saturate(200%);
+    -webkit-backdrop-filter: blur(40px) saturate(200%);
   }
 
   /* Focus ring - accessible and beautiful */
@@ -502,13 +501,13 @@
 .life-section-ask .life-section-meta   { color: rgba(255, 255, 255, 0.65) !important; }
 .life-section-ask .life-section-chevron { color: rgba(255, 255, 255, 0.4) !important; }
 
-/* Day (light) — 6 depth steps (indices 0–5 for the 6 non-Ask cards) */
-.life-section-card[data-depth="0"] { background: hsl(0 0% 94%); }
-.life-section-card[data-depth="1"] { background: hsl(0 0% 91%); }
-.life-section-card[data-depth="2"] { background: hsl(0 0% 88%); }
-.life-section-card[data-depth="3"] { background: hsl(0 0% 85%); }
-.life-section-card[data-depth="4"] { background: hsl(0 0% 82%); }
-.life-section-card[data-depth="5"] { background: hsl(0 0% 79%); }
+/* Day (light) — 6 depth steps, more dramatic contrast for editorial feel */
+.life-section-card[data-depth="0"] { background: hsl(0 0% 97%); }
+.life-section-card[data-depth="1"] { background: hsl(0 0% 92%); }
+.life-section-card[data-depth="2"] { background: hsl(0 0% 87%); }
+.life-section-card[data-depth="3"] { background: hsl(0 0% 82%); }
+.life-section-card[data-depth="4"] { background: hsl(0 0% 76%); }
+.life-section-card[data-depth="5"] { background: hsl(0 0% 70%); }
 .life-section-label { color: hsl(0 0% 10%); }
 .life-section-meta  { color: hsl(0 0% 10% / 0.65); }
 .life-section-chevron { color: hsl(0 0% 10% / 0.3); }
@@ -525,13 +524,13 @@
 .blu .life-section-meta  { color: hsl(0 0% 100% / 0.5); }
 .blu .life-section-chevron { color: hsl(0 0% 100% / 0.2); }
 
-/* Night (dark) */
-.dark .life-section-card[data-depth="0"] { background: hsl(0 0% 18%); }
-.dark .life-section-card[data-depth="1"] { background: hsl(0 0% 16%); }
+/* Night (dark) — starts bright, plunges to near-black */
+.dark .life-section-card[data-depth="0"] { background: hsl(0 0% 22%); }
+.dark .life-section-card[data-depth="1"] { background: hsl(0 0% 18%); }
 .dark .life-section-card[data-depth="2"] { background: hsl(0 0% 14%); }
-.dark .life-section-card[data-depth="3"] { background: hsl(0 0% 12%); }
-.dark .life-section-card[data-depth="4"] { background: hsl(0 0% 10%); }
-.dark .life-section-card[data-depth="5"] { background: hsl(0 0% 8%); }
+.dark .life-section-card[data-depth="3"] { background: hsl(0 0% 10%); }
+.dark .life-section-card[data-depth="4"] { background: hsl(0 0% 7%); }
+.dark .life-section-card[data-depth="5"] { background: hsl(0 0% 4%); }
 .dark .life-section-card { border-bottom-color: hsl(0 0% 100% / 0.07); }
 .dark .life-section-label { color: white; }
 .dark .life-section-meta  { color: hsl(0 0% 100% / 0.65); }

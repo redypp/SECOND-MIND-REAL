@@ -166,7 +166,7 @@ export const ItemCard = memo(function ItemCard({ item, compact = false, archiveM
         whileTap={{ scale: 0.98 }}
         transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
         onClick={handleClick}
-        className="group overflow-hidden cursor-pointer rounded-none bg-secondary/40 dark:bg-white/[0.06] backdrop-blur-md border-none shadow-none hover:bg-secondary/60 dark:hover:bg-white/[0.10] transition-all duration-200"
+        className="group overflow-hidden cursor-pointer rounded-2xl bg-secondary/50 dark:bg-white/[0.07] backdrop-blur-xl border border-border/40 dark:border-white/[0.08] shadow-card hover:bg-secondary/70 dark:hover:bg-white/[0.11] transition-all duration-200"
       >
         <div className="px-3.5 py-3 flex items-center gap-3">
           <div className="w-10 h-10 bg-secondary/30 dark:bg-white/[0.08] rounded-lg flex items-center justify-center shrink-0 group-hover:bg-secondary/50 dark:group-hover:bg-white/[0.12] transition-colors overflow-hidden">
@@ -212,7 +212,7 @@ export const ItemCard = memo(function ItemCard({ item, compact = false, archiveM
         whileTap={{ scale: 0.98 }}
         transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
         onClick={handleClick}
-        className="group overflow-hidden cursor-pointer rounded-none bg-secondary/40 dark:bg-white/[0.06] backdrop-blur-md border-none shadow-none hover:bg-secondary/60 dark:hover:bg-white/[0.10] transition-all duration-200"
+        className="group overflow-hidden cursor-pointer rounded-2xl bg-secondary/50 dark:bg-white/[0.07] backdrop-blur-xl border border-border/40 dark:border-white/[0.08] shadow-card hover:bg-secondary/70 dark:hover:bg-white/[0.11] transition-all duration-200"
       >
         <div className="p-2">
           <TableDisplay headers={tableBlock.headers} rows={tableBlock.rows} compact />
@@ -232,10 +232,10 @@ export const ItemCard = memo(function ItemCard({ item, compact = false, archiveM
       onClick={handleClick}
       className={`group overflow-hidden cursor-pointer transition-all duration-200 ${
         isPureNote && !archiveMode
-          ? 'inline-block w-fit rounded-none bg-secondary/40 dark:bg-white/[0.06] backdrop-blur-md border-none shadow-none hover:bg-secondary/60 dark:hover:bg-white/[0.10]'
+          ? 'inline-block w-fit rounded-2xl bg-secondary/55 dark:bg-white/[0.07] backdrop-blur-xl border border-border/40 dark:border-white/[0.08] shadow-card hover:bg-secondary/75 dark:hover:bg-white/[0.11]'
           : archiveMode && isPureNote
-          ? 'w-full rounded-none bg-secondary/30 dark:bg-white/[0.05] backdrop-blur-md border-l-2 border-l-primary/20 border-y-0 border-r-0 shadow-none hover:bg-secondary/50 dark:hover:bg-white/[0.09] hover:border-l-primary/40'
-          : 'w-full rounded-none bg-secondary/40 dark:bg-white/[0.08] backdrop-blur-md border-none shadow-none hover:bg-secondary/60 dark:hover:bg-white/[0.10]'
+          ? 'w-full rounded-none bg-secondary/30 dark:bg-white/[0.05] backdrop-blur-xl border-l-2 border-l-primary/30 border-y-0 border-r-0 shadow-none hover:bg-secondary/50 dark:hover:bg-white/[0.09] hover:border-l-primary/50'
+          : 'w-full rounded-2xl bg-secondary/50 dark:bg-white/[0.07] backdrop-blur-xl border border-border/40 dark:border-white/[0.08] shadow-card hover:bg-secondary/70 dark:hover:bg-white/[0.11]'
       } ${isImportant ? '' : ''}`}
       style={{
         flexShrink: 0,
