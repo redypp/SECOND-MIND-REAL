@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
+import { Capacitor } from '@capacitor/core';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -33,6 +34,18 @@ interface UseVoiceInputReturn {
   cancel: () => void;
 }
 
+// ─── Detect platform ─────────────────────────────────────────────────────────
+
+const isNative = Capacitor.isNativePlatform();
+
+// Lazy-load the Capacitor plugin only on native to avoid import errors on web
+let SpeechRecognitionPlugin: any = null;
+if (isNative) {
+  import('@capacitor-community/speech-recognition').then(mod => {
+    SpeechRecognitionPlugin = mod.SpeechRecognition;
+  }).catch(() => {});
+}
+
 // ─── Hook ─────────────────────────────────────────────────────────────────────
 
 export function useVoiceInput({
@@ -48,18 +61,20 @@ export function useVoiceInput({
   const finalTextRef      = useRef('');
   const silenceTimerRef   = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isActiveRef       = useRef(false);
-  const isCommittingRef   = useRef(false); // guard against double-commit
+  const isCommittingRef   = useRef(false);
+  const listenerRef       = useRef<any>(null); // Capacitor listener handle
 
   // Keep callback fresh without triggering restarts
   const onFinalRef = useRef(onFinalTranscript);
   useEffect(() => { onFinalRef.current = onFinalTranscript; }, [onFinalTranscript]);
 
-  const SpeechRecognition =
+  // Web Speech API detection
+  const WebSpeechRecognition =
     typeof window !== 'undefined'
       ? (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
       : null;
 
-  const isSupported = !!SpeechRecognition;
+  const isSupported = isNative || !!WebSpeechRecognition;
 
   // ── Silence timer helpers ──────────────────────────────────────────────────
 
@@ -80,6 +95,16 @@ export function useVoiceInput({
     clearSilenceTimer();
     setInterimText('');
 
+    // Stop native plugin
+    if (isNative && SpeechRecognitionPlugin) {
+      SpeechRecognitionPlugin.stop().catch(() => {});
+      if (listenerRef.current) {
+        listenerRef.current.remove().catch(() => {});
+        listenerRef.current = null;
+      }
+    }
+
+    // Stop web recognition
     const rec = recognitionRef.current;
     if (rec) {
       recognitionRef.current = null;
@@ -127,8 +152,19 @@ export function useVoiceInput({
     commit(true);
   }, [commit]);
 
-  const start = useCallback(() => {
-    if (isActiveRef.current || isCommittingRef.current || !SpeechRecognition) return;
+  const startNative = useCallback(async () => {
+    if (isActiveRef.current || isCommittingRef.current) return;
+    if (!SpeechRecognitionPlugin) {
+      // Plugin not loaded yet — try loading again
+      try {
+        const mod = await import('@capacitor-community/speech-recognition');
+        SpeechRecognitionPlugin = mod.SpeechRecognition;
+      } catch {
+        setState('error');
+        setError('Speech recognition is not available on this device.');
+        return;
+      }
+    }
 
     setError(null);
     setInterimText('');
@@ -136,7 +172,68 @@ export function useVoiceInput({
     isCommittingRef.current = false;
     setState('requesting');
 
-    const recognition = new SpeechRecognition();
+    try {
+      // Check and request permissions
+      const { speechRecognition } = await SpeechRecognitionPlugin.checkPermissions();
+      if (speechRecognition !== 'granted') {
+        const result = await SpeechRecognitionPlugin.requestPermissions();
+        if (result.speechRecognition !== 'granted') {
+          setState('error');
+          setError('Microphone permission is required. Please allow it in Settings.');
+          return;
+        }
+      }
+
+      // Check availability
+      const { available } = await SpeechRecognitionPlugin.available();
+      if (!available) {
+        setState('error');
+        setError('Speech recognition is not available on this device.');
+        return;
+      }
+
+      // Listen for partial results
+      listenerRef.current = await SpeechRecognitionPlugin.addListener(
+        'partialResults',
+        (data: { matches: string[] }) => {
+          if (!isActiveRef.current) return;
+          const text = data.matches?.[0] || '';
+          if (text) {
+            finalTextRef.current = text;
+            setInterimText(text);
+            resetSilenceTimer();
+          }
+        }
+      );
+
+      // Start recognition
+      await SpeechRecognitionPlugin.start({
+        language: navigator.language || 'en-US',
+        maxResults: 5,
+        partialResults: true,
+        popup: false,
+      });
+
+      isActiveRef.current = true;
+      setState('listening');
+      resetSilenceTimer();
+    } catch (err: any) {
+      console.warn('[useVoiceInput] Native speech error:', err);
+      setState('error');
+      setError('Could not start voice input. Please try again.');
+    }
+  }, [resetSilenceTimer]);
+
+  const startWeb = useCallback(() => {
+    if (isActiveRef.current || isCommittingRef.current || !WebSpeechRecognition) return;
+
+    setError(null);
+    setInterimText('');
+    finalTextRef.current = '';
+    isCommittingRef.current = false;
+    setState('requesting');
+
+    const recognition = new WebSpeechRecognition();
     recognition.continuous = true;
     recognition.interimResults = true;
     recognition.lang = navigator.language || 'en-US';
@@ -161,7 +258,7 @@ export function useVoiceInput({
         }
       }
       setInterimText(interim);
-      resetSilenceTimer(); // any speech activity resets the silence clock
+      resetSilenceTimer();
     };
 
     recognition.onerror = (event: any) => {
@@ -171,9 +268,7 @@ export function useVoiceInput({
         recognitionRef.current = null;
         clearSilenceTimer();
         setState('error');
-        setError(
-          'Microphone access denied. Please enable it in your browser or device settings and try again.',
-        );
+        setError('Microphone permission is required. Please allow it in Settings.');
       } else if (errCode === 'no-speech' || errCode === 'aborted') {
         // Non-fatal — browser restarts on its own
       } else {
@@ -182,7 +277,6 @@ export function useVoiceInput({
     };
 
     recognition.onend = () => {
-      // Browser auto-stops on silence; restart if we're still supposed to be active
       if (isActiveRef.current && recognitionRef.current === recognition) {
         try { recognition.start(); } catch { /* already stopped externally */ }
       }
@@ -195,7 +289,15 @@ export function useVoiceInput({
       setError('Could not start voice input. Please try again.');
       recognitionRef.current = null;
     }
-  }, [SpeechRecognition, resetSilenceTimer, clearSilenceTimer]);
+  }, [WebSpeechRecognition, resetSilenceTimer, clearSilenceTimer]);
+
+  const start = useCallback(() => {
+    if (isNative) {
+      startNative();
+    } else {
+      startWeb();
+    }
+  }, [startNative, startWeb]);
 
   // ── Cleanup on unmount ─────────────────────────────────────────────────────
 
@@ -206,6 +308,13 @@ export function useVoiceInput({
       if (recognitionRef.current) {
         try { recognitionRef.current.abort(); } catch { /* ignore */ }
         recognitionRef.current = null;
+      }
+      if (isNative && SpeechRecognitionPlugin) {
+        SpeechRecognitionPlugin.stop().catch(() => {});
+        if (listenerRef.current) {
+          listenerRef.current.remove().catch(() => {});
+          listenerRef.current = null;
+        }
       }
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
