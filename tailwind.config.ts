@@ -15,6 +15,7 @@ export default {
   	extend: {
   		fontFamily: {
   			sans: [
+  				'Space Grotesk',
   				'Helvetica Neue',
   				'Helvetica',
   				'Arial',

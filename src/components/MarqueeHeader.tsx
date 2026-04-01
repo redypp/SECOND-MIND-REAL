@@ -34,7 +34,6 @@ export function MarqueeHeader({ text, repeats = 12, speed = 60, className = '' }
   return (
     <div
       className={`overflow-hidden whitespace-nowrap flex-shrink-0 max-w-full ${className}`}
-      style={{ transform: 'rotate(-1.2deg)', transformOrigin: 'left center' }}
     >
       <motion.div
         className="inline-flex w-max will-change-transform"
