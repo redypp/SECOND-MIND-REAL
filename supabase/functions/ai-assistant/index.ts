@@ -1566,9 +1566,6 @@ RULES:
       const pendingTodos = context.items.filter(
         (i: any) => i.subCategory === 'todo' || i.subCategory === 'task'
       );
-      const overdueItems = pendingTodos.filter(
-        (i: any) => i.scheduledDate && i.scheduledDate < todayStr
-      );
 
       // Habits signals — from dedicated habits + today's entries
       const habits: Array<{ id: string; name: string }> = (context as any).habits || [];
@@ -1598,9 +1595,7 @@ RULES:
 
       const todoFact = pendingTodos.length === 0
         ? 'No tasks on the list.'
-        : overdueItems.length > 0
-          ? `${pendingTodos.length} task${pendingTodos.length !== 1 ? 's' : ''} total, ${overdueItems.length} overdue from a previous day.`
-          : `${pendingTodos.length} task${pendingTodos.length !== 1 ? 's' : ''} on the list.`;
+        : `${pendingTodos.length} task${pendingTodos.length !== 1 ? 's' : ''} on the list.`;
 
       const habitsFact = totalHabits === 0
         ? 'No habits set up yet.'
