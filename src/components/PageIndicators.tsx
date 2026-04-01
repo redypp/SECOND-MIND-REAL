@@ -8,7 +8,7 @@ interface PageIndicatorsProps {
 
 export function PageIndicators({ currentIndex, onPageSelect }: PageIndicatorsProps) {
   return (
-    <nav className="fixed bottom-[var(--app-safe-bottom,0px)] left-1/2 -translate-x-1/2 z-50 pointer-events-none page-indicators" style={{ width: '25%' }}>
+    <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 z-50 pointer-events-none page-indicators" style={{ width: '25%' }}>
       {/* Outer container expanded to 44px for proper iOS tap targets */}
       <div className="relative w-full flex items-center justify-center pointer-events-auto" style={{ height: '44px' }}>
         {/* Visual pill — stays 4px, centered in the 44px hit area */}
