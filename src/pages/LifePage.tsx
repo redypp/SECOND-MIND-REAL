@@ -27,9 +27,6 @@ export default function LifePage({ embedded = false, onNavigateToSection }: Life
     const nextEvent = upcomingToday.sort((a, b) => (a.scheduledTime || '').localeCompare(b.scheduledTime || ''))[0];
 
     const taskCount = items.filter(i => i.subCategory === 'todo' || i.subCategory === 'task').length;
-    const overdueCount = items.filter(
-      i => (i.subCategory === 'todo' || i.subCategory === 'task') && i.scheduledDate && i.scheduledDate < todayString
-    ).length;
 
     let daily_plan: string;
     if (nextEvent) {
@@ -45,8 +42,6 @@ export default function LifePage({ embedded = false, onNavigateToSection }: Life
     let todo: string;
     if (taskCount === 0) {
       todo = 'no tasks yet';
-    } else if (overdueCount > 0) {
-      todo = `${overdueCount} overdue, ${taskCount} total`;
     } else {
       todo = `${taskCount} task${taskCount !== 1 ? 's' : ''} on your list`;
     }
