@@ -13,11 +13,9 @@ interface CollectionsPageProps {
 }
 
 // Each archive card is exactly 1/7 of usable viewport height — matching Life cards.
-// Usable height = 100dvh minus: header (52px), bottom clearance (12px),
-// and cumulative gap between 7 cards (6 × 4px = 24px) + safe bottom.
-// Total fixed overhead = 88px = 5.5rem — cards fill the screen naturally with 7 archives
-// and scroll gracefully beyond that.
-const CARD_HEIGHT = 'calc((100dvh - 5.5rem - var(--app-safe-bottom, 0px)) / 7)';
+// Usable height = 100dvh minus: header (52px) + bottom padding (12px) + safe bottom.
+// Total fixed overhead = 64px = 4rem.
+const CARD_HEIGHT = 'calc((100dvh - 4rem - var(--app-safe-bottom, 0px)) / 7)';
 
 export default function CollectionsPage({ embedded = false, onNavigateToSpace }: CollectionsPageProps) {
   const navigate = useNavigate();
