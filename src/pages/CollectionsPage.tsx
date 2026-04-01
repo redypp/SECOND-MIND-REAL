@@ -181,23 +181,25 @@ export default function CollectionsPage({ embedded = false, onNavigateToSpace }:
               ))}
             </AnimatePresence>
 
-            {/* ── Add archive — subtle action row below the card list ── */}
-            <motion.div
-              layout
-              className="flex items-center justify-center py-6"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.05, duration: 0.25 }}
-            >
-              <AddSpaceDialog
-                variant="button"
-                navigateAfterCreate={!onNavigateToSpace}
-                onAfterCreate={onNavigateToSpace}
-              />
-            </motion.div>
           </>
         )}
       </main>
+
+      {/* ── Add archive — absolutely positioned so it doesn't affect card sizing ── */}
+      {hasSpaces && (
+        <div
+          className="absolute left-0 right-0 flex items-center justify-center z-10 pointer-events-none"
+          style={{ bottom: 'calc(var(--app-safe-bottom, 0px) + 4px)' }}
+        >
+          <div className="pointer-events-auto">
+            <AddSpaceDialog
+              variant="button"
+              navigateAfterCreate={!onNavigateToSpace}
+              onAfterCreate={onNavigateToSpace}
+            />
+          </div>
+        </div>
+      )}
 
       {!embedded && <BottomNavigation />}
     </div>
