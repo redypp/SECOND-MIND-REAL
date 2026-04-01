@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Loader2, Check, AlertCircle } from 'lucide-react';
+import { Loader2, AlertCircle } from 'lucide-react';
 import { useAI, DumpItem } from '@/hooks/useAI';
 import { useSpaces } from '@/contexts/SpacesContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -23,20 +23,6 @@ export function NoteOrganizer({ noteText, attachments = [], spaceId, onDone }: N
   const [isOrganizing, setIsOrganizing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [savedItems, setSavedItems] = useState<{ title: string; destination: string }[] | null>(null);
-
-  const destinationLabel = (dest: string, spaceName?: string): string => {
-    const labels: Record<string, string> = {
-      todo: 'Todos',
-      habit: 'Habits',
-      journal: 'Journal',
-      daily_plan: 'Daily Plan',
-      reminder: 'Reminders',
-      archive: 'Archive',
-    };
-    if (dest === 'archive' && spaceName) return spaceName;
-    return labels[dest] || 'Archive';
-  };
 
   const saveItems = useCallback(async (items: DumpItem[]) => {
     if (items.length === 0 && attachments.length === 0) return;
@@ -191,9 +177,9 @@ export function NoteOrganizer({ noteText, attachments = [], spaceId, onDone }: N
       }
     }
 
-    setSavedItems(results);
     setIsSaving(false);
-  }, [spaces, addItem, addSpaceAsync, user, spaceId, attachments]);
+    onDone();
+  }, [spaces, addItem, addSpaceAsync, user, spaceId, attachments, onDone]);
 
   const handleOrganize = useCallback(async () => {
     if (isOrganizing) return;
@@ -208,7 +194,6 @@ export function NoteOrganizer({ noteText, attachments = [], spaceId, onDone }: N
     
     setIsOrganizing(true);
     setError(null);
-    setSavedItems(null);
 
     // Build enriched input with link context
     let enrichedInput = noteText;
@@ -246,11 +231,8 @@ export function NoteOrganizer({ noteText, attachments = [], spaceId, onDone }: N
   // Loading
   if (isOrganizing || isSaving) {
     return (
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center gap-2 py-2">
-        <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />
-        <span className="text-xs text-muted-foreground">
-          {isSaving ? 'Saving...' : 'Organizing your thoughts...'}
-        </span>
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center justify-center py-4">
+        <Loader2 className="w-5 h-5 animate-spin text-primary" />
       </motion.div>
     );
   }
@@ -262,31 +244,6 @@ export function NoteOrganizer({ noteText, attachments = [], spaceId, onDone }: N
         <AlertCircle className="w-3.5 h-3.5 text-destructive" />
         <span className="text-xs text-destructive">{error}</span>
         <button onClick={() => { setError(null); handleOrganize(); }} className="text-xs text-muted-foreground hover:text-foreground ml-1">Retry</button>
-      </motion.div>
-    );
-  }
-
-  // Success
-  if (savedItems !== null) {
-    return (
-      <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="space-y-1.5 py-2">
-        <div className="flex items-center gap-2">
-          <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-            <Check className="w-3 h-3 text-primary" />
-          </div>
-          <span className="text-xs text-foreground font-medium">
-            {savedItems.length} item{savedItems.length !== 1 ? 's' : ''} saved
-          </span>
-        </div>
-        <div className="pl-7 space-y-0.5">
-          {savedItems.map((si, idx) => (
-            <p key={idx} className="text-[11px] text-muted-foreground leading-relaxed">
-              <span className="text-foreground/80">{si.title}</span>
-              <span className="mx-1">→</span>
-              <span className="text-primary/80 font-medium">{si.destination}</span>
-            </p>
-          ))}
-        </div>
       </motion.div>
     );
   }
