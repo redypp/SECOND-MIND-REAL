@@ -12,9 +12,8 @@ interface CollectionsPageProps {
   onNavigateToSpace?: (spaceId: string) => void;
 }
 
-// When ≤ 7 archives, cards use flex-1 to exactly match Life page sizing.
-// When > 7, we switch to a fixed height so the list scrolls naturally.
-const MAX_FLEX_CARDS = 7;
+// Fixed card height — cards never resize when adding/removing archives.
+const CARD_HEIGHT = 'calc((100dvh - 4rem - var(--app-safe-bottom, 0px)) / 5)';
 
 export default function CollectionsPage({ embedded = false, onNavigateToSpace }: CollectionsPageProps) {
   const navigate = useNavigate();
@@ -49,7 +48,7 @@ export default function CollectionsPage({ embedded = false, onNavigateToSpace }:
 
       {/* Content */}
       <main
-        className={`flex-1 min-h-0 flex flex-col px-0 ${sortedSpaces.length > MAX_FLEX_CARDS ? 'overflow-y-auto' : ''}`}
+        className="flex-1 min-h-0 flex flex-col px-0 overflow-y-auto"
         style={{ paddingBottom: 'calc(var(--app-safe-bottom, 0px) + 12px)', overscrollBehavior: 'none' }}
       >
         {!hasSpaces ? (
@@ -101,8 +100,8 @@ export default function CollectionsPage({ embedded = false, onNavigateToSpace }:
                 <motion.button
                   key={space.id}
                   layout
-                  className={`w-full text-left relative overflow-hidden ${sortedSpaces.length <= MAX_FLEX_CARDS ? 'flex-1' : 'flex-shrink-0'}`}
-                  style={sortedSpaces.length <= MAX_FLEX_CARDS ? { minHeight: 0 } : { height: 'calc((100dvh - 4rem - var(--app-safe-bottom, 0px)) / 7)' }}
+                  className="w-full text-left relative overflow-hidden flex-shrink-0"
+                  style={{ height: CARD_HEIGHT }}
                   initial={{ opacity: 0, y: 16, scale: 0.99 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, x: -20, scale: 0.97, transition: { duration: 0.2 } }}
