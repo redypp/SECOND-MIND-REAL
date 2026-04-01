@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { X, ArrowUp, Image, Link2, Check } from 'lucide-react';
+import { X, Image, Link2, Check, Plus } from 'lucide-react';
 import { NoteOrganizer } from './NoteOrganizer';
 import { AnimatePresence, motion } from 'framer-motion';
 import { compressImage } from '@/lib/imageCompression';
@@ -40,11 +40,6 @@ export function OrganizeModal({ isOpen, onClose, spaceId, spaceName, onItemSaved
     try { return new URL(url).hostname.replace('www.', ''); } catch { return url; }
   };
 
-  const resetTextareaHeight = () => {
-    const ta = textareaRef.current;
-    if (ta) { ta.style.height = 'auto'; }
-  };
-
   // ─── handlers ────────────────────────────────────────────────────────────────
 
   const handleClose = useCallback(() => {
@@ -55,7 +50,6 @@ export function OrganizeModal({ isOpen, onClose, spaceId, spaceName, onItemSaved
     setShowOrganizer(false);
     setShowLinkInput(false);
     setLinkInput('');
-    resetTextareaHeight();
     onClose();
   }, [onClose]);
 
@@ -78,7 +72,6 @@ export function OrganizeModal({ isOpen, onClose, spaceId, spaceName, onItemSaved
     setSubmittedAttachments([...attachments]);
     setText('');
     setAttachments([]);
-    resetTextareaHeight();
     setShowOrganizer(true);
   }, [text, attachments]);
 
@@ -86,13 +79,6 @@ export function OrganizeModal({ isOpen, onClose, spaceId, spaceName, onItemSaved
     onItemSaved?.();
     handleClose();
   }, [handleClose, onItemSaved]);
-
-  const handleTextKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSubmit();
-    }
-  }, [handleSubmit]);
 
   const handleImageUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     Array.from(e.target.files || []).forEach(file => {
@@ -131,34 +117,19 @@ export function OrganizeModal({ isOpen, onClose, spaceId, spaceName, onItemSaved
     setAttachments(prev => prev.filter((_, i) => i !== index));
   }, []);
 
-  const toggleLinkInput = useCallback(() => {
-    const next = !showLinkInput;
-    setShowLinkInput(next);
-    if (next) {
-      setTimeout(() => linkInputRef.current?.focus(), 60);
-    } else {
-      setLinkInput('');
-      setTimeout(() => textareaRef.current?.focus(), 60);
-    }
-  }, [showLinkInput]);
-
   // ─── effects ─────────────────────────────────────────────────────────────────
 
-  // Visual viewport: keep modal flush with visible area as keyboard opens/closes
   useEffect(() => {
     if (!isOpen) return;
     const el = modalRef.current;
     const vv = window.visualViewport;
-
     const apply = () => {
       if (!el) return;
       el.style.height = `${vv ? vv.height : window.innerHeight}px`;
       el.style.top = `${vv ? vv.offsetTop : 0}px`;
     };
-
     let raf: number;
     const update = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(apply); };
-
     apply();
     vv?.addEventListener('resize', update);
     vv?.addEventListener('scroll', update);
@@ -169,7 +140,6 @@ export function OrganizeModal({ isOpen, onClose, spaceId, spaceName, onItemSaved
     };
   }, [isOpen]);
 
-  // Lock body scroll while open
   useEffect(() => {
     if (!isOpen) return;
     document.body.style.overflow = 'hidden';
@@ -180,12 +150,10 @@ export function OrganizeModal({ isOpen, onClose, spaceId, spaceName, onItemSaved
     };
   }, [isOpen]);
 
-  // Auto-focus textarea on open
   useEffect(() => {
     if (isOpen) setTimeout(() => textareaRef.current?.focus(), 120);
   }, [isOpen]);
 
-  // Scroll to bottom when AI result appears
   useEffect(() => {
     if (showOrganizer && scrollRef.current) {
       setTimeout(() => {
@@ -197,7 +165,8 @@ export function OrganizeModal({ isOpen, onClose, spaceId, spaceName, onItemSaved
   if (!isOpen) return null;
 
   const hasContent = text.trim().length > 0 || attachments.length > 0;
-  const hasSubmitted = submittedText.length > 0 || submittedAttachments.length > 0;
+  const imageAttachments = attachments.filter(a => a.type === 'image');
+  const linkAttachments = attachments.filter(a => a.type === 'link');
 
   return (
     <div
@@ -221,203 +190,220 @@ export function OrganizeModal({ isOpen, onClose, spaceId, spaceName, onItemSaved
         >
           <X className="w-5 h-5" strokeWidth={2} />
         </button>
-
         <div className="flex-1 text-center px-2 min-w-0">
-          <span className="text-[14px] font-semibold text-foreground truncate block">
+          <span className="text-[15px] font-semibold text-foreground truncate block">
             {spaceName ?? 'New entry'}
           </span>
         </div>
-
-        {/* Right spacer — mirrors close button for perfect centering */}
         <div className="w-9 shrink-0" />
       </div>
 
-      {/* ── Scrollable content ──────────────────────────────────── */}
+      {/* ── Scrollable editor area ─────────────────────────────── */}
       <div
         ref={scrollRef}
-        className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-4"
+        className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-5"
         style={{ touchAction: 'pan-y', WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
       >
-        {!hasSubmitted ? (
-          /* Empty hint */
-          <div className="h-full flex items-center justify-center">
-            <p className="text-[13px] text-muted-foreground/60 text-center leading-relaxed max-w-[200px]">
-              {spaceName
-                ? `Drop anything into ${spaceName}`
-                : 'Dump your thoughts — AI will sort them'}
-            </p>
-          </div>
-        ) : (
-          /* Chat bubbles */
-          <div className="py-4 space-y-3">
-            {/* User bubble */}
-            <div className="flex justify-end">
-              <div className="max-w-[78%] rounded-[20px] rounded-tr-[6px] px-4 py-2.5 bg-primary text-primary-foreground space-y-2">
-                {submittedText && (
-                  <p className="text-[14px] leading-relaxed whitespace-pre-wrap">{submittedText}</p>
-                )}
-                {submittedAttachments.map((att, i) => (
-                  <div key={i}>
-                    {att.type === 'image' && (
-                      <img src={att.value} alt="" className="rounded-xl max-h-44 w-full object-cover" />
-                    )}
-                    {att.type === 'link' && (
-                      <div className="flex items-center gap-1.5 py-0.5">
-                        <Link2 className="w-3 h-3 opacity-60 shrink-0" />
-                        <span className="text-[12px] opacity-75 truncate">{getDomain(att.value)}</span>
-                      </div>
-                    )}
+        {showOrganizer ? (
+          /* ── AI organizer results (after save) ── */
+          <div className="py-6">
+            {submittedText && (
+              <div className="mb-4 px-4 py-3 rounded-2xl bg-muted/20 border border-border/15">
+                <p className="text-[15px] leading-relaxed text-foreground/80 whitespace-pre-wrap">{submittedText}</p>
+              </div>
+            )}
+            {submittedAttachments.filter(a => a.type === 'image').length > 0 && (
+              <div className="mb-4 grid grid-cols-2 gap-2">
+                {submittedAttachments.filter(a => a.type === 'image').map((att, i) => (
+                  <div key={i} className="rounded-2xl overflow-hidden bg-secondary border border-border/20">
+                    <img src={att.value} alt="" className="w-full aspect-square object-cover" />
                   </div>
                 ))}
               </div>
-            </div>
-
-            {/* AI response bubble */}
-            {showOrganizer && (
-              <motion.div
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ type: 'spring', stiffness: 400, damping: 32 }}
-                className="flex justify-start"
-              >
-                <div className="max-w-[78%] rounded-[20px] rounded-tl-[6px] px-4 py-3 bg-secondary/70 border border-border/30">
-                  <NoteOrganizer
-                    noteText={submittedText}
-                    attachments={submittedAttachments}
-                    spaceId={spaceId}
-                    onDone={handleDone}
-                  />
-                </div>
-              </motion.div>
             )}
-          </div>
-        )}
-      </div>
-
-      {/* ── Attachment strip ────────────────────────────────────── */}
-      <AnimatePresence>
-        {attachments.length > 0 && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.16, ease: 'easeInOut' }}
-            className="shrink-0 overflow-hidden px-4"
-          >
-            <div className="flex gap-2 pt-1.5 pb-1 overflow-x-auto scrollbar-hide">
-              {attachments.map((att, i) => (
-                <div key={i} className="relative shrink-0">
-                  {att.type === 'image' ? (
-                    <div className="w-11 h-11 rounded-xl overflow-hidden bg-secondary border border-border/40">
-                      <img src={att.value} alt="" className="w-full h-full object-cover" />
-                    </div>
-                  ) : (
-                    <div className="h-9 px-2.5 rounded-xl bg-secondary border border-border/40 flex items-center gap-1.5 max-w-[140px]">
-                      <Link2 className="w-3 h-3 text-muted-foreground shrink-0" />
-                      <span className="text-[11px] text-muted-foreground truncate">{getDomain(att.value)}</span>
-                    </div>
-                  )}
-                  <button
-                    onClick={() => removeAttachment(i)}
-                    className="absolute -top-1 -right-1 w-[18px] h-[18px] rounded-full bg-foreground/70 flex items-center justify-center touch-manipulation"
-                    aria-label="Remove"
-                  >
-                    <X className="w-2.5 h-2.5 text-background" strokeWidth={2.5} />
-                  </button>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* ── Input bar ───────────────────────────────────────────── */}
-      <div
-        className="shrink-0 border-t border-border/25 bg-background px-3 pt-2"
-        style={{ paddingBottom: 'max(var(--app-safe-bottom), 10px)' }}
-      >
-        <div className="flex items-end gap-1.5">
-
-          {/* Icon buttons — always visible */}
-          <div className="flex items-center shrink-0 pb-[3px]">
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-secondary transition-colors text-muted-foreground touch-manipulation"
-              aria-label="Attach image"
+            {submittedAttachments.filter(a => a.type === 'link').length > 0 && (
+              <div className="mb-4 space-y-2">
+                {submittedAttachments.filter(a => a.type === 'link').map((att, i) => (
+                  <div key={i} className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-muted/15 border border-border/15">
+                    <Link2 className="w-4 h-4 text-muted-foreground/50 shrink-0" />
+                    <span className="text-[14px] text-muted-foreground truncate">{getDomain(att.value)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 32 }}
             >
-              <Image className="w-[18px] h-[18px]" />
-            </button>
-            <button
-              onClick={toggleLinkInput}
-              className={`w-9 h-9 flex items-center justify-center rounded-full transition-colors touch-manipulation ${
-                showLinkInput
-                  ? 'bg-primary/12 text-primary'
-                  : 'hover:bg-secondary text-muted-foreground'
-              }`}
-              aria-label={showLinkInput ? 'Cancel link' : 'Attach link'}
-            >
-              <Link2 className="w-[18px] h-[18px]" />
-            </button>
+              <NoteOrganizer
+                noteText={submittedText}
+                attachments={submittedAttachments}
+                spaceId={spaceId}
+                onDone={handleDone}
+              />
+            </motion.div>
           </div>
-
-          {/* Input field — text or URL */}
-          {showLinkInput ? (
-            <input
-              ref={linkInputRef}
-              type="url"
-              inputMode="url"
-              autoComplete="url"
-              value={linkInput}
-              onChange={(e) => setLinkInput(e.target.value)}
-              placeholder="Paste or type a link…"
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') { e.preventDefault(); handleAddLink(); }
-                if (e.key === 'Escape') { setShowLinkInput(false); setLinkInput(''); setTimeout(() => textareaRef.current?.focus(), 50); }
-              }}
-              className="flex-1 px-3.5 bg-secondary/60 border border-border/40 focus:border-primary/30 focus:outline-none rounded-2xl text-[14px] text-foreground placeholder:text-muted-foreground/50 transition-colors"
-              style={{ height: '40px' }}
-            />
-          ) : (
+        ) : (
+          /* ── Editor layout ── */
+          <div className="py-4 space-y-5">
+            {/* Large textarea */}
             <textarea
               ref={textareaRef}
               value={text}
               onChange={(e) => {
                 setText(e.target.value);
-                if (showOrganizer) setShowOrganizer(false);
                 e.target.style.height = 'auto';
-                e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
+                e.target.style.height = Math.max(e.target.scrollHeight, 150) + 'px';
               }}
-              onKeyDown={handleTextKeyDown}
               onPaste={handlePaste}
-              placeholder={spaceName ? `Add to ${spaceName}…` : 'Type, paste, or attach…'}
-              rows={1}
-              className="flex-1 px-3.5 py-[10px] bg-secondary/60 border border-border/40 focus:border-primary/30 focus:outline-none rounded-2xl resize-none text-[14px] leading-[1.45] placeholder:text-muted-foreground/50 transition-colors overflow-hidden"
-              style={{ minHeight: '40px', maxHeight: '120px' }}
+              placeholder="Write a note..."
+              rows={4}
+              className="w-full px-1 py-2 bg-transparent text-[17px] leading-[1.65] text-foreground placeholder:text-muted-foreground/35 focus:outline-none resize-none"
+              style={{ minHeight: '150px' }}
             />
-          )}
 
-          {/* Send / confirm — single context-aware button */}
+            {/* Image previews grid */}
+            <AnimatePresence>
+              {imageAttachments.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 6 }}
+                  className="grid grid-cols-2 gap-2.5"
+                >
+                  {attachments.map((att, i) => {
+                    if (att.type !== 'image') return null;
+                    return (
+                      <div key={i} className="relative group">
+                        <div className="rounded-2xl overflow-hidden bg-secondary border border-border/20">
+                          <img src={att.value} alt="" className="w-full aspect-square object-cover" />
+                        </div>
+                        <button
+                          onClick={() => removeAttachment(i)}
+                          className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center touch-manipulation"
+                          aria-label="Remove"
+                        >
+                          <X className="w-3.5 h-3.5 text-white" strokeWidth={2.5} />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Link cards */}
+            <AnimatePresence>
+              {linkAttachments.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 6 }}
+                  className="space-y-2"
+                >
+                  {attachments.map((att, i) => {
+                    if (att.type !== 'link') return null;
+                    return (
+                      <div key={i} className="flex items-center gap-3 px-4 py-3.5 rounded-2xl bg-muted/20 border border-border/20">
+                        <Link2 className="w-4.5 h-4.5 text-muted-foreground/50 shrink-0" />
+                        <span className="text-[15px] text-foreground/70 truncate flex-1">{getDomain(att.value)}</span>
+                        <button
+                          onClick={() => removeAttachment(i)}
+                          className="w-7 h-7 rounded-full flex items-center justify-center text-muted-foreground/40 hover:text-foreground hover:bg-secondary transition-colors touch-manipulation shrink-0"
+                          aria-label="Remove"
+                        >
+                          <X className="w-3.5 h-3.5" strokeWidth={2.5} />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Inline link input */}
+            <AnimatePresence>
+              {showLinkInput && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="overflow-hidden"
+                >
+                  <div className="flex items-center gap-2">
+                    <input
+                      ref={linkInputRef}
+                      type="url"
+                      inputMode="url"
+                      autoComplete="url"
+                      value={linkInput}
+                      onChange={(e) => setLinkInput(e.target.value)}
+                      placeholder="Paste or type a URL..."
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') { e.preventDefault(); handleAddLink(); }
+                        if (e.key === 'Escape') { setShowLinkInput(false); setLinkInput(''); }
+                      }}
+                      className="flex-1 px-4 py-3 bg-muted/15 border border-border/25 focus:border-border/50 focus:outline-none rounded-2xl text-[15px] text-foreground placeholder:text-muted-foreground/40 transition-colors"
+                    />
+                    <button
+                      onClick={handleAddLink}
+                      disabled={!linkInput.trim()}
+                      className="w-10 h-10 rounded-full bg-foreground text-background flex items-center justify-center shrink-0 disabled:opacity-20 transition-opacity touch-manipulation"
+                      aria-label="Add link"
+                    >
+                      <Check className="w-4 h-4" strokeWidth={2.5} />
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Action buttons */}
+            <div className="flex gap-2.5">
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="flex-1 flex items-center justify-center gap-2.5 py-3.5 rounded-2xl bg-muted/15 border border-border/15 text-muted-foreground/70 hover:bg-muted/30 hover:text-foreground/80 transition-all active:scale-[0.98] touch-manipulation"
+              >
+                <Image className="w-5 h-5" />
+                <span className="text-[15px] font-medium">Add Image</span>
+              </button>
+              <button
+                onClick={() => {
+                  setShowLinkInput(prev => !prev);
+                  if (!showLinkInput) setTimeout(() => linkInputRef.current?.focus(), 80);
+                }}
+                className={[
+                  'flex-1 flex items-center justify-center gap-2.5 py-3.5 rounded-2xl border transition-all active:scale-[0.98] touch-manipulation',
+                  showLinkInput
+                    ? 'bg-foreground/5 border-foreground/20 text-foreground/80'
+                    : 'bg-muted/15 border-border/15 text-muted-foreground/70 hover:bg-muted/30 hover:text-foreground/80',
+                ].join(' ')}
+              >
+                <Link2 className="w-5 h-5" />
+                <span className="text-[15px] font-medium">Add Link</span>
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ── Save button (bottom) ───────────────────────────────── */}
+      {!showOrganizer && (
+        <div
+          className="shrink-0 px-5 pt-3 bg-background"
+          style={{ paddingBottom: 'max(var(--app-safe-bottom), 16px)' }}
+        >
           <button
-            onClick={showLinkInput ? handleAddLink : handleSubmit}
-            disabled={showLinkInput ? !linkInput.trim() : !hasContent}
-            className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 mb-[3px] transition-all duration-150 touch-manipulation disabled:opacity-30"
-            style={{
-              backgroundColor: (showLinkInput ? linkInput.trim() : hasContent)
-                ? 'hsl(var(--primary))'
-                : 'hsl(var(--secondary))',
-              color: (showLinkInput ? linkInput.trim() : hasContent)
-                ? 'hsl(var(--primary-foreground))'
-                : 'hsl(var(--muted-foreground))',
-            }}
-            aria-label={showLinkInput ? 'Add link' : 'Send'}
+            onClick={handleSubmit}
+            disabled={!hasContent}
+            className="w-full py-4 rounded-2xl bg-foreground text-background font-semibold text-[16px] flex items-center justify-center gap-2 disabled:opacity-20 transition-all active:scale-[0.98] touch-manipulation"
           >
-            {showLinkInput
-              ? <Check className="w-4 h-4" strokeWidth={2.5} />
-              : <ArrowUp className="w-4 h-4" strokeWidth={3} />
-            }
+            <Plus className="w-4.5 h-4.5" strokeWidth={2.5} />
+            {spaceName ? `Save to ${spaceName}` : 'Save'}
           </button>
         </div>
-      </div>
+      )}
 
       <input
         ref={fileInputRef}
