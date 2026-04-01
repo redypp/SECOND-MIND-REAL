@@ -583,7 +583,7 @@ export default function SpaceDetail({ embedded = false, spaceId: propSpaceId, on
                   className="text-left py-1.5"
                   onClick={() => { setEditedName(space.name); setIsEditingName(true); setShowSettingsPanel(false); }}
                 >
-                  <p className="text-[clamp(2rem,8vw,2.8rem)] font-black uppercase tracking-tighter leading-none text-white">Rename</p>
+                  <p className="text-[clamp(2rem,8vw,2.8rem)] font-display font-bold uppercase tracking-[-0.04em] leading-none text-white">Rename</p>
                 </motion.button>
 
                 <motion.button
@@ -591,7 +591,7 @@ export default function SpaceDetail({ embedded = false, spaceId: propSpaceId, on
                   className="text-left py-1.5"
                   onClick={() => { coverInputRef.current?.click(); setShowSettingsPanel(false); }}
                 >
-                  <p className="text-[clamp(2rem,8vw,2.8rem)] font-black uppercase tracking-tighter leading-none text-white">Cover</p>
+                  <p className="text-[clamp(2rem,8vw,2.8rem)] font-display font-bold uppercase tracking-[-0.04em] leading-none text-white">Cover</p>
                 </motion.button>
 
                 <motion.button
@@ -599,7 +599,7 @@ export default function SpaceDetail({ embedded = false, spaceId: propSpaceId, on
                   className="text-left py-1.5"
                   onClick={() => { if (id) { space.isPinned ? unpinSpace(id) : pinSpace(id); } setShowSettingsPanel(false); }}
                 >
-                  <p className="text-[clamp(2rem,8vw,2.8rem)] font-black uppercase tracking-tighter leading-none text-white">
+                  <p className="text-[clamp(2rem,8vw,2.8rem)] font-display font-bold uppercase tracking-[-0.04em] leading-none text-white">
                     {space.isPinned ? 'Unpin' : 'Pin'}
                   </p>
                 </motion.button>
@@ -611,7 +611,7 @@ export default function SpaceDetail({ embedded = false, spaceId: propSpaceId, on
                     onClick={() => { handleOrganizeArchive(false); setShowSettingsPanel(false); }}
                     disabled={isOrganizing}
                   >
-                    <p className="text-[clamp(2rem,8vw,2.8rem)] font-black uppercase tracking-tighter leading-none text-white">
+                    <p className="text-[clamp(2rem,8vw,2.8rem)] font-display font-bold uppercase tracking-[-0.04em] leading-none text-white">
                       {isOrganizing ? 'Working…' : 'Organize'}
                     </p>
                   </motion.button>
@@ -623,7 +623,7 @@ export default function SpaceDetail({ embedded = false, spaceId: propSpaceId, on
                     className="text-left py-1.5"
                     onClick={() => { goHomeRef.current?.(); setShowSettingsPanel(false); }}
                   >
-                    <p className="text-[clamp(2rem,8vw,2.8rem)] font-black uppercase tracking-tighter leading-none text-white">Center</p>
+                    <p className="text-[clamp(2rem,8vw,2.8rem)] font-display font-bold uppercase tracking-[-0.04em] leading-none text-white">Center</p>
                   </motion.button>
                 )}
 
@@ -634,7 +634,7 @@ export default function SpaceDetail({ embedded = false, spaceId: propSpaceId, on
                     className="text-left py-1.5"
                     onClick={() => { if (id) { deleteSpace(id); embedded ? onBack?.() : navigate('/archive', { replace: true }); } }}
                   >
-                    <p className="text-[clamp(2rem,8vw,2.8rem)] font-black uppercase tracking-tighter leading-none text-white/60">Delete</p>
+                    <p className="text-[clamp(2rem,8vw,2.8rem)] font-display font-bold uppercase tracking-[-0.04em] leading-none text-white/60">Delete</p>
                   </motion.button>
                 </div>
               </div>

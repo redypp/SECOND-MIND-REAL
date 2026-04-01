@@ -356,7 +356,7 @@ export default function ClockPage({ embedded = false, onBack }: ClockPageProps) 
               <ArrowLeft className="w-5 h-5 text-foreground" />
             </button>
           )}
-          <h1 className="text-2xl font-black tracking-tight text-foreground">Daily Plan</h1>
+          <h1 className="text-2xl font-display font-bold tracking-[-0.04em] uppercase text-foreground">Daily Plan</h1>
         </div>
         
         <div className="flex items-center gap-1">

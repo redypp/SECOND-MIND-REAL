@@ -298,7 +298,7 @@ export default function JournalPage({ embedded = false, onBack }: JournalPagePro
               <ArrowLeft className="w-5 h-5 text-foreground" />
             </button>
           )}
-          <h1 className="text-2xl font-black tracking-tight text-foreground">Journal</h1>
+          <h1 className="text-2xl font-display font-bold tracking-[-0.04em] uppercase text-foreground">Journal</h1>
         </div>
         <AnimatePresence>
           {saving && (

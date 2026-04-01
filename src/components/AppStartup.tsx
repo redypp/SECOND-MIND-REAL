@@ -352,40 +352,67 @@ export function AppStartup({ children, onInitialize, onLogout, isDataReady }: Ap
   // Show loading screen during startup (cold start only)
   if (phase !== 'ready') {
     return (
-      <div className="fixed inset-0 z-[9999] bg-background flex flex-col items-center justify-center p-6">
-        <motion.div
-          initial={{ opacity: 1 }}
-          animate={{ opacity: 1 }}
-          className="flex flex-col items-center gap-6"
-        >
-          {phase === 'error' ? (
-            <AlertCircle className="w-8 h-8 text-destructive" />
-          ) : !isOnline ? (
-            <WifiOff className="w-8 h-8 text-muted-foreground" />
-          ) : (
-            <motion.img
-              src={splashLogo}
-              alt=""
-              className="select-none pointer-events-none"
-              style={{ width: 80, height: 80, objectFit: 'contain' }}
-              animate={{ rotate: 360 }}
-              transition={{ duration: 1.2, repeat: Infinity, ease: 'linear' }}
+      <div className="fixed inset-0 z-[9999] bg-background flex flex-col items-center justify-center p-6 overflow-hidden">
+        {phase === 'error' || !isOnline ? (
+          /* Error / offline state */
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="flex flex-col items-center gap-6"
+          >
+            {phase === 'error' ? (
+              <AlertCircle className="w-8 h-8 text-destructive" />
+            ) : (
+              <WifiOff className="w-8 h-8 text-muted-foreground" />
+            )}
+            {phase === 'error' && error && (
+              <div className="text-center space-y-1.5">
+                <p className="text-sm font-medium text-foreground">{error.message}</p>
+                {error.details && (
+                  <p className="text-xs text-muted-foreground max-w-[280px]">{error.details}</p>
+                )}
+              </div>
+            )}
+            {!isOnline && phase !== 'error' && (
+              <p className="text-xs text-muted-foreground">No internet connection</p>
+            )}
+          </motion.div>
+        ) : (
+          /* Editorial typographic splash */
+          <div className="flex flex-col items-center justify-center gap-1">
+            <motion.div
+              initial={{ clipPath: 'inset(0 100% 0 0)' }}
+              animate={{ clipPath: 'inset(0 0% 0 0)' }}
+              transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <span
+                className="block font-display uppercase tracking-[-0.06em] leading-[0.85] text-foreground/90 select-none"
+                style={{ fontSize: 'clamp(4.5rem, 18vw, 9rem)', fontWeight: 700 }}
+              >
+                SECOND
+              </span>
+            </motion.div>
+            <motion.div
+              initial={{ clipPath: 'inset(0 100% 0 0)' }}
+              animate={{ clipPath: 'inset(0 0% 0 0)' }}
+              transition={{ duration: 0.6, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <span
+                className="block font-display uppercase tracking-[-0.06em] leading-[0.85] text-foreground/90 select-none"
+                style={{ fontSize: 'clamp(4.5rem, 18vw, 9rem)', fontWeight: 700 }}
+              >
+                MIND
+              </span>
+            </motion.div>
+            {/* Thin loading bar */}
+            <motion.div
+              className="mt-6 h-[2px] bg-primary/80 rounded-full"
+              initial={{ width: 0 }}
+              animate={{ width: 80 }}
+              transition={{ duration: 1.5, delay: 0.4, ease: 'easeInOut' }}
             />
-          )}
-
-          {/* Status text on error or offline */}
-          {phase === 'error' && error && (
-            <div className="text-center space-y-1.5">
-              <p className="text-sm font-medium text-foreground">{error.message}</p>
-              {error.details && (
-                <p className="text-xs text-muted-foreground max-w-[280px]">{error.details}</p>
-              )}
-            </div>
-          )}
-          {!isOnline && phase !== 'error' && (
-            <p className="text-xs text-muted-foreground">No internet connection</p>
-          )}
-        </motion.div>
+          </div>
+        )}
 
         {/* Action buttons */}
         <AnimatePresence>

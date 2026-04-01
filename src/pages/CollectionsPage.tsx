@@ -96,16 +96,16 @@ export default function CollectionsPage({ embedded = false, onNavigateToSpace }:
           <>
             {/* ── Archive cards — fixed height, never compressed ── */}
             <AnimatePresence initial={false}>
-              {sortedSpaces.map((space) => (
+              {sortedSpaces.map((space, i) => (
                 <motion.button
                   key={space.id}
                   layout
                   className="w-full text-left relative overflow-hidden flex-shrink-0"
                   style={{ height: CARD_HEIGHT }}
-                  initial={{ opacity: 0, y: 16, scale: 0.99 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, x: -20, scale: 0.97, transition: { duration: 0.2 } }}
-                  transition={{ type: 'spring', stiffness: 360, damping: 30 }}
+                  transition={{ duration: 0.5, delay: i * 0.06, ease: [0.16, 1, 0.3, 1] }}
                   whileTap={{ scale: 0.982 }}
                   onClick={() => {
                     if (selectedCollectionId === space.id) {
@@ -130,7 +130,7 @@ export default function CollectionsPage({ embedded = false, onNavigateToSpace }:
                           alt=""
                           className="absolute inset-0 w-full h-full object-cover"
                         />
-                        <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-black/20 to-transparent" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
                       </>
                     ) : (
                       <div
@@ -144,11 +144,15 @@ export default function CollectionsPage({ embedded = false, onNavigateToSpace }:
                     )}
                   </div>
 
-                  {/* Title */}
-                  <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-6">
+                  {/* Editorial bottom-left title */}
+                  <div className="absolute inset-0 flex flex-col justify-end px-5 pb-3">
                     <span
-                      className="text-white uppercase text-[clamp(1.8rem,7vw,2.8rem)] font-black tracking-tighter leading-none"
-                      style={{ textShadow: '0 2px 16px rgba(0,0,0,0.5), 0 0 4px rgba(0,0,0,0.3)' }}
+                      className="text-white uppercase font-display tracking-[-0.05em] leading-[0.88]"
+                      style={{
+                        fontSize: 'clamp(2.5rem, 10vw, 4rem)',
+                        fontWeight: 700,
+                        textShadow: '0 2px 20px rgba(0,0,0,0.6), 0 0 4px rgba(0,0,0,0.3)',
+                      }}
                     >
                       {space.name}
                     </span>

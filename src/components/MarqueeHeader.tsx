@@ -27,18 +27,22 @@ export function MarqueeHeader({ text, repeats = 12, speed = 60, className = '' }
     }
   }, [text, repeats, speed]);
 
-  const spanStyle: React.CSSProperties = { fontWeight: 900, textShadow: '0 0 1px currentColor' };
-  const spanClass = "text-[3.25rem] tracking-[-0.04em] uppercase text-foreground select-none pr-[0.15em] leading-none";
+  const spanStyle: React.CSSProperties = { fontWeight: 700 };
+  const spanClass = "font-display tracking-[-0.06em] uppercase text-foreground/88 select-none pr-[0.15em] leading-none";
+  const fontSize = 'clamp(4rem, 15vw, 7rem)';
 
   return (
-    <div className={`overflow-hidden whitespace-nowrap flex-shrink-0 max-w-full ${className}`}>
+    <div
+      className={`overflow-hidden whitespace-nowrap flex-shrink-0 max-w-full ${className}`}
+      style={{ transform: 'rotate(-1.2deg)', transformOrigin: 'left center' }}
+    >
       <motion.div
         className="inline-flex w-max will-change-transform"
         animate={{ x: spanWidth > 0 ? [0, -spanWidth] : 0 }}
         transition={{ duration, ease: 'linear', repeat: Infinity, repeatType: 'loop' }}
       >
-        <span ref={spanRef} className={spanClass} style={spanStyle}>{content}</span>
-        <span className={spanClass} style={spanStyle}>{content}</span>
+        <span ref={spanRef} className={spanClass} style={{ ...spanStyle, fontSize }}>{content}</span>
+        <span className={spanClass} style={{ ...spanStyle, fontSize }}>{content}</span>
       </motion.div>
     </div>
   );

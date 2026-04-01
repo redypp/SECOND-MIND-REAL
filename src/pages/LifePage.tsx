@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ChevronRight } from 'lucide-react';
 import { useSpaces } from '@/contexts/SpacesContext';
 import { useCurrentDate } from '@/hooks/useCurrentDate';
 import { useLifeSubheadings } from '@/hooks/useLifeSubheadings';
@@ -90,16 +89,16 @@ export default function LifePage({ embedded = false, onNavigateToSection }: Life
         </div>
       </div>
 
-      {/* Section cards — evenly fill remaining height */}
+      {/* Section cards — evenly fill remaining height, editorial layout */}
       <main className="flex-1 min-h-0 flex flex-col px-0" style={{ paddingBottom: 'calc(var(--app-safe-bottom, 0px) + 12px)' }}>
         {sections.map((section, i) => (
           <motion.button
             key={section.id}
             className="flex-1 w-full relative"
             style={{ minHeight: 0 }}
-            initial={{ opacity: 0, y: 6 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ type: 'spring', stiffness: 420, damping: 34 }}
+            transition={{ duration: 0.5, delay: i * 0.06, ease: [0.16, 1, 0.3, 1] }}
             whileTap={{ scale: 0.982 }}
             onClick={() => handleTap(section.path, section.isExternal)}
             aria-label={`Open ${section.label}`}
@@ -108,16 +107,18 @@ export default function LifePage({ embedded = false, onNavigateToSection }: Life
               className={`w-full h-full relative overflow-hidden life-section-card${section.isAsk ? ' life-section-ask' : ''}`}
               data-depth={section.isAsk ? undefined : getDepth(i)}
             >
-              {/* Unified centered layout for all sections */}
-              <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center">
-                <p className="text-[clamp(1.8rem,7vw,2.8rem)] font-black tracking-tighter leading-none uppercase life-section-label">
-                  {section.label}
-                </p>
-                <p className="text-[10px] mt-1.5 uppercase tracking-[0.14em] font-medium life-section-meta">
+              {/* Editorial bottom-left aligned layout */}
+              <div className="absolute inset-0 flex flex-col justify-end px-5 pb-2">
+                <p className="text-[9px] uppercase tracking-[0.16em] font-medium life-section-meta opacity-70 mb-0.5">
                   {section.meta}
                 </p>
+                <p
+                  className="font-display tracking-[-0.05em] leading-[0.88] uppercase life-section-label"
+                  style={{ fontSize: 'clamp(2.2rem, 9vw, 3.5rem)', fontWeight: 700 }}
+                >
+                  {section.label}
+                </p>
               </div>
-              <ChevronRight className="absolute top-1/2 -translate-y-1/2 right-4 w-3.5 h-3.5 life-section-chevron" />
             </div>
           </motion.button>
         ))}

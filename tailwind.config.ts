@@ -20,6 +20,11 @@ export default {
   				'Arial',
   				'sans-serif'
   			],
+  			display: [
+  				'Space Grotesk',
+  				'Helvetica Neue',
+  				'sans-serif'
+  			],
   			serif: [
   				'Helvetica Neue',
   				'Helvetica',

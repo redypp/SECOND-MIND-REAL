@@ -465,7 +465,7 @@ export default function AskPage() {
       {/* ── Header ── */}
       <div className="flex items-center px-5 pt-3 pb-2 shrink-0">
         <div className="flex-1" />
-        <p className="text-[13px] font-black tracking-[0.28em] text-foreground/40 uppercase select-none">
+        <p className="text-[13px] font-display font-bold tracking-[0.28em] text-foreground/40 uppercase select-none">
           Second Mind
         </p>
         <div className="flex-1 flex justify-end">

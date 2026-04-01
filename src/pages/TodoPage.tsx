@@ -162,7 +162,7 @@ export default function TodoPage({ embedded = false, onBack }: TodoPageProps) {
               <ArrowLeft className="w-5 h-5 text-foreground" />
             </button>
           )}
-          <h1 className="text-2xl font-black tracking-tight text-foreground">To-Do</h1>
+          <h1 className="text-2xl font-display font-bold tracking-[-0.04em] uppercase text-foreground">To-Do</h1>
         </div>
         
         {/* Add Todo Button - Crimson Red */}

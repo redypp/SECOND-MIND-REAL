@@ -327,7 +327,7 @@ export function RadialMenu({ pageIndex }: RadialMenuProps) {
             onClick={() => setSuggestion(null)}
           >
             <div className="bg-foreground text-background rounded-2xl px-5 py-4 shadow-2xl">
-              <span className="text-[10px] font-black uppercase tracking-[0.25em] opacity-50 block mb-1">
+              <span className="text-[10px] font-display font-bold uppercase tracking-[0.25em] opacity-50 block mb-1">
                 Breaking news
               </span>
               <p className="text-base font-semibold leading-snug">

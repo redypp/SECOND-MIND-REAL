@@ -6,39 +6,33 @@ interface PageIndicatorsProps {
   onPageSelect?: (index: number) => void;
 }
 
+const LABELS = ['LIFE', 'ARCHIVE'];
+
 export function PageIndicators({ currentIndex, onPageSelect }: PageIndicatorsProps) {
   return (
-    <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 z-50 pointer-events-none page-indicators" style={{ width: '25%' }}>
-      {/* Outer container expanded to 44px for proper iOS tap targets */}
+    <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 z-50 pointer-events-none page-indicators" style={{ width: '50%', maxWidth: '220px' }}>
       <div className="relative w-full flex items-center justify-center pointer-events-auto" style={{ height: '44px' }}>
-        {/* Visual pill — stays 4px, centered in the 44px hit area */}
-        <div className="relative w-full h-[4px] rounded-full bg-foreground/20 overflow-hidden pointer-events-none">
-          <motion.div
-            className="absolute top-0 bottom-0 rounded-full bg-foreground/50"
-            style={{ width: 'calc(50% - 2px)' }}
-            animate={{
-              left: currentIndex === 0 ? '3px' : 'calc(50%)',
-            }}
-            transition={{
-              type: 'spring',
-              stiffness: 700,
-              damping: 35,
-              mass: 0.6,
-            }}
-          />
+        {/* Text labels */}
+        <div className="flex w-full justify-between px-2">
+          {LABELS.map((label, i) => (
+            <button
+              key={label}
+              className="touch-manipulation py-2 px-3"
+              onClick={() => onPageSelect?.(i)}
+              aria-label={label}
+            >
+              <motion.span
+                className="font-display text-[10px] uppercase tracking-[0.16em] font-bold select-none"
+                animate={{
+                  opacity: currentIndex === i ? 1 : 0.3,
+                }}
+                transition={{ duration: 0.25 }}
+              >
+                {label}
+              </motion.span>
+            </button>
+          ))}
         </div>
-
-        {/* Tap zones — full 44px height, layered on top */}
-        <button
-          className="absolute left-0 top-0 bottom-0 w-1/2 touch-manipulation"
-          onClick={() => onPageSelect?.(0)}
-          aria-label="Life"
-        />
-        <button
-          className="absolute right-0 top-0 bottom-0 w-1/2 touch-manipulation"
-          onClick={() => onPageSelect?.(1)}
-          aria-label="Archive"
-        />
       </div>
     </nav>
   );

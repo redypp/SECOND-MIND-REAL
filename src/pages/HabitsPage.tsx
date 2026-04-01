@@ -555,7 +555,7 @@ export default function HabitsPage({ embedded = false, onBack }: HabitsPageProps
                   <ArrowLeft className="w-5 h-5 text-foreground" />
                 </button>
               )}
-              <h1 className="text-2xl font-black tracking-tight text-foreground">Habits</h1>
+              <h1 className="text-2xl font-display font-bold tracking-[-0.04em] uppercase text-foreground">Habits</h1>
             </div>
           <motion.button
             data-tutorial="habit-settings"
