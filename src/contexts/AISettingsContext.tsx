@@ -1,6 +1,6 @@
- import { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
- import { supabase } from '@/integrations/supabase/app-client';
- import { useAuth } from '@/contexts/AuthContext';
+import { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
+import { supabase } from '@/integrations/supabase/app-client';
+import { useAuth } from '@/contexts/AuthContext';
 
 export type AITone = 'concise' | 'friendly' | 'professional' | 'encouraging';
 export type AIVerbosity = 'brief' | 'balanced' | 'detailed';
@@ -40,74 +40,80 @@ const defaultSettings: AISettings = {
 
 interface AISettingsContextType {
   settings: AISettings;
-   loading: boolean;
+  loading: boolean;
   updateSettings: (updates: Partial<AISettings>) => void;
 }
 
 const AISettingsContext = createContext<AISettingsContextType | undefined>(undefined);
 
 export function AISettingsProvider({ children }: { children: ReactNode }) {
-   const { user } = useAuth();
-   const [settings, setSettings] = useState<AISettings>(defaultSettings);
-   const [loading, setLoading] = useState(true);
- 
-   // Fetch settings from cloud
-   const fetchSettings = useCallback(async () => {
-     if (!user) {
-       setSettings(defaultSettings);
-       setLoading(false);
-       return;
-     }
- 
-     try {
-       const { data, error } = await supabase
-         .from('user_preferences')
-         .select('ai_settings')
-         .eq('user_id', user.id)
-         .maybeSingle();
- 
-       if (error) throw error;
- 
-       if (data?.ai_settings) {
-         setSettings({ ...defaultSettings, ...(data.ai_settings as Partial<AISettings>) });
-       } else {
-         // Create default preferences if none exist
-         await supabase
-           .from('user_preferences')
-           .upsert([{ user_id: user.id, ai_settings: defaultSettings as any }], { onConflict: 'user_id' });
-         setSettings(defaultSettings);
-       }
-     } catch (err) {
-       console.error('Error loading AI settings:', err);
-       setSettings(defaultSettings);
-     } finally {
-       setLoading(false);
-     }
-   }, [user]);
+  const { user } = useAuth();
+  const [settings, setSettings] = useState<AISettings>(defaultSettings);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch settings from cloud
+  const fetchSettings = useCallback(async () => {
+    if (!user) {
+      setSettings(defaultSettings);
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('user_preferences')
+        .select('ai_settings')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (data?.ai_settings) {
+        setSettings({ ...defaultSettings, ...(data.ai_settings as Partial<AISettings>) });
+      } else {
+        // Create default preferences if none exist
+        await supabase
+          .from('user_preferences')
+          .upsert([{ user_id: user.id, ai_settings: defaultSettings as any }], { onConflict: 'user_id' });
+        setSettings(defaultSettings);
+      }
+    } catch (err) {
+      console.error('Error loading AI settings:', err);
+      setSettings(defaultSettings);
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
 
   useEffect(() => {
-     fetchSettings();
-   }, [fetchSettings]);
+    fetchSettings();
+  }, [fetchSettings]);
 
-   const updateSettings = (updates: Partial<AISettings>) => {
-     const newSettings = { ...settings, ...updates };
-     setSettings(newSettings);
- 
-     // Save to cloud
-     if (user) {
-       supabase
-         .from('user_preferences')
-         .upsert([{ user_id: user.id, ai_settings: newSettings as any }], { onConflict: 'user_id' })
-         .then(({ error }) => {
-           if (error) {
-             console.error('Error saving AI settings:', error);
-           }
-         });
-     }
+  const updateSettings = (updates: Partial<AISettings>) => {
+    const prev = settings;
+    const newSettings = { ...settings, ...updates };
+    setSettings(newSettings);
+
+    // Save to cloud — revert on failure
+    if (user) {
+      supabase
+        .from('user_preferences')
+        .upsert([{ user_id: user.id, ai_settings: newSettings as any }], { onConflict: 'user_id' })
+        .then(({ error }) => {
+          if (error) {
+            console.error('Error saving AI settings:', error);
+            setSettings(prev);
+          }
+        })
+        .catch((err) => {
+          console.error('Network error saving AI settings:', err);
+          setSettings(prev);
+        });
+    }
   };
 
   return (
-     <AISettingsContext.Provider value={{ settings, loading, updateSettings }}>
+    <AISettingsContext.Provider value={{ settings, loading, updateSettings }}>
       {children}
     </AISettingsContext.Provider>
   );
