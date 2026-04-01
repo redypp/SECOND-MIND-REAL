@@ -96,9 +96,56 @@ export function getSmartTitle(item: Item): string {
   return fallbacks[item.subCategory] ?? 'Note';
 }
 
+// ─── Tag-to-category mapping ─────────────────────────────────────────────────
+// Maps AI-generated tags (from keywords) to display category headers.
+const TAG_CATEGORY_MAP: Record<string, string> = {
+  // Ideas & creativity
+  idea: 'Ideas', ideas: 'Ideas', concept: 'Ideas', brainstorm: 'Ideas',
+  creative: 'Ideas', innovation: 'Ideas', experiment: 'Ideas',
+  // Plans & goals
+  plan: 'Plans & Goals', plans: 'Plans & Goals', goal: 'Plans & Goals',
+  goals: 'Plans & Goals', future: 'Plans & Goals', strategy: 'Plans & Goals',
+  roadmap: 'Plans & Goals', milestone: 'Plans & Goals', objective: 'Plans & Goals',
+  // Research & learning
+  research: 'Research & Learning', learning: 'Research & Learning',
+  study: 'Research & Learning', education: 'Research & Learning',
+  tutorial: 'Research & Learning', course: 'Research & Learning',
+  lesson: 'Research & Learning', reading: 'Research & Learning',
+  // Inspiration & quotes
+  inspiration: 'Inspiration', quote: 'Inspiration', quotes: 'Inspiration',
+  motivation: 'Inspiration', wisdom: 'Inspiration', philosophy: 'Inspiration',
+  // People & contacts
+  people: 'People & Contacts', contact: 'People & Contacts',
+  network: 'People & Contacts', meeting: 'People & Contacts',
+  // Recommendations
+  recommendation: 'Recommendations', recommendations: 'Recommendations',
+  review: 'Recommendations', suggestion: 'Recommendations',
+  // Health & wellness
+  health: 'Health & Wellness', wellness: 'Health & Wellness',
+  fitness: 'Health & Wellness', nutrition: 'Health & Wellness',
+  exercise: 'Health & Wellness', mental: 'Health & Wellness',
+  // Finance & money
+  finance: 'Finance', money: 'Finance', budget: 'Finance',
+  investment: 'Finance', savings: 'Finance', expense: 'Finance',
+  // Work & career
+  work: 'Work & Career', career: 'Work & Career', job: 'Work & Career',
+  professional: 'Work & Career', project: 'Work & Career',
+  // Travel
+  travel: 'Travel', trip: 'Travel', destination: 'Travel', vacation: 'Travel',
+  // Food & cooking
+  recipe: 'Food & Recipes', food: 'Food & Recipes', cooking: 'Food & Recipes',
+  restaurant: 'Food & Recipes',
+  // Decisions
+  decision: 'Decisions', decide: 'Decisions', choice: 'Decisions',
+  comparison: 'Decisions', 'pros-cons': 'Decisions',
+  // Reflections
+  reflection: 'Reflections', thought: 'Reflections', thoughts: 'Reflections',
+  insight: 'Reflections', realization: 'Reflections', observation: 'Reflections',
+};
+
 /**
  * Assign a smart display category label for grouping in archives.
- * Priority: AI tags → structural type → subCategory → content keyword analysis.
+ * Priority: AI tags → structural type → subCategory → keyword tags → content analysis.
  */
 export function getSmartCategory(item: Item): string {
   const mediaBlock = item.blocks?.find(b => b.type === 'media');
@@ -127,24 +174,41 @@ export function getSmartCategory(item: Item): string {
     case 'journal': return 'Journal';
   }
 
+  // Use AI-generated keyword tags to determine category
+  if (item.keywords && item.keywords.length > 0) {
+    for (const tag of item.keywords) {
+      const category = TAG_CATEGORY_MAP[tag.toLowerCase()];
+      if (category) return category;
+    }
+  }
+
   // Content-aware classification using keyword patterns
   const text = extractItemText(item);
 
   if (item.subCategory === 'idea' || IDEAS_RE.test(text)) return 'Ideas';
-  if (FUTURE_PLANS_RE.test(text)) return 'Future Plans';
+  if (FUTURE_PLANS_RE.test(text)) return 'Plans & Goals';
   if (INSPIRATION_RE.test(text)) return 'Inspiration';
   if (REVISIT_RE.test(text)) return 'Things to Revisit';
-  if (REMEMBER_RE.test(text)) return 'Stuff to Remember';
+  if (REMEMBER_RE.test(text)) return 'Notes';
 
-  // Default: Stuff to Remember (better than a generic "Notes" bucket)
-  return 'Stuff to Remember';
+  return 'Notes';
 }
 
 const CATEGORY_ORDER = [
   'Ideas',
-  'Future Plans',
+  'Plans & Goals',
+  'Research & Learning',
+  'Reflections',
   'Inspiration',
-  'Stuff to Remember',
+  'Notes',
+  'Recommendations',
+  'Decisions',
+  'People & Contacts',
+  'Work & Career',
+  'Health & Wellness',
+  'Finance',
+  'Travel',
+  'Food & Recipes',
   'Things to Revisit',
   'References',
   'Tasks',

@@ -53,7 +53,7 @@ export function GroupedArchiveView({ items, groups, onDeleteItem, onGroupsChange
   // Any items not covered by groups go into a catch-all bucket
   const ungrouped = items.filter(i => !assignedIds.has(i.id));
   if (ungrouped.length > 0) {
-    groupedItems.push({ label: 'Stuff to Remember', items: ungrouped });
+    groupedItems.push({ label: 'Notes', items: ungrouped });
   }
 
   const showNav = groupedItems.length > 1;
