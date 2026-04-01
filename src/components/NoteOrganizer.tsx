@@ -164,13 +164,16 @@ export function NoteOrganizer({ noteText, attachments = [], spaceId, onDone }: N
         }
       } else if (att.type === 'link') {
         try {
+          // Use the user's typed text as the title for the link
+          const linkTitle = noteText.trim() || att.value;
           addItem({
             subCategory: 'misc',
+            title: linkTitle,
             blocks: [{ id: `media-${Date.now()}-${i}`, type: 'media', url: att.value, mediaType: 'link' }] as any,
             spaceIds: spaceId ? [spaceId] : [],
           });
           const spaceName = spaceId ? spaces.find(s => s.id === spaceId)?.name : undefined;
-          results.push({ title: att.value, destination: destinationLabel('archive', spaceName) });
+          results.push({ title: linkTitle, destination: destinationLabel('archive', spaceName) });
         } catch (err) {
           console.warn(`Failed to save link ${i}:`, err);
         }
@@ -179,7 +182,7 @@ export function NoteOrganizer({ noteText, attachments = [], spaceId, onDone }: N
 
     setIsSaving(false);
     onDone();
-  }, [spaces, addItem, addSpaceAsync, user, spaceId, attachments, onDone]);
+  }, [spaces, addItem, addSpaceAsync, user, spaceId, attachments, onDone, noteText]);
 
   const handleOrganize = useCallback(async () => {
     if (isOrganizing) return;
@@ -189,8 +192,16 @@ export function NoteOrganizer({ noteText, attachments = [], spaceId, onDone }: N
       await saveItems([]);
       return;
     }
-    
+
     if (!noteText.trim()) return;
+
+    // If text + only link attachments (no images), skip AI — save links with text as title
+    const hasImages = attachments.some(a => a.type === 'image');
+    const hasLinks = attachments.some(a => a.type === 'link');
+    if (hasLinks && !hasImages) {
+      await saveItems([]);
+      return;
+    }
     
     setIsOrganizing(true);
     setError(null);
