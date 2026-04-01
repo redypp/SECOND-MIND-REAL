@@ -1392,7 +1392,7 @@ Your job:
 6. Generate a clean title for each item (max 8 words)
 7. OPTIMIZE the content text: fix grammar, improve clarity, remove filler words, tighten the language — but PRESERVE the original meaning and voice. Make it read cleanly and professionally.
 8. Categorize each item's sub_category: "notes", "todo", "scheduling", or "misc"
-8. Categorize each item's sub_category: "notes", "todo", "scheduling", or "misc"
+9. For the tags array, the FIRST tag must be a CATEGORY TAG that determines how items are grouped under headers in the archive. Choose from: idea, plan, research, learning, reflection, thought, inspiration, recommendation, decision, people, work, career, health, fitness, finance, travel, recipe, food, quote. This is critical for smart organization — items with the same first tag will be grouped together under a meaningful header.
 
 CRITICAL — ARCHIVE IS THE DEFAULT DESTINATION:
 Most user input is knowledge, ideas, thoughts, or information that should be SAVED in the archive.
@@ -1471,7 +1471,7 @@ STRICT RULES:
                         items: { type: "string" },
                         description: "If needs_clarification, list 2-3 space names it could belong to"
                       },
-                      tags: { type: "array", items: { type: "string" }, description: "2-4 lowercase tags" },
+                      tags: { type: "array", items: { type: "string" }, description: "2-4 lowercase tags. The FIRST tag MUST be a category tag for smart grouping headers. Use one of: idea, plan, research, learning, reflection, thought, inspiration, recommendation, decision, people, work, career, health, fitness, finance, travel, recipe, food, quote. Pick the single most relevant category as the first tag, then add 1-3 topic-specific tags." },
                       scheduled_date: { type: "string", description: "ISO date YYYY-MM-DD if mentioned" },
                       scheduled_time: { type: "string", description: "Start time HH:MM in 24h format" },
                       scheduled_end_time: { type: "string", description: "End time HH:MM in 24h format (for daily_plan events)" }
