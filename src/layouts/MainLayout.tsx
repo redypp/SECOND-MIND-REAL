@@ -288,8 +288,28 @@ export default function MainLayout() {
     const container = containerRef.current;
     if (!container) return;
     container.addEventListener('scroll', handleScroll, { passive: true });
+
+    // Prevent iOS Safari back/forward swipe when at scroll edges
+    let touchStartX = 0;
+    const onTouchStart = (e: TouchEvent) => {
+      touchStartX = e.touches[0].clientX;
+    };
+    const onTouchMove = (e: TouchEvent) => {
+      const dx = e.touches[0].clientX - touchStartX;
+      const atLeft = container.scrollLeft <= 0;
+      const atRight = container.scrollLeft >= container.scrollWidth - container.clientWidth - 1;
+      // Block overscroll: swiping right at left edge, or swiping left at right edge
+      if ((atLeft && dx > 0) || (atRight && dx < 0)) {
+        e.preventDefault();
+      }
+    };
+    container.addEventListener('touchstart', onTouchStart, { passive: true });
+    container.addEventListener('touchmove', onTouchMove, { passive: false });
+
     return () => {
       container.removeEventListener('scroll', handleScroll);
+      container.removeEventListener('touchstart', onTouchStart);
+      container.removeEventListener('touchmove', onTouchMove);
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       clearTimeout((handleScroll as any).timeout);
     };
