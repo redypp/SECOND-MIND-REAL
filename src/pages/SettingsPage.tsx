@@ -234,6 +234,37 @@ export default function SettingsPage() {
           {/* Theme row — expands inline */}
           <ThemeRowExpanded theme={theme} setTheme={setTheme} />
 
+          {/* Microphone permission */}
+          <button
+            onClick={async () => {
+              try {
+                // Try native Capacitor first
+                const mod = await import('@capacitor-community/speech-recognition').catch(() => null);
+                if (mod?.SpeechRecognition) {
+                  const result = await mod.SpeechRecognition.requestPermissions();
+                  alert(result.speechRecognition === 'granted' ? 'Microphone access granted' : 'Microphone access denied. Please enable in device Settings.');
+                  return;
+                }
+                // Web fallback — triggers browser permission prompt
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                stream.getTracks().forEach(t => t.stop());
+                alert('Microphone access granted');
+              } catch {
+                alert('Microphone access denied. Please enable in your browser or device settings.');
+              }
+            }}
+            className="w-full flex items-center gap-3.5 px-4 py-3.5 hover:bg-accent/30 transition-colors text-left"
+          >
+            <div className="w-8 h-8 rounded-lg bg-accent/60 flex items-center justify-center shrink-0">
+              <Mic className="w-4 h-4 text-foreground" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium">Microphone access</p>
+              <p className="text-xs text-muted-foreground">Grant permission for voice input on Ask</p>
+            </div>
+            <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+          </button>
+
           {/* Voice auto-send */}
           <div className="flex items-center gap-3.5 px-4 py-3.5">
             <div className="w-8 h-8 rounded-lg bg-accent/60 flex items-center justify-center shrink-0">
