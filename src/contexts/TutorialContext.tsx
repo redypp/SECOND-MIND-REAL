@@ -1,8 +1,9 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode, useRef } from 'react';
 
 export type OnboardingPhase =
-  | 'welcome-1'
-  | 'welcome-2'
+  | 'ai-name'
+  | 'ai-tone'
+  | 'ai-focus'
   | 'tour-home'
   | 'tour-daily-plan'
   | 'tour-todos'
@@ -19,8 +20,9 @@ export type OnboardingPhase =
 export type TutorialStep = OnboardingPhase;
 
 const PHASE_ORDER: OnboardingPhase[] = [
-  'welcome-1',
-  'welcome-2',
+  'ai-name',
+  'ai-tone',
+  'ai-focus',
   'tour-home',
   'tour-daily-plan',
   'tour-todos',
@@ -206,6 +208,9 @@ function resolveInitialPhase(): OnboardingPhase {
   if (saved && PHASE_ORDER.includes(saved as OnboardingPhase)) {
     return saved as OnboardingPhase;
   }
+  // Legacy mapping: old welcome slides → new AI personality phases
+  if (saved === 'welcome-1') return 'ai-name';
+  if (saved === 'welcome-2') return 'ai-tone';
   // Migration: if user completed both old onboarding + old tutorial, mark as complete
   const legacyOnboarding = localStorage.getItem('secondmind_onboarding_done');
   const legacyTutorial = localStorage.getItem('secondmind_tutorial_step');
@@ -213,7 +218,7 @@ function resolveInitialPhase(): OnboardingPhase {
     return 'complete';
   }
   // New user — start from the beginning
-  return 'welcome-1';
+  return 'ai-name';
 }
 
 export function TutorialProvider({ children }: { children: ReactNode }) {
@@ -240,7 +245,7 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
     const trigger = localStorage.getItem('secondmind_trigger_tutorial');
     if (trigger === 'true') {
       localStorage.removeItem('secondmind_trigger_tutorial');
-      setCurrentPhase('welcome-1');
+      setCurrentPhase('ai-name');
     }
   }, []);
 
@@ -271,7 +276,7 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('secondmind_tutorial_step');
     localStorage.removeItem('secondmind_tutorial_collection_id');
     localStorage.removeItem('secondmind_tour_seen');
-    setCurrentPhase('welcome-1');
+    setCurrentPhase('ai-name');
   }, []);
 
   const reportTutorialAction = useCallback((actionKey: string) => {

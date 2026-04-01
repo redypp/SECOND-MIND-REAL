@@ -3,6 +3,7 @@ import { useSpaces } from '@/contexts/SpacesContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/app-client';
 import { fetchSourcesForItems, ArchiveSource } from '@/lib/archiveSources';
+import { useAISettings } from '@/contexts/AISettingsContext';
 
 // ─── Module-level auth token cache ──────────────────────────────────────────
 // Avoids an async round-trip to the session store on every question submit.
@@ -106,6 +107,7 @@ interface OrganizeAllResponse {
 export function useAI() {
   const { spaces, items } = useSpaces();
   const { profile } = useAuth();
+  const { settings: aiSettings } = useAISettings();
   const [isLoading, setIsLoading] = useState(false);
   const [sourcesCache, setSourcesCache] = useState<ArchiveSource[]>([]);
   const sourcesFetchedRef = useRef(false);
@@ -160,8 +162,15 @@ export function useAI() {
           birthday: profile.birthday || undefined,
         },
       } : {}),
+      // AI personality preferences
+      personality: {
+        name: aiSettings.assistantName || 'Second Mind',
+        tone: aiSettings.tone || 'friendly',
+        verbosity: aiSettings.verbosity || 'balanced',
+        focusAreas: aiSettings.focusAreas || [],
+      },
     };
-  }, [spaces, items, sourcesCache, profile]);
+  }, [spaces, items, sourcesCache, profile, aiSettings]);
 
   const askQuestion = useCallback(async (
     question: string,

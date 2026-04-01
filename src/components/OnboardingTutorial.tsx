@@ -1,7 +1,7 @@
 /**
  * OnboardingTutorial — Unified onboarding flow
  *
- *  1. Welcome phases  (welcome-1, welcome-2) — full-screen slides, no skip
+ *  1. AI setup phases (ai-name, ai-tone, ai-focus) — personality configuration
  *  2. Tour phases     (tour-*) — app is live underneath; spotlight + bottom bar
  *  3. Complete phase  — brief completion screen, then hides itself
  *
@@ -19,37 +19,10 @@ import {
   TOUR_PHASE_CONFIGS,
   OnboardingPhase,
 } from '@/contexts/TutorialContext';
+import { AIPersonalitySetup } from '@/components/AIPersonalitySetup';
 
 // ─── Legacy export so any stale App.tsx import keeps compiling ───────────────
 export { isOnboardingFlowComplete as isOnboardingComplete } from '@/contexts/TutorialContext';
-
-// ─── Welcome slide data ──────────────────────────────────────────────────────
-
-const WELCOME_SLIDES = [
-  {
-    phase: 'welcome-1' as OnboardingPhase,
-    quote:
-      '"8 in 10 people agree that having all their information in one place makes them significantly more focused and productive."',
-    subtitle: 'Second Mind is that place.',
-    tagline: "Let's get you set up — it takes less than two minutes.",
-    cta: 'Show me around',
-  },
-  {
-    phase: 'welcome-2' as OnboardingPhase,
-    title: "Here's what we'll cover",
-    sections: [
-      { icon: '🏠', label: 'Life' },
-      { icon: '📅', label: 'Daily Planner' },
-      { icon: '✅', label: 'Tasks' },
-      { icon: '🔁', label: 'Habits' },
-      { icon: '📝', label: 'Journal' },
-      { icon: '📚', label: 'Archive' },
-      { icon: '🤖', label: 'AI Ask' },
-    ],
-    tagline: "You'll try each section briefly — then you're done.",
-    cta: "Let's go",
-  },
-];
 
 // ─── Spotlight geometry ──────────────────────────────────────────────────────
 
@@ -167,7 +140,7 @@ export function OnboardingTutorial() {
   if (isAuthRoute) return null;
 
   const isTourPhase = currentPhase.startsWith('tour-');
-  const isWelcomePhase = currentPhase.startsWith('welcome-');
+  const isAISetupPhase = currentPhase.startsWith('ai-');
   const isComplete = currentPhase === 'complete';
 
   if (isComplete && !justCompleted) return null;
@@ -212,120 +185,9 @@ export function OnboardingTutorial() {
     );
   }
 
-  // ── Welcome slides (full-screen, no skip) ────────────────────────────────
-  if (isWelcomePhase) {
-    const slideIndex = currentPhase === 'welcome-1' ? 0 : 1;
-    const slide = WELCOME_SLIDES[slideIndex];
-
-    return (
-      <div className="fixed inset-0 z-[9999] bg-background flex flex-col">
-        {/* Progress dots */}
-        <div className="flex items-center justify-center gap-1.5 pt-safe pt-8 pb-2">
-          {[0, 1].map(i => (
-            <div
-              key={i}
-              className={`w-1.5 h-1.5 rounded-full transition-colors duration-300 ${
-                i === slideIndex
-                  ? 'bg-foreground'
-                  : i < slideIndex
-                  ? 'bg-muted-foreground/40'
-                  : 'bg-border'
-              }`}
-            />
-          ))}
-        </div>
-
-        {/* Slide content */}
-        <div className="flex-1 relative overflow-hidden">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={currentPhase}
-              initial={{ x: '100%', opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              exit={{ x: '-100%', opacity: 0 }}
-              transition={{ type: 'tween', duration: 0.3, ease: 'easeInOut' }}
-              className="absolute inset-0 flex flex-col items-center justify-center px-8"
-            >
-              {slideIndex === 0 ? (
-                /* Quote slide */
-                <div className="text-center max-w-sm">
-                  <motion.p
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1 }}
-                    className="text-lg font-light leading-relaxed text-foreground"
-                  >
-                    {slide.quote}
-                  </motion.p>
-                  <motion.p
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.35 }}
-                    className="mt-5 text-sm font-semibold text-foreground"
-                  >
-                    {slide.subtitle}
-                  </motion.p>
-                  <motion.p
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.5 }}
-                    className="mt-2 text-sm text-muted-foreground"
-                  >
-                    {slide.tagline}
-                  </motion.p>
-                </div>
-              ) : (
-                /* Section overview slide */
-                <div className="text-center max-w-sm w-full">
-                  <motion.h2
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1 }}
-                    className="text-xl font-light text-foreground mb-6"
-                  >
-                    {slide.title}
-                  </motion.h2>
-                  <div className="grid grid-cols-4 gap-3">
-                    {slide.sections?.map((section, i) => (
-                      <motion.div
-                        key={section.label}
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.12 + i * 0.05 }}
-                        className="flex flex-col items-center gap-2 p-3 rounded-xl bg-secondary/50"
-                      >
-                        <span className="text-xl">{section.icon}</span>
-                        <span className="text-[12px] text-muted-foreground leading-tight text-center">{section.label}</span>
-                      </motion.div>
-                    ))}
-                  </div>
-                  <motion.p
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.6 }}
-                    className="mt-5 text-sm text-muted-foreground"
-                  >
-                    {slide.tagline}
-                  </motion.p>
-                </div>
-              )}
-            </motion.div>
-          </AnimatePresence>
-        </div>
-
-        {/* CTA — no skip */}
-        <div className="px-8 pb-10 pt-4">
-          <button
-            onClick={advancePhase}
-            className="w-full py-3.5 rounded-xl bg-foreground text-background font-medium text-sm
-                       transition-colors active:scale-[0.98] flex items-center justify-center gap-2"
-          >
-            {slide.cta}
-            <ArrowRight className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
-    );
+  // ── AI personality setup (replaces old welcome slides) ────────────────────
+  if (isAISetupPhase) {
+    return <AIPersonalitySetup phase={currentPhase} />;
   }
 
   // ── Tour phases ───────────────────────────────────────────────────────────

@@ -2,6 +2,9 @@
  import { supabase } from '@/integrations/supabase/app-client';
  import { useAuth } from '@/contexts/AuthContext';
 
+export type AITone = 'concise' | 'friendly' | 'professional' | 'encouraging';
+export type AIVerbosity = 'brief' | 'balanced' | 'detailed';
+
 export interface AISettings {
   smartNotifications: boolean;
   notificationFrequency: number;
@@ -11,6 +14,14 @@ export interface AISettings {
   aiButtonHidden: boolean;
   /** Auto-send after voice transcription without requiring a manual tap. */
   voiceAutoSend: boolean;
+  /** Custom name for the AI assistant. */
+  assistantName: string;
+  /** Response tone/style. */
+  tone: AITone;
+  /** Response length preference. */
+  verbosity: AIVerbosity;
+  /** Priority topics the AI should weight. */
+  focusAreas: string[];
 }
 
 const defaultSettings: AISettings = {
@@ -21,6 +32,10 @@ const defaultSettings: AISettings = {
   isPremiumUnlocked: true,
   aiButtonHidden: false,
   voiceAutoSend: false,
+  assistantName: 'Second Mind',
+  tone: 'friendly',
+  verbosity: 'balanced',
+  focusAreas: [],
 };
 
 interface AISettingsContextType {
