@@ -1,5 +1,5 @@
-/* Space Grotesk — geometric, bold, editorial. Primary font for all text. */
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+/* Oswald — condensed, bold, editorial magazine font. Used for ALL text. */
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@200;300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -91,8 +91,8 @@
     --chart-4: 0 60% 30%;
     --chart-5: 350 89% 60%;
 
-    --font-sans: 'Space Grotesk', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    --font-display: 'Space Grotesk', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    --font-sans: 'Oswald', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    --font-display: 'Oswald', 'Helvetica Neue', Helvetica, Arial, sans-serif;
 
     --spacing: 0.25rem;
     --tracking-normal: -0.011em;

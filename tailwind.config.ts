@@ -15,14 +15,14 @@ export default {
   	extend: {
   		fontFamily: {
   			sans: [
-  				'Space Grotesk',
+  				'Oswald',
   				'Helvetica Neue',
   				'Helvetica',
   				'Arial',
   				'sans-serif'
   			],
   			display: [
-  				'Space Grotesk',
+  				'Oswald',
   				'Helvetica Neue',
   				'sans-serif'
   			],
