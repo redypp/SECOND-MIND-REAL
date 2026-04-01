@@ -107,16 +107,16 @@ export default function LifePage({ embedded = false, onNavigateToSection }: Life
               className={`w-full h-full relative overflow-hidden life-section-card${section.isAsk ? ' life-section-ask' : ''}`}
               data-depth={section.isAsk ? undefined : getDepth(i)}
             >
-              {/* Editorial bottom-left aligned layout */}
-              <div className="absolute inset-0 flex flex-col justify-end px-5 pb-2">
-                <p className="text-[9px] uppercase tracking-[0.16em] font-medium life-section-meta opacity-70 mb-0.5">
-                  {section.meta}
-                </p>
+              {/* Left-center aligned layout */}
+              <div className="absolute inset-0 flex flex-col justify-center px-5">
                 <p
                   className="font-display tracking-[-0.05em] leading-[0.88] uppercase life-section-label"
                   style={{ fontSize: 'clamp(2.2rem, 9vw, 3.5rem)', fontWeight: 700 }}
                 >
                   {section.label}
+                </p>
+                <p className="text-[9px] uppercase tracking-[0.16em] font-medium life-section-meta opacity-70 mt-1">
+                  {section.meta}
                 </p>
               </div>
             </div>

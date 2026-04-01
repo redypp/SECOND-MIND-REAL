@@ -144,12 +144,12 @@ export default function CollectionsPage({ embedded = false, onNavigateToSpace }:
                     )}
                   </div>
 
-                  {/* Editorial bottom-left title */}
-                  <div className="absolute inset-0 flex flex-col justify-end px-5 pb-3">
+                  {/* Left-center title */}
+                  <div className="absolute inset-0 flex flex-col justify-center px-5">
                     <span
                       className="text-white uppercase font-display tracking-[-0.05em] leading-[0.88]"
                       style={{
-                        fontSize: 'clamp(2.5rem, 10vw, 4rem)',
+                        fontSize: 'clamp(2.2rem, 9vw, 3.5rem)',
                         fontWeight: 700,
                         textShadow: '0 2px 20px rgba(0,0,0,0.6), 0 0 4px rgba(0,0,0,0.3)',
                       }}
