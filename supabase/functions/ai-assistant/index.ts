@@ -73,6 +73,13 @@ interface UserProfile {
   birthday?: string;
 }
 
+interface Personality {
+  name?: string;
+  tone?: 'concise' | 'friendly' | 'professional' | 'encouraging';
+  verbosity?: 'brief' | 'balanced' | 'detailed';
+  focusAreas?: string[];
+}
+
 interface AssistantRequest {
   type: RequestType;
   input: string;
@@ -83,6 +90,7 @@ interface AssistantRequest {
     conversationHistory?: ConversationMessage[];
     answer?: string; // For ask_action_suggestions: the AI's previous answer
     profile?: UserProfile;
+    personality?: Personality;
   };
 }
 
@@ -505,9 +513,66 @@ serve(async (req) => {
     const searchableContent = NEEDS_FULL_CONTEXT.has(type) ? buildSearchableContent(context) : "";
 
     // ============================================================
+    // PERSONALITY PROMPT BUILDER
+    // ============================================================
+    const personality = context.personality ?? {};
+    const assistantName = personality.name || 'Second Mind';
+
+    function buildPersonalityPrompt(p: Personality): string {
+      const lines: string[] = [];
+
+      // Tone
+      switch (p.tone) {
+        case 'concise':
+          lines.push('- Be direct and efficient. No filler words or unnecessary pleasantries.');
+          lines.push('- Lead with the answer, then context only if needed.');
+          break;
+        case 'professional':
+          lines.push('- Use clear, structured language. Be thorough and well-organized.');
+          lines.push('- Present information in a business-ready format when relevant.');
+          break;
+        case 'encouraging':
+          lines.push('- Be warm, supportive, and motivating. Celebrate progress.');
+          lines.push('- Frame challenges positively and highlight what the user is doing well.');
+          break;
+        case 'friendly':
+        default:
+          lines.push('- Be warm and conversational, like a smart friend who knows them well.');
+          lines.push('- Be clear, concise, and honest.');
+          break;
+      }
+
+      // Verbosity
+      switch (p.verbosity) {
+        case 'brief':
+          lines.push('- Keep responses short — 2-3 sentences when possible. Only elaborate if asked.');
+          break;
+        case 'detailed':
+          lines.push('- Provide thorough, detailed responses with examples and context.');
+          break;
+        case 'balanced':
+        default:
+          lines.push('- Give enough detail to be helpful without being overwhelming.');
+          break;
+      }
+
+      // Focus areas
+      if (p.focusAreas && p.focusAreas.length > 0) {
+        lines.push(`- When relevant, prioritize topics related to: ${p.focusAreas.join(', ')}.`);
+      }
+
+      lines.push('- If you are uncertain or lack data, say so directly.');
+      lines.push('- Your success is measured by whether the user: Remembers more, Thinks more clearly, Makes better decisions faster');
+
+      return lines.join('\n');
+    }
+
+    const personalityBlock = buildPersonalityPrompt(personality);
+
+    // ============================================================
     // SECOND MIND SYSTEM PROMPT FOUNDATION
     // ============================================================
-    const secondMindCore = `You are Second Mind — a long-term personal thinking and memory assistant.
+    const secondMindCore = `You are ${assistantName} — a long-term personal thinking and memory assistant.
 
 Your core responsibility is to help the user store, retrieve, connect, and act on information over time. You are NOT a generic chatbot. You must prioritize memory accuracy, relevance, and practical value.
 
@@ -555,11 +620,9 @@ When asked for summaries, reviews, or digests, prioritize:
 - Connections the user may have missed
 
 ═══════════════════════════════════════════════════════════════
-TONE
+TONE & PERSONALITY
 ═══════════════════════════════════════════════════════════════
-- Be clear, concise, and honest
-- If you are uncertain or lack data, say so directly
-- Your success is measured by whether the user: Remembers more, Thinks more clearly, Makes better decisions faster
+${personalityBlock}
 
 Current time: ${context.currentTime}
 ${context.profile ? `
@@ -579,7 +642,7 @@ ${context.spaces.map(s => `- "${s.name}" (${s.itemCount} items)`).join('\n')}`;
 
     // Lightweight version — just identity + time + profile + spaces, no full knowledge base.
     // Use this for tasks that operate on a single note or only need space routing.
-    const secondMindCoreLite = `You are Second Mind — a personal thinking and memory assistant.
+    const secondMindCoreLite = `You are ${assistantName} — a personal thinking and memory assistant.
 Current time: ${context.currentTime}${context.profile?.name ? `\nUser: ${context.profile.name}` : ''}
 
 SPACES/CATEGORIES:
