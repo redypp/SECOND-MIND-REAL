@@ -27,7 +27,7 @@ export function useChatSessions() {
   const [isLoading, setIsLoading] = useState(true);
   const initRef = useRef(false);
 
-  // ── Load sessions on mount ────────────────────────────────────────────
+  // ── Load sessions on mount — always start fresh, keep history ──────────
   useEffect(() => {
     if (!userId || initRef.current) return;
     initRef.current = true;
@@ -35,29 +35,20 @@ export function useChatSessions() {
     (async () => {
       setIsLoading(true);
       try {
-        const { data, error } = await supabase
+        // Load session list for history access
+        const { data } = await supabase
           .from('chat_sessions')
           .select('*')
           .eq('user_id', userId)
           .order('updated_at', { ascending: false });
 
-        if (error) throw error;
+        if (data) setSessions(data as ChatSession[]);
 
-        if (data && data.length > 0) {
-          setSessions(data as ChatSession[]);
-          setActiveSessionId(data[0].id);
-          // Load messages for the most recent session
-          await loadMessages(data[0].id);
-        } else {
-          // No sessions — create one
-          const newSession = await createSession();
-          if (newSession) {
-            setActiveSessionId(newSession.id);
-          }
-        }
+        // Always start a fresh session — previous ones are accessible via history
+        const newSession = await createSession();
+        if (newSession) setActiveSessionId(newSession.id);
       } catch (err) {
-        console.error('Could not load chat sessions, creating new one:', err);
-        // Fallback: create a fresh session
+        console.error('Could not init chat sessions:', err);
         try {
           const newSession = await createSession();
           if (newSession) setActiveSessionId(newSession.id);
@@ -154,6 +145,28 @@ export function useChatSessions() {
 
   const activeMessages = activeSessionId ? (messagesMap[activeSessionId] || []) : [];
 
+  // ── Load all previous messages (across older sessions) for history ────
+  const loadHistory = useCallback(async (): Promise<ChatMessageRow[]> => {
+    if (!userId) return [];
+    try {
+      // Get all messages from sessions other than the active one, newest first
+      const { data, error } = await supabase
+        .from('chat_messages')
+        .select('*')
+        .eq('user_id', userId)
+        .neq('session_id', activeSessionId || '')
+        .order('created_at', { ascending: false })
+        .limit(100);
+
+      if (error) throw error;
+      // Reverse so oldest is first (chronological order)
+      return (data as ChatMessageRow[]).reverse();
+    } catch (err) {
+      console.error('Failed to load chat history:', err);
+      return [];
+    }
+  }, [userId, activeSessionId]);
+
   return {
     sessions,
     activeSessionId,
@@ -164,5 +177,6 @@ export function useChatSessions() {
     startNewSession,
     switchSession,
     loadMessages,
+    loadHistory,
   };
 }

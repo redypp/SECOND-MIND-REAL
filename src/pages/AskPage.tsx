@@ -94,9 +94,12 @@ export default function AskPage() {
   const { items, addItemAsync } = useSpaces();
   const { reportTutorialAction } = useTutorial();
   const { settings } = useAISettings();
-  const { activeSessionId, activeMessages, saveMessage, isLoading: sessionsLoading } = useChatSessions();
+  const { activeSessionId, activeMessages, saveMessage, loadHistory, isLoading: sessionsLoading } = useChatSessions();
 
   const [messages, setMessages]           = useState<Message[]>([]);
+  const [historyMessages, setHistoryMessages] = useState<Message[]>([]);
+  const [historyLoaded, setHistoryLoaded] = useState(false);
+  const [historyLoading, setHistoryLoading] = useState(false);
   const [conversationHistory, setHistory] = useState<ChatMessage[]>([]);
   const [input, setInput]                 = useState('');
   const [isLoading, setIsLoading]         = useState(false);
@@ -117,26 +120,12 @@ export default function AskPage() {
   // ── Prewarm auth token on mount (removes async wait on first submit) ──────
   useEffect(() => { prewarmAuth().catch(() => {}); }, []);
 
-  // ── Restore persisted messages when session loads ─────────────────────────
+  // ── Fresh session — no messages restored on load ──────────────────────────
   useEffect(() => {
     if (sessionsLoading || sessionInitRef.current || !activeSessionId) return;
-    if (activeMessages.length > 0) {
-      sessionInitRef.current = true;
-      const restored: Message[] = activeMessages.map(m => ({
-        id: m.id,
-        role: m.role as 'user' | 'assistant',
-        content: m.content,
-      }));
-      setMessages(restored);
-      const history: ChatMessage[] = activeMessages.map(m => ({
-        role: m.role as 'user' | 'assistant',
-        content: m.content,
-      }));
-      setHistory(history.slice(-12));
-    } else {
-      sessionInitRef.current = true;
-    }
-  }, [sessionsLoading, activeSessionId, activeMessages]);
+    sessionInitRef.current = true;
+    // Start with a clean slate — history is loaded on scroll-up
+  }, [sessionsLoading, activeSessionId]);
 
   useEffect(() => {
     document.body.style.overflow = 'hidden';
@@ -148,6 +137,34 @@ export default function AskPage() {
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
 
   // ── Derived context data for personalization ──────────────────────────────
+  // ── Load previous conversation history when scrolling to top ───────────
+  const handleScrollToTop = useCallback(async () => {
+    if (historyLoaded || historyLoading) return;
+    setHistoryLoading(true);
+    try {
+      const history = await loadHistory();
+      if (history.length > 0) {
+        const restored: Message[] = history.map(m => ({
+          id: m.id,
+          role: m.role as 'user' | 'assistant',
+          content: m.content,
+        }));
+        setHistoryMessages(restored);
+      }
+      setHistoryLoaded(true);
+    } finally {
+      setHistoryLoading(false);
+    }
+  }, [historyLoaded, historyLoading, loadHistory]);
+
+  const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+    const el = e.currentTarget;
+    // Trigger when scrolled near the top (within 20px)
+    if (el.scrollTop <= 20 && messages.length > 0 && !historyLoaded) {
+      handleScrollToTop();
+    }
+  }, [messages.length, historyLoaded, handleScrollToTop]);
+
   const { contextLine, itemCount, dynamicPrompts } = useMemo(() => {
     const today    = new Date().toISOString().slice(0, 10);
     const notes    = items.filter(i => ['notes', 'idea', 'misc'].includes(i.subCategory ?? ''));
@@ -465,6 +482,7 @@ export default function AskPage() {
       {/* ── Messages / Empty state ── */}
       <div
         className="flex-1 overflow-y-auto overscroll-none min-h-0"
+        onScroll={handleScroll}
         style={{ touchAction: 'pan-y', WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
       >
         {isEmpty ? (
@@ -500,6 +518,40 @@ export default function AskPage() {
         ) : (
           /* ── Conversation ── */
           <div className="px-5 pt-4 pb-6 space-y-6">
+            {/* Previous conversation history — loaded on scroll-up */}
+            {historyMessages.length > 0 && (
+              <>
+                <div className="text-center py-3">
+                  <span className="text-[11px] uppercase tracking-widest text-muted-foreground/40 font-medium">
+                    Previous conversations
+                  </span>
+                </div>
+                {historyMessages.map(message => (
+                  <div
+                    key={message.id}
+                    className={message.role === 'user' ? 'flex justify-end' : 'flex justify-start'}
+                  >
+                    {message.role === 'user' ? (
+                      <div className="max-w-[82%] bg-muted/30 rounded-2xl rounded-br-md px-4 py-2.5">
+                        <p className="text-[14px] leading-relaxed text-foreground/50">{message.content}</p>
+                      </div>
+                    ) : (
+                      <div className="w-full pl-3.5 border-l-2 border-muted-foreground/10">
+                        <p className="text-[14px] leading-relaxed text-foreground/50 whitespace-pre-wrap">{message.content}</p>
+                      </div>
+                    )}
+                  </div>
+                ))}
+                <div className="text-center py-2">
+                  <div className="h-px bg-border/20 mx-auto" style={{ width: '40%' }} />
+                </div>
+              </>
+            )}
+            {historyLoading && (
+              <div className="text-center py-3">
+                <span className="text-[12px] text-muted-foreground/40">Loading history...</span>
+              </div>
+            )}
             {messages.map(message => (
               <div
                 key={message.id}
