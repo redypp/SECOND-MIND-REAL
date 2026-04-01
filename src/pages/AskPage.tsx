@@ -138,23 +138,6 @@ export default function AskPage() {
     }
   }, [sessionsLoading, activeSessionId, activeMessages]);
 
-  // ── Viewport / scroll helpers ─────────────────────────────────────────────
-  useEffect(() => {
-    const el = modalRef.current;
-    const vv = window.visualViewport;
-    const apply = () => {
-      if (!el) return;
-      el.style.height = `${vv?.height ?? window.innerHeight}px`;
-      el.style.top    = `${vv?.offsetTop ?? 0}px`;
-      el.style.bottom = 'auto';
-    };
-    let raf: number;
-    const update = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(apply); };
-    apply();
-    if (vv) { vv.addEventListener('resize', update); vv.addEventListener('scroll', update); }
-    return () => { cancelAnimationFrame(raf); if (vv) { vv.removeEventListener('resize', update); vv.removeEventListener('scroll', update); } };
-  }, []);
-
   useEffect(() => {
     document.body.style.overflow = 'hidden';
     document.documentElement.style.overflow = 'hidden';
@@ -426,13 +409,36 @@ export default function AskPage() {
   // ── Render ────────────────────────────────────────────────────────────────
   const isEmpty = messages.length === 0;
 
+  // ── Viewport height tracking (avoids stale inline style) ──────────────────
+  const [viewportH, setViewportH] = useState(() => window.visualViewport?.height ?? window.innerHeight);
+  const [viewportTop, setViewportTop] = useState(() => window.visualViewport?.offsetTop ?? 0);
+
+  useEffect(() => {
+    const vv = window.visualViewport;
+    const sync = () => {
+      setViewportH(vv?.height ?? window.innerHeight);
+      setViewportTop(vv?.offsetTop ?? 0);
+    };
+    sync();
+    if (vv) {
+      vv.addEventListener('resize', sync);
+      vv.addEventListener('scroll', sync);
+    }
+    return () => {
+      if (vv) {
+        vv.removeEventListener('resize', sync);
+        vv.removeEventListener('scroll', sync);
+      }
+    };
+  }, []);
+
   return (
     <div
       ref={modalRef}
-      className="fixed inset-0 z-[99999] bg-background flex flex-col"
+      className="fixed inset-x-0 z-[99999] bg-background flex flex-col"
       style={{
-        height: `${window.visualViewport?.height ?? window.innerHeight}px`,
-        top:    `${window.visualViewport?.offsetTop ?? 0}px`,
+        height: `${viewportH}px`,
+        top:    `${viewportTop}px`,
         overscrollBehavior: 'none',
       }}
     >
@@ -440,7 +446,7 @@ export default function AskPage() {
       <div className="shrink-0" style={{ height: 'var(--app-safe-top)' }} />
 
       {/* ── Header ── */}
-      <div className="flex items-center px-4 pt-3 pb-2 shrink-0">
+      <div className="flex items-center px-5 pt-3 pb-2 shrink-0">
         <div className="flex-1" />
         <p className="text-[13px] font-black tracking-[0.28em] text-foreground/40 uppercase select-none">
           Second Mind
@@ -448,7 +454,7 @@ export default function AskPage() {
         <div className="flex-1 flex justify-end">
           <button
             onClick={() => navigate(-1)}
-            className="p-2 rounded-full hover:bg-accent/60 transition-colors active:scale-90"
+            className="p-2 -mr-1 rounded-full hover:bg-accent/60 transition-colors active:scale-90"
             aria-label="Close"
           >
             <X className="w-4 h-4 text-foreground/40" strokeWidth={2.5} />
@@ -462,23 +468,28 @@ export default function AskPage() {
         style={{ touchAction: 'pan-y', WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
       >
         {isEmpty ? (
-          /* ── Empty state: bottom-aligned prompts near input ── */
-          <div className="h-full flex flex-col justify-end px-5 pb-3 gap-3">
-            {contextLine && (
-              <p className="text-[14px] text-center text-muted-foreground/55 tracking-wide pb-0.5">
-                {contextLine}
+          /* ── Empty state: centered greeting + bottom-aligned prompts ── */
+          <div className="h-full flex flex-col px-5 pb-4">
+            <div className="flex-1 flex flex-col items-center justify-center gap-2">
+              <p className="text-[22px] font-semibold text-foreground/80 tracking-tight">
+                Ask anything
               </p>
-            )}
-            <div className="space-y-1.5">
+              {contextLine && (
+                <p className="text-[13px] text-muted-foreground/45 tracking-wide">
+                  {contextLine}
+                </p>
+              )}
+            </div>
+            <div className="space-y-2">
               <AnimatePresence>
                 {dynamicPrompts.map((q, i) => (
                   <motion.button
                     key={q}
-                    initial={{ opacity: 0, y: 5 }}
+                    initial={{ opacity: 0, y: 6 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.045, duration: 0.18 }}
+                    transition={{ delay: i * 0.04, duration: 0.2 }}
                     onClick={() => handleSend(q)}
-                    className="w-full text-left text-[15px] px-4 py-3 rounded-2xl bg-muted/40 hover:bg-muted/60 text-foreground/65 hover:text-foreground/90 transition-all active:scale-[0.985] touch-manipulation leading-snug"
+                    className="w-full text-left text-[14px] px-4 py-3 rounded-2xl bg-muted/30 hover:bg-muted/50 text-foreground/60 hover:text-foreground/85 transition-all active:scale-[0.985] touch-manipulation leading-snug border border-border/10"
                   >
                     {q}
                   </motion.button>
@@ -488,30 +499,29 @@ export default function AskPage() {
           </div>
         ) : (
           /* ── Conversation ── */
-          <div className="px-5 pt-5 pb-6 space-y-7">
+          <div className="px-5 pt-4 pb-6 space-y-6">
             {messages.map(message => (
               <div
                 key={message.id}
                 className={message.role === 'user' ? 'flex justify-end' : 'flex justify-start'}
               >
                 {message.role === 'user' ? (
-                  /* User — minimal muted pill */
-                  <div className="max-w-[80%] bg-muted/60 rounded-2xl rounded-br-md px-4 py-2.5">
+                  /* User — muted pill */
+                  <div className="max-w-[82%] bg-muted/50 rounded-2xl rounded-br-md px-4 py-2.5">
                     <p className="text-[14px] leading-relaxed text-foreground/85">{message.content}</p>
                   </div>
                 ) : (
-                  /* Assistant — editorial: left accent line, no bubble */
+                  /* Assistant */
                   <div className="w-full">
                     {message.phase === 'connecting' ? (
-                      /* Connecting phase — personal pulsing indicator */
                       <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        className="flex items-center gap-2.5 py-0.5"
+                        className="flex items-center gap-2.5 py-1"
                       >
-                        <span className="relative flex h-2.5 w-2.5 shrink-0">
+                        <span className="relative flex h-2 w-2 shrink-0">
                           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary/40" />
-                          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-primary/60" />
+                          <span className="relative inline-flex rounded-full h-2 w-2 bg-primary/60" />
                         </span>
                         <span className="text-[13px] text-muted-foreground/50">
                           {itemCount > 0 ? `Searching ${itemCount} items…` : 'Thinking…'}
@@ -541,18 +551,16 @@ export default function AskPage() {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ duration: 0.15 }}
-                        className="pl-3 border-l border-primary/40 space-y-3"
+                        className="pl-3.5 border-l-2 border-primary/25 space-y-3"
                       >
-                        {/* Content — plain text during stream, Markdown when done */}
-                        <div className="text-[14px] leading-relaxed text-foreground/90">
+                        {/* Content */}
+                        <div className="text-[14px] leading-[1.7] text-foreground/85">
                           {message.phase === 'streaming' ? (
-                            /* Streaming: plain text + blinking cursor (no Markdown parse overhead) */
                             <p className="whitespace-pre-wrap">
                               {message.content}
                               <span className="inline-block w-[1.5px] h-[15px] bg-foreground/40 ml-0.5 align-text-bottom animate-pulse" />
                             </p>
                           ) : (
-                            /* Done: full Markdown render (happens once) */
                             <div className="prose prose-sm dark:prose-invert max-w-none [&>p]:mb-2.5 [&>p:last-child]:mb-0 [&>ul]:mt-2 [&>ul]:pl-4 [&>ol]:mt-2 [&>ol]:pl-4 [&>li]:mb-1.5 [&>h3]:text-[14px] [&>h3]:font-semibold [&>h3]:mb-2 [&>h3]:mt-4 [&>strong]:font-semibold">
                               <ReactMarkdown>{message.content}</ReactMarkdown>
                             </div>
@@ -565,7 +573,7 @@ export default function AskPage() {
                             <motion.div
                               initial={{ opacity: 0, y: 3 }}
                               animate={{ opacity: 1, y: 0 }}
-                              className="flex flex-wrap gap-1.5"
+                              className="flex flex-wrap gap-1.5 pt-1"
                             >
                               {message.actions.map((action, i) => {
                                 const key = `${message.id}-${action.type}`;
@@ -575,7 +583,7 @@ export default function AskPage() {
                                     onClick={() => handleAction(action, message.id)}
                                     disabled={actionLoadingId === key}
                                     title={action.description}
-                                    className="inline-flex items-center gap-1.5 text-[13px] px-2.5 py-1.5 rounded-lg border border-border/40 text-muted-foreground/70 hover:text-foreground hover:border-border/70 bg-background/50 hover:bg-background transition-all active:scale-95 disabled:opacity-40"
+                                    className="inline-flex items-center gap-1.5 text-[12px] px-2.5 py-1.5 rounded-xl border border-border/30 text-muted-foreground/65 hover:text-foreground hover:border-border/60 bg-muted/20 hover:bg-muted/40 transition-all active:scale-95 disabled:opacity-40"
                                   >
                                     {actionLoadingId === key
                                       ? <Loader2 className="w-3 h-3 animate-spin" />
@@ -600,8 +608,8 @@ export default function AskPage() {
 
       {/* ── Input composer ── */}
       <div
-        className="border-t border-border/20 px-4 pt-3 bg-background shrink-0"
-        style={{ paddingBottom: 'max(var(--app-safe-bottom), 14px)' }}
+        className="border-t border-border/15 px-4 pt-2.5 bg-background/95 backdrop-blur-sm shrink-0"
+        style={{ paddingBottom: 'max(var(--app-safe-bottom), 12px)' }}
       >
         {/* Voice error banner */}
         <AnimatePresence>
@@ -610,10 +618,10 @@ export default function AskPage() {
               initial={{ opacity: 0, y: 4 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 4 }}
-              className="flex items-start gap-2 mb-2.5 px-3 py-2.5 rounded-xl bg-destructive/10 border border-destructive/25"
+              className="flex items-start gap-2 mb-2 px-3 py-2 rounded-xl bg-destructive/8 border border-destructive/20"
             >
               <AlertCircle className="w-3.5 h-3.5 text-destructive/60 mt-0.5 shrink-0" />
-              <p className="text-[13px] text-destructive/70 leading-snug flex-1">
+              <p className="text-[12px] text-destructive/70 leading-snug flex-1">
                 {voiceError}
               </p>
             </motion.div>
@@ -627,7 +635,7 @@ export default function AskPage() {
               initial={{ opacity: 0, y: 4 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 4 }}
-              className="text-[13px] text-center text-muted-foreground/60 mb-2 tracking-wide"
+              className="text-[12px] text-center text-muted-foreground/50 mb-1.5 tracking-wide"
             >
               Listening… tap mic to stop
             </motion.p>
@@ -637,7 +645,7 @@ export default function AskPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="text-[13px] text-center text-muted-foreground/60 mb-2 tracking-wide"
+              className="text-[12px] text-center text-muted-foreground/50 mb-1.5 tracking-wide"
             >
               Processing…
             </motion.p>
@@ -653,46 +661,49 @@ export default function AskPage() {
           />
 
           {/* Text input */}
-          <textarea
-            ref={inputRef}
-            value={displayInput}
-            onChange={e => {
-              // Only allow edits when not actively listening (interim is display-only)
-              if (!isListening) {
-                setInput(e.target.value);
-                e.target.style.height = 'auto';
-                e.target.style.height = Math.min(e.target.scrollHeight, 130) + 'px';
+          <div className="flex-1 relative">
+            <textarea
+              ref={inputRef}
+              value={displayInput}
+              onChange={e => {
+                if (!isListening) {
+                  setInput(e.target.value);
+                  const el = e.target;
+                  el.style.height = '0';
+                  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+                }
+              }}
+              onKeyDown={handleKeyDown}
+              placeholder={
+                isListening
+                  ? 'Listening…'
+                  : isEmpty
+                    ? 'Ask about your notes, plans, ideas…'
+                    : 'Follow up…'
               }
-            }}
-            onKeyDown={handleKeyDown}
-            placeholder={
-              isListening
-                ? 'Listening…'
-                : isEmpty
-                  ? 'Ask anything about your notes, plans, or ideas…'
-                  : 'Follow up…'
-            }
-            rows={1}
-            disabled={isLoading}
-            readOnly={isListening}
-            data-tutorial="ai-input"
-            className={[
-              'flex-1 px-4 py-3 rounded-2xl bg-muted/20 border focus:outline-none resize-none text-[15px] leading-relaxed max-h-32 overflow-y-auto disabled:opacity-40 placeholder:text-muted-foreground/50 transition-colors',
-              isListening
-                ? 'border-red-500/30 bg-red-500/5 text-foreground/60 focus:border-red-500/40 cursor-default'
-                : 'border-border/30 focus:border-border/60 focus:bg-muted/30',
-            ].join(' ')}
-          />
+              rows={1}
+              disabled={isLoading}
+              readOnly={isListening}
+              data-tutorial="ai-input"
+              className={[
+                'w-full px-3.5 py-2.5 rounded-2xl bg-muted/15 border focus:outline-none resize-none text-[15px] leading-snug overflow-y-auto disabled:opacity-40 placeholder:text-muted-foreground/40 transition-colors',
+                isListening
+                  ? 'border-red-500/25 bg-red-500/5 text-foreground/60 focus:border-red-500/35 cursor-default'
+                  : 'border-border/20 focus:border-border/50 focus:bg-muted/25',
+              ].join(' ')}
+              style={{ maxHeight: '120px', minHeight: '40px' }}
+            />
+          </div>
 
           {/* Send button */}
           <button
             onClick={() => handleSend()}
             disabled={!input.trim() || isLoading || isListening}
-            className="w-10 h-10 rounded-full bg-foreground text-background flex items-center justify-center disabled:opacity-15 transition-all active:scale-90 shrink-0"
+            className="w-9 h-9 rounded-full bg-foreground text-background flex items-center justify-center disabled:opacity-15 transition-all active:scale-90 shrink-0 mb-[1px]"
           >
             {isLoading
-              ? <Loader2 className="w-4 h-4 animate-spin" />
-              : <ArrowUp className="w-4 h-4 stroke-[2.5]" />}
+              ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              : <ArrowUp className="w-3.5 h-3.5 stroke-[2.5]" />}
           </button>
         </div>
       </div>
