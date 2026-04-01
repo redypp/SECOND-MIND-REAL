@@ -49,7 +49,7 @@ export default function CollectionsPage({ embedded = false, onNavigateToSpace }:
       {/* Content */}
       <main
         className="flex-1 min-h-0 flex flex-col px-0 overflow-y-auto"
-        style={{ paddingBottom: 'calc(var(--app-safe-bottom, 0px) + 12px)', overscrollBehavior: 'none' }}
+        style={{ paddingBottom: 'calc(var(--app-safe-bottom, 0px) + 12px)', overscrollBehavior: 'none', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch' }}
       >
         {!hasSpaces ? (
           /* ── Empty state ── */
@@ -100,13 +100,12 @@ export default function CollectionsPage({ embedded = false, onNavigateToSpace }:
                 <motion.button
                   key={space.id}
                   layout
-                  className="w-full text-left relative overflow-hidden flex-shrink-0"
+                  className="w-full text-left relative overflow-hidden flex-shrink-0 active:scale-[0.982] transition-transform duration-100"
                   style={{ height: CARD_HEIGHT }}
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, x: -20, scale: 0.97, transition: { duration: 0.2 } }}
                   transition={{ duration: 0.5, delay: i * 0.06, ease: [0.16, 1, 0.3, 1] }}
-                  whileTap={{ scale: 0.982 }}
                   onClick={() => {
                     if (selectedCollectionId === space.id) {
                       setSelectedCollectionId(null);
