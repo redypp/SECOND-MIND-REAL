@@ -1666,6 +1666,7 @@ ANALYSIS STEPS:
 4. Classify into one of these categories: task, idea, plan, knowledge, experiment, reference, journal, recipe, project, creative, health, finance, travel, learning
 5. Extract 3-6 relevant tags (lowercase, no #)
 6. Detect any date references and convert to ISO format
+6b. Extract any person names mentioned in the content (first names, full names, or nicknames). Include people being referenced, talked about, or addressed. Return as an array. If no people are mentioned, return an empty array.
 7. Suggest the best existing space/collection from the user's list — or suggest "New: [Name]" if none fit
 8. Determine the sub_category for storage:
    - "notes": general ideas, knowledge, references (default)
@@ -1760,9 +1761,14 @@ RULES:
                 image_description: {
                   type: "string",
                   description: "If input includes image context, a brief description of the image content"
+                },
+                extracted_people: {
+                  type: "array",
+                  items: { type: "string" },
+                  description: "Person names mentioned in the content (first names, full names, or nicknames). Empty array if none."
                 }
               },
-              required: ["title", "summary", "category", "sub_category", "tags", "cleaned_content", "suggested_space"],
+              required: ["title", "summary", "category", "sub_category", "tags", "cleaned_content", "suggested_space", "extracted_people"],
               additionalProperties: false
             }
           }
