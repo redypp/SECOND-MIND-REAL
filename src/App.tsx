@@ -28,6 +28,8 @@ import OnboardingPage from "./pages/OnboardingPage";
 import NotificationsPage from "./pages/NotificationsPage";
 import AskPage from "./pages/AskPage";
 import NotFound from "./pages/NotFound";
+import PublicArchivePage from "./pages/PublicArchivePage";
+import AcceptInvitePage from "./pages/AcceptInvitePage";
 import { useCallback, useEffect } from "react";
 import { forceClearAllCaches } from "@/lib/localCache";
 import { prefetchLifeSubheadings } from "@/hooks/useLifeSubheadings";
@@ -68,12 +70,13 @@ function AppContent() {
   }, [signOut]);
 
   // Auth route is always accessible — never behind AppStartup loader
-  const isPublicRoute = location.pathname === '/auth';
+  const isPublicRoute = location.pathname === '/auth' || location.pathname.startsWith('/p/');
 
   const routes = (
     <Routes>
       {/* Public routes */}
       <Route path="/auth" element={<AuthPage />} />
+      <Route path="/p/:slug" element={<PublicArchivePage />} />
 
       {/* Protected routes */}
       <Route path="/onboarding" element={
@@ -81,6 +84,10 @@ function AppContent() {
       } />
 
       {/* MainLayout stays mounted — detail pages render as children */}
+      <Route path="/invite/:token" element={
+        <ProtectedRoute><AcceptInvitePage /></ProtectedRoute>
+      } />
+
       <Route element={<ProtectedRoute><MainLayoutWrapper /></ProtectedRoute>}>
         <Route path="/" element={null} />
         <Route path="/archive" element={null} />

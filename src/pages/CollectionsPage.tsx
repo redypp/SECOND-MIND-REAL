@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AddSpaceDialog } from '@/components/AddSpaceDialog';
 import { useSpaces } from '@/contexts/SpacesContext';
-import { Plus, X } from 'lucide-react';
+import { Plus, X, Users } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BottomNavigation } from '@/components/BottomNavigation';
 import { MarqueeHeader } from '@/components/MarqueeHeader';
@@ -17,7 +17,7 @@ const CARD_HEIGHT = 'calc((100dvh - 4rem - var(--app-safe-bottom, 0px)) / 5)';
 
 export default function CollectionsPage({ embedded = false, onNavigateToSpace }: CollectionsPageProps) {
   const navigate = useNavigate();
-  const { spaces, deleteSpace } = useSpaces();
+  const { spaces, sharedSpaces, deleteSpace } = useSpaces();
   const [selectedCollectionId, setSelectedCollectionId] = useState<string | null>(null);
 
   const hasSpaces = spaces.length > 0;
@@ -182,6 +182,61 @@ export default function CollectionsPage({ embedded = false, onNavigateToSpace }:
                 </motion.button>
               ))}
             </AnimatePresence>
+
+            {/* ── Shared with me ── */}
+            {sharedSpaces.length > 0 && (
+              <div className="mt-2">
+                <div className="flex items-center gap-2 px-5 py-3">
+                  <Users className="w-3.5 h-3.5 text-muted-foreground" />
+                  <span className="text-[11px] uppercase tracking-[0.2em] font-semibold text-muted-foreground">Shared with me</span>
+                </div>
+                {sharedSpaces.map((space, i) => (
+                  <motion.button
+                    key={space.id}
+                    className="w-full text-left relative overflow-hidden flex-shrink-0 active:scale-[0.982] transition-transform duration-100"
+                    style={{ height: 'calc((100dvh - 4rem - var(--app-safe-bottom, 0px)) / 7)' }}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: i * 0.05 }}
+                    onClick={() => {
+                      if (onNavigateToSpace) onNavigateToSpace(space.id);
+                      else navigate(`/space/${space.id}`);
+                    }}
+                  >
+                    <div className="absolute inset-0">
+                      {space.image ? (
+                        <>
+                          <img src={space.image} alt="" className="absolute inset-0 w-full h-full object-cover" />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                        </>
+                      ) : (
+                        <div
+                          className="absolute inset-0"
+                          style={{
+                            background: space.color
+                              ? `linear-gradient(145deg, ${space.color} 0%, ${space.color}cc 100%)`
+                              : 'linear-gradient(145deg, #0d1b2a 0%, #1b1f3b 100%)',
+                          }}
+                        />
+                      )}
+                    </div>
+                    <div className="absolute inset-0 flex items-center px-5 gap-3">
+                      <Users className="w-4 h-4 text-white/60 shrink-0" />
+                      <span
+                        className="text-white uppercase font-display tracking-[-0.05em] leading-[0.88]"
+                        style={{
+                          fontSize: 'clamp(1.6rem, 7vw, 2.5rem)',
+                          fontWeight: 700,
+                          textShadow: '0 2px 20px rgba(0,0,0,0.6)',
+                        }}
+                      >
+                        {space.name}
+                      </span>
+                    </div>
+                  </motion.button>
+                ))}
+              </div>
+            )}
 
           </>
         )}

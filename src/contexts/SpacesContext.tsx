@@ -28,6 +28,11 @@ function dbSpaceToSpace(dbSpace: DbSpace): Space {
     pinnedAt: dbSpace.pinned_at ? new Date(dbSpace.pinned_at) : null,
     lastUsedAt: dbSpace.last_used_at ? new Date(dbSpace.last_used_at) : undefined,
     groupAssignments: dbSpace.group_assignments || null,
+    isPublic: dbSpace.is_public ?? false,
+    publicSlug: dbSpace.public_slug || undefined,
+    publicDescription: dbSpace.public_description || undefined,
+    publishedAt: dbSpace.published_at ? new Date(dbSpace.published_at) : undefined,
+    authorName: dbSpace.author_name || undefined,
   };
 }
 
@@ -61,6 +66,7 @@ function dbItemToItem(dbItem: DbItem): Item {
 
 interface SpacesContextType {
   spaces: Space[];
+  sharedSpaces: Space[];
   items: Item[];
    loading: boolean;
   addSpace: (name: string, image?: string, color?: string, gifBackground?: string) => string;
@@ -171,6 +177,7 @@ export function SpacesProvider({ children }: { children: ReactNode }) {
   // This prevents the empty-state flash on warm resume.
   const [initialCache] = useState(loadInitialCacheState);
   const [spaces, setSpaces] = useState<Space[]>(initialCache.spaces);
+  const [sharedSpaces, setSharedSpaces] = useState<Space[]>([]);
   const [items, setItems] = useState<Item[]>(initialCache.items);
   // Start with loading=false if cache is populated; true if we need cloud fetch
   const [loading, setLoading] = useState(!initialCache.hasCachedData);
@@ -522,7 +529,30 @@ export function SpacesProvider({ children }: { children: ReactNode }) {
 
        // Complete! Mark data as successfully loaded
        notifyDataStatus({ kind: 'success' });
-       
+
+       // Fetch shared spaces (non-blocking, fire-and-forget)
+       supabase
+         .from('space_members')
+         .select('space_id, role, accepted_at')
+         .eq('user_id', user.id)
+         .not('accepted_at', 'is', null)
+         .then(async ({ data: memberships }) => {
+           if (!memberships || memberships.length === 0) {
+             setSharedSpaces([]);
+             return;
+           }
+           const spaceIds = memberships.map(m => m.space_id);
+           const { data: sharedData } = await supabase
+             .from('spaces')
+             .select('*')
+             .in('id', spaceIds)
+             .is('deleted_at', null);
+           if (sharedData) {
+             setSharedSpaces((sharedData as DbSpace[]).map(dbSpaceToSpace));
+           }
+         })
+         .catch(() => { /* non-critical */ });
+
         // Mark initial load complete for warm resume support
         markInitialLoadComplete();
         hasCachedDataRef.current = true;
@@ -1772,8 +1802,9 @@ export function SpacesProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <SpacesContext.Provider value={{ 
-      spaces, 
+    <SpacesContext.Provider value={{
+      spaces,
+      sharedSpaces,
       items,
        loading,
       addSpace, 

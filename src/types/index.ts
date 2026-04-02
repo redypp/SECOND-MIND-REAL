@@ -105,6 +105,31 @@ export interface Space {
   pinnedAt?: Date | null;
   lastUsedAt?: Date;
   groupAssignments?: GroupAssignments | null;
+  // Public archive fields
+  isPublic?: boolean;
+  publicSlug?: string;
+  publicDescription?: string;
+  publishedAt?: Date;
+  authorName?: string;
+}
+
+export interface SpaceMember {
+  id: string;
+  spaceId: string;
+  userId: string;
+  role: 'viewer' | 'editor';
+  invitedAt: Date;
+  acceptedAt: Date | null;
+}
+
+export interface SpaceInvite {
+  id: string;
+  spaceId: string;
+  token: string;
+  invitedEmail?: string;
+  role: 'viewer' | 'editor';
+  expiresAt: Date;
+  acceptedAt: Date | null;
 }
 
 export interface Person {

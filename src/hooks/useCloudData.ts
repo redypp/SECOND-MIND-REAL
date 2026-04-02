@@ -27,6 +27,11 @@ export interface DbSpace {
      item_count_at_organize: number;
    } | null;
    gif_background: string | null;
+   is_public: boolean;
+   public_slug: string | null;
+   public_description: string | null;
+   published_at: string | null;
+   author_name: string | null;
  }
  
  export interface DbItem {

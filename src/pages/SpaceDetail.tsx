@@ -11,9 +11,11 @@ import { UnifiedArchiveView } from '@/components/UnifiedArchiveView';
 import { EditNoteModal } from '@/components/EditNoteModal';
 import { showErrorPopup } from '@/contexts/ErrorPopupContext';
 import { useTutorial } from '@/contexts/TutorialContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { Item, GroupAssignments } from '@/types';
 import { supabase } from '@/integrations/supabase/app-client';
 import { getSmartCategory } from '@/lib/smartTitle';
+import { ShareArchiveSheet } from '@/components/ShareArchiveSheet';
 
 interface SpaceDetailProps {
   embedded?: boolean;
@@ -27,7 +29,8 @@ export default function SpaceDetail({ embedded = false, spaceId: propSpaceId, on
   const navigate = useNavigate();
 
   const { reportTutorialAction } = useTutorial();
-  const { spaces, getItemsBySpaceId, deleteItem, addItemAsync, updateItem, updateItemPosition, markSpaceUsed, deleteSpace, updateSpaceName, updateSpaceImage, updateSpaceGif, pinSpace, unpinSpace, saveGroupAssignments } = useSpaces();
+  const { user } = useAuth();
+  const { spaces, sharedSpaces, getItemsBySpaceId, deleteItem, addItemAsync, updateItem, updateItemPosition, markSpaceUsed, deleteSpace, updateSpaceName, updateSpaceImage, updateSpaceGif, pinSpace, unpinSpace, saveGroupAssignments } = useSpaces();
 
   const [showAddMemoryPanel, setShowAddMemoryPanel] = useState(false);
   const [showOrganizeModal, setShowOrganizeModal] = useState(false);
@@ -43,6 +46,7 @@ export default function SpaceDetail({ embedded = false, spaceId: propSpaceId, on
   const [organizedGroups, setOrganizedGroups] = useState<{ label: string; item_ids: string[] }[] | null>(null);
   // 'list' = smart-categorised feed (default & fallback), 'grouped' = AI-organised sections, 'canvas' = freeform
   const [viewMode, setViewMode] = useState<'list' | 'grouped' | 'canvas'>('list');
+  const [showShareSheet, setShowShareSheet] = useState(false);
   const coverInputRef = useRef<HTMLInputElement>(null);
   const goHomeRef = useRef<(() => void) | null>(null);
   const autoOrganizeAttempted = useRef(false);
@@ -88,7 +92,9 @@ export default function SpaceDetail({ embedded = false, spaceId: propSpaceId, on
     }
   }, [animateOut]);
 
-  const space = id ? spaces.find(s => s.id === id) : undefined;
+  const space = id ? (spaces.find(s => s.id === id) ?? sharedSpaces.find(s => s.id === id)) : undefined;
+  // Determine if the user is a shared member (not the owner)
+  const isSharedMember = !!(space && !spaces.find(s => s.id === id) && sharedSpaces.find(s => s.id === id));
 
   useEffect(() => {
     if (id) markSpaceUsed(id);
@@ -351,6 +357,7 @@ export default function SpaceDetail({ embedded = false, spaceId: propSpaceId, on
               {space.name}
             </h2>
             <p className="text-white/80 text-[13px] mt-0.5">
+              {isSharedMember && <span className="text-primary/80 mr-1.5">Shared with you ·</span>}
               {items.length} {items.length === 1 ? 'item' : 'items'}
             </p>
           </div>
@@ -401,15 +408,17 @@ export default function SpaceDetail({ embedded = false, spaceId: propSpaceId, on
             </div>
           </div>
 
-          <motion.button
-            data-tutorial="add-archive-item"
-            whileTap={{ scale: 0.95 }}
-            onClick={() => setShowOrganizeModal(true)}
-            className="w-10 h-10 rounded-full bg-primary flex items-center justify-center shadow-lg shadow-primary/30 hover:bg-primary/90 transition-all touch-manipulation"
-            aria-label="Add to archive"
-          >
-            <Plus className="w-5 h-5 text-primary-foreground" />
-          </motion.button>
+          {!isSharedMember && (
+            <motion.button
+              data-tutorial="add-archive-item"
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setShowOrganizeModal(true)}
+              className="w-10 h-10 rounded-full bg-primary flex items-center justify-center shadow-lg shadow-primary/30 hover:bg-primary/90 transition-all touch-manipulation"
+              aria-label="Add to archive"
+            >
+              <Plus className="w-5 h-5 text-primary-foreground" />
+            </motion.button>
+          )}
 
           {/* Canvas toggle — only shown when AI groups exist */}
           {hasGroups && (
@@ -426,15 +435,17 @@ export default function SpaceDetail({ embedded = false, spaceId: propSpaceId, on
             </motion.button>
           )}
 
-          <motion.button
-            data-tutorial="archive-settings"
-            whileTap={{ scale: 0.95 }}
-            onClick={() => setShowSettingsPanel(true)}
-            className="w-10 h-10 rounded-full bg-secondary/60 flex items-center justify-center hover:bg-secondary transition-all touch-manipulation"
-            aria-label="Archive settings"
-          >
-            <Settings className="w-5 h-5 text-foreground/70" />
-          </motion.button>
+          {!isSharedMember && (
+            <motion.button
+              data-tutorial="archive-settings"
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setShowSettingsPanel(true)}
+              className="w-10 h-10 rounded-full bg-secondary/60 flex items-center justify-center hover:bg-secondary transition-all touch-manipulation"
+              aria-label="Archive settings"
+            >
+              <Settings className="w-5 h-5 text-foreground/70" />
+            </motion.button>
+          )}
 
           <input ref={coverInputRef} type="file" accept="image/*" onChange={(e) => {
             const file = e.target.files?.[0];
@@ -604,6 +615,14 @@ export default function SpaceDetail({ embedded = false, spaceId: propSpaceId, on
                   </p>
                 </motion.button>
 
+                <motion.button
+                  whileTap={{ scale: 0.97 }}
+                  className="text-left py-1.5"
+                  onClick={() => { setShowShareSheet(true); setShowSettingsPanel(false); }}
+                >
+                  <p className="text-[clamp(2rem,8vw,2.8rem)] font-display font-bold uppercase tracking-[-0.04em] leading-none text-white">Share</p>
+                </motion.button>
+
                 {items.length > 0 && (
                   <motion.button
                     whileTap={{ scale: 0.97 }}
@@ -656,6 +675,19 @@ export default function SpaceDetail({ embedded = false, spaceId: propSpaceId, on
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Share & Publish sheet */}
+      {space && (
+        <ShareArchiveSheet
+          space={space}
+          open={showShareSheet}
+          onClose={() => setShowShareSheet(false)}
+          onSpaceUpdate={(updates) => {
+            // Updates are persisted to DB by the sheet; no local state to update here
+            // since space comes from SpacesContext which will refresh
+          }}
+        />
+      )}
     </div>
   );
 }

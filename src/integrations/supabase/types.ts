@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.1"
+    PostgrestVersion: "14.4"
   }
   public: {
     Tables: {
@@ -230,6 +230,7 @@ export type Database = {
       }
       items: {
         Row: {
+          ai_category: string | null
           ai_processed: boolean | null
           ai_summary: string | null
           ai_tags: string[] | null
@@ -247,8 +248,10 @@ export type Database = {
           item_type: string | null
           keywords: string[] | null
           people_ids: string[] | null
+          raw_input: string | null
           scheduled_date: string | null
           scheduled_time: string | null
+          source_type: string | null
           space_ids: string[] | null
           sub_category: string
           suggested_space: string | null
@@ -260,6 +263,7 @@ export type Database = {
           version: number | null
         }
         Insert: {
+          ai_category?: string | null
           ai_processed?: boolean | null
           ai_summary?: string | null
           ai_tags?: string[] | null
@@ -277,8 +281,10 @@ export type Database = {
           item_type?: string | null
           keywords?: string[] | null
           people_ids?: string[] | null
+          raw_input?: string | null
           scheduled_date?: string | null
           scheduled_time?: string | null
+          source_type?: string | null
           space_ids?: string[] | null
           sub_category: string
           suggested_space?: string | null
@@ -290,6 +296,7 @@ export type Database = {
           version?: number | null
         }
         Update: {
+          ai_category?: string | null
           ai_processed?: boolean | null
           ai_summary?: string | null
           ai_tags?: string[] | null
@@ -307,8 +314,10 @@ export type Database = {
           item_type?: string | null
           keywords?: string[] | null
           people_ids?: string[] | null
+          raw_input?: string | null
           scheduled_date?: string | null
           scheduled_time?: string | null
+          source_type?: string | null
           space_ids?: string[] | null
           sub_category?: string
           suggested_space?: string | null
@@ -347,38 +356,56 @@ export type Database = {
       }
       notification_preferences: {
         Row: {
+          ai_nudges_enabled: boolean
           created_at: string
           daily_digest_enabled: boolean
           digest_time: string | null
           email_digest_enabled: boolean
+          follow_ups_enabled: boolean
           id: string
+          insights_enabled: boolean
           max_daily_notifications: number
+          push_enabled: boolean
           quiet_hours_end: string | null
           quiet_hours_start: string | null
+          time_based_enabled: boolean
+          timezone: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          ai_nudges_enabled?: boolean
           created_at?: string
           daily_digest_enabled?: boolean
           digest_time?: string | null
           email_digest_enabled?: boolean
+          follow_ups_enabled?: boolean
           id?: string
+          insights_enabled?: boolean
           max_daily_notifications?: number
+          push_enabled?: boolean
           quiet_hours_end?: string | null
           quiet_hours_start?: string | null
+          time_based_enabled?: boolean
+          timezone?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          ai_nudges_enabled?: boolean
           created_at?: string
           daily_digest_enabled?: boolean
           digest_time?: string | null
           email_digest_enabled?: boolean
+          follow_ups_enabled?: boolean
           id?: string
+          insights_enabled?: boolean
           max_daily_notifications?: number
+          push_enabled?: boolean
           quiet_hours_end?: string | null
           quiet_hours_start?: string | null
+          time_based_enabled?: boolean
+          timezone?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -388,14 +415,18 @@ export type Database = {
         Row: {
           category: string
           created_at: string
+          dedup_key: string | null
           dismissed_at: string | null
           id: string
           message: string
+          notification_type: string
           priority: string
+          push_sent: boolean
           read_at: string | null
           reason: string
           related_item_ids: string[] | null
           scheduled_for: string
+          status: string
           suggested_action: string | null
           title: string
           user_id: string
@@ -403,14 +434,18 @@ export type Database = {
         Insert: {
           category: string
           created_at?: string
+          dedup_key?: string | null
           dismissed_at?: string | null
           id?: string
           message: string
+          notification_type?: string
           priority?: string
+          push_sent?: boolean
           read_at?: string | null
           reason: string
           related_item_ids?: string[] | null
           scheduled_for?: string
+          status?: string
           suggested_action?: string | null
           title: string
           user_id: string
@@ -418,14 +453,18 @@ export type Database = {
         Update: {
           category?: string
           created_at?: string
+          dedup_key?: string | null
           dismissed_at?: string | null
           id?: string
           message?: string
+          notification_type?: string
           priority?: string
+          push_sent?: boolean
           read_at?: string | null
           reason?: string
           related_item_ids?: string[] | null
           scheduled_for?: string
+          status?: string
           suggested_action?: string | null
           title?: string
           user_id?: string
@@ -438,6 +477,8 @@ export type Database = {
           created_at: string
           full_name: string
           id: string
+          location: string | null
+          phone_number: string | null
           updated_at: string
           user_id: string
         }
@@ -446,6 +487,8 @@ export type Database = {
           created_at?: string
           full_name?: string
           id?: string
+          location?: string | null
+          phone_number?: string | null
           updated_at?: string
           user_id: string
         }
@@ -454,6 +497,8 @@ export type Database = {
           created_at?: string
           full_name?: string
           id?: string
+          location?: string | null
+          phone_number?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -525,8 +570,94 @@ export type Database = {
         }
         Relationships: []
       }
+      space_invites: {
+        Row: {
+          accepted_at: string | null
+          accepted_by: string | null
+          created_at: string
+          created_by: string
+          expires_at: string | null
+          id: string
+          invited_email: string | null
+          role: string
+          space_id: string
+          token: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          accepted_by?: string | null
+          created_at?: string
+          created_by: string
+          expires_at?: string | null
+          id?: string
+          invited_email?: string | null
+          role?: string
+          space_id: string
+          token?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          accepted_by?: string | null
+          created_at?: string
+          created_by?: string
+          expires_at?: string | null
+          id?: string
+          invited_email?: string | null
+          role?: string
+          space_id?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "space_invites_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "spaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      space_members: {
+        Row: {
+          accepted_at: string | null
+          id: string
+          invited_at: string
+          invited_by: string | null
+          role: string
+          space_id: string
+          user_id: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          id?: string
+          invited_at?: string
+          invited_by?: string | null
+          role?: string
+          space_id: string
+          user_id: string
+        }
+        Update: {
+          accepted_at?: string | null
+          id?: string
+          invited_at?: string
+          invited_by?: string | null
+          role?: string
+          space_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "space_members_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "spaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       spaces: {
         Row: {
+          author_name: string | null
           color: string | null
           created_at: string
           deleted_at: string | null
@@ -535,17 +666,22 @@ export type Database = {
           id: string
           image: string | null
           is_pinned: boolean
+          is_public: boolean
           item_count: number
           last_used_at: string
           merged_from: string[] | null
           name: string
           pinned_at: string | null
           position: number
+          public_description: string | null
+          public_slug: string | null
+          published_at: string | null
           updated_at: string
           user_id: string
           version: number | null
         }
         Insert: {
+          author_name?: string | null
           color?: string | null
           created_at?: string
           deleted_at?: string | null
@@ -554,17 +690,22 @@ export type Database = {
           id?: string
           image?: string | null
           is_pinned?: boolean
+          is_public?: boolean
           item_count?: number
           last_used_at?: string
           merged_from?: string[] | null
           name: string
           pinned_at?: string | null
           position?: number
+          public_description?: string | null
+          public_slug?: string | null
+          published_at?: string | null
           updated_at?: string
           user_id: string
           version?: number | null
         }
         Update: {
+          author_name?: string | null
           color?: string | null
           created_at?: string
           deleted_at?: string | null
@@ -573,12 +714,16 @@ export type Database = {
           id?: string
           image?: string | null
           is_pinned?: boolean
+          is_public?: boolean
           item_count?: number
           last_used_at?: string
           merged_from?: string[] | null
           name?: string
           pinned_at?: string | null
           position?: number
+          public_description?: string | null
+          public_slug?: string | null
+          published_at?: string | null
           updated_at?: string
           user_id?: string
           version?: number | null
@@ -620,7 +765,8 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_in_quiet_hours: { Args: { p_user_id: string }; Returns: boolean }
+      restore_recent_archives: { Args: never; Returns: undefined }
     }
     Enums: {
       [_ in never]: never
