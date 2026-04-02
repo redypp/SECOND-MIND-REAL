@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  ArrowLeft, Loader2, User, LogOut, Lightbulb, Moon, Sun, Sunrise, Pencil,
+  ArrowLeft, Loader2, User, Users, LogOut, Lightbulb, Moon, Sun, Sunrise, Pencil,
   Check, X, RotateCcw, Mail, Mic, MapPin, Navigation, ChevronRight,
 } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -281,8 +281,22 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        {/* Help & Onboarding Section */}
+        {/* People & Help Section */}
         <div className="rounded-2xl bg-card border border-border/40 overflow-hidden divide-y divide-border/40">
+          <button
+            onClick={() => navigate('/people')}
+            className="w-full flex items-center gap-3.5 px-4 py-3.5 hover:bg-accent/30 transition-colors text-left"
+          >
+            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+              <Users className="w-4 h-4 text-primary" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-medium">People</p>
+              <p className="text-xs text-muted-foreground">View people mentioned across your archives</p>
+            </div>
+            <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+          </button>
+
           <button
             onClick={() => setShowBriefing(true)}
             className="w-full flex items-center gap-3.5 px-4 py-3.5 hover:bg-accent/30 transition-colors text-left"
