@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 
 import { Item, ContentBlock, TableBlock } from '@/types';
-import { ExternalLink, Check, List, CheckSquare, Globe, Table } from 'lucide-react';
+import { ExternalLink, Check, List, CheckSquare, Globe, Table, User } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useSpaces } from '@/contexts/SpacesContext';
 import { isValidUrl, safeOpenUrl } from '@/lib/urlValidation';
@@ -10,6 +10,7 @@ import { useState, memo } from 'react';
 import { FormattedText } from '@/components/RichTextEditor';
 import { TableDisplay } from '@/components/TableEditor';
 import { getSmartTitle } from '@/lib/smartTitle';
+import { usePeople } from '@/contexts/PeopleContext';
 
 interface ItemCardProps {
   item: Item;
@@ -23,7 +24,9 @@ export const ItemCard = memo(function ItemCard({ item, compact = false, archiveM
   const isImportant = item.color === 'important' && !isImageItem;
   const navigate = useNavigate();
   const { toggleChecklistItem } = useSpaces();
+  const { getPeopleForItem } = usePeople();
   const [faviconError, setFaviconError] = useState(false);
+  const itemPeople = getPeopleForItem(item);
 
   // Get first media block for thumbnail
   const mediaBlock = item.blocks?.find(b => b.type === 'media');
@@ -371,6 +374,20 @@ export const ItemCard = memo(function ItemCard({ item, compact = false, archiveM
                 <div className="flex items-center gap-1 text-[13px] text-muted-foreground bg-secondary/50 px-1.5 py-0.5 rounded">
                   +{item.blocks.filter(b => b.type === 'media').length - 1} media
                 </div>
+              )}
+            </div>
+          )}
+
+          {itemPeople.length > 0 && (
+            <div className="mt-1.5 flex items-center gap-1 flex-wrap">
+              {itemPeople.slice(0, 3).map(person => (
+                <div key={person.id} className="flex items-center gap-1 text-[12px] text-primary/80 bg-primary/10 px-1.5 py-0.5 rounded-full">
+                  <User className="w-2.5 h-2.5" />
+                  {person.name}
+                </div>
+              ))}
+              {itemPeople.length > 3 && (
+                <span className="text-[12px] text-muted-foreground">+{itemPeople.length - 3}</span>
               )}
             </div>
           )}

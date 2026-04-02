@@ -30,6 +30,8 @@ import AskPage from "./pages/AskPage";
 import NotFound from "./pages/NotFound";
 import PublicArchivePage from "./pages/PublicArchivePage";
 import AcceptInvitePage from "./pages/AcceptInvitePage";
+import PeoplePage from "./pages/PeoplePage";
+import { PeopleProvider } from "@/contexts/PeopleContext";
 import { useCallback, useEffect } from "react";
 import { forceClearAllCaches } from "@/lib/localCache";
 import { prefetchLifeSubheadings } from "@/hooks/useLifeSubheadings";
@@ -103,6 +105,7 @@ function AppContent() {
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/chamber" element={<ChamberPage />} />
         <Route path="/notifications" element={<NotificationsPage />} />
+        <Route path="/people" element={<PeoplePage />} />
       </Route>
 
       <Route path="*" element={<NotFound />} />
@@ -149,9 +152,11 @@ function AppContent() {
   return (
     <ThemeProvider>
       <SpacesProvider>
-        <AppStartup onInitialize={handleInitialize} onLogout={handleLogout} isDataReady={isDataReady}>
-          {innerContent}
-        </AppStartup>
+        <PeopleProvider>
+          <AppStartup onInitialize={handleInitialize} onLogout={handleLogout} isDataReady={isDataReady}>
+            {innerContent}
+          </AppStartup>
+        </PeopleProvider>
       </SpacesProvider>
     </ThemeProvider>
   );

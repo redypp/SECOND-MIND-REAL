@@ -44,6 +44,13 @@ export default function CollectionsPage({ embedded = false, onNavigateToSpace }:
         <div className="flex-1 min-w-0 overflow-hidden">
           <MarqueeHeader text="ARCHIVE" />
         </div>
+        <button
+          onClick={() => navigate('/people')}
+          className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-lg hover:bg-secondary/60 transition-colors z-10"
+          aria-label="People"
+        >
+          <Users className="w-5 h-5 text-muted-foreground" />
+        </button>
       </header>
 
       {/* Content */}

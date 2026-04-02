@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { uploadImageToStorage } from '@/lib/imageUpload';
 import { compressImage } from '@/lib/imageCompression';
 import { TextBlock, MediaBlock, SubCategory } from '@/types';
+import { usePeople } from '@/contexts/PeopleContext';
 
 export type CaptureSourceType = 'text' | 'voice' | 'image';
 
@@ -20,6 +21,7 @@ export interface CaptureResult {
   suggested_space: string;
   suggested_space_id?: string;
   image_description?: string;
+  extracted_people?: string[];
 }
 
 /**
@@ -65,6 +67,7 @@ function mapCategoryToSubCategory(category: string, aiSubCategory?: string): Sub
 export function useIntelligentCapture() {
   const { spaces, items, addItem, addSpaceAsync, updateItem } = useSpaces();
   const { user } = useAuth();
+  const { resolvePeopleNames } = usePeople();
   const [isProcessing, setIsProcessing] = useState(false);
   const [lastResult, setLastResult] = useState<CaptureResult | null>(null);
 
@@ -173,6 +176,16 @@ export function useIntelligentCapture() {
           }
         }
 
+        // Step 3b: Resolve people names to canonical IDs
+        let peopleIds: string[] = [];
+        if (result.extracted_people && result.extracted_people.length > 0) {
+          try {
+            peopleIds = await resolvePeopleNames(result.extracted_people);
+          } catch {
+            console.warn('[Capture] People resolution failed (non-critical)');
+          }
+        }
+
         // Route all user-visible fields through the sync queue so they are
         // persisted reliably (with retry) and are never dropped on network errors.
         const queueUpdates: Parameters<typeof updateItem>[1] = {
@@ -183,6 +196,7 @@ export function useIntelligentCapture() {
         if (spaceIds.length > 0) queueUpdates.spaceIds = spaceIds;
         if (result.scheduled_date) queueUpdates.scheduledDate = result.scheduled_date;
         if (result.scheduled_time) queueUpdates.scheduledTime = result.scheduled_time;
+        if (peopleIds.length > 0) queueUpdates.peopleIds = peopleIds;
 
         updateItem(itemId, queueUpdates);
 
@@ -199,6 +213,7 @@ export function useIntelligentCapture() {
             ai_processed: true,
             ai_category: result.category,
             suggested_space: result.suggested_space,
+            extracted_people: result.extracted_people || [],
           })
           .eq('id', itemId);
 
@@ -228,7 +243,7 @@ export function useIntelligentCapture() {
     } finally {
       setIsProcessing(false);
     }
-  }, [user, spaces, items, addItem, addSpaceAsync, updateItem]);
+  }, [user, spaces, items, addItem, addSpaceAsync, updateItem, resolvePeopleNames]);
 
   return { capture, isProcessing, lastResult };
 }
