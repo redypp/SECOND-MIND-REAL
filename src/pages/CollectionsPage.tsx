@@ -37,7 +37,7 @@ export default function CollectionsPage({ embedded = false, onNavigateToSpace }:
   return (
     <div
       className={`${embedded ? 'relative w-full h-full' : 'fixed inset-0 safe-area-top-ios'} flex flex-col bg-background overflow-hidden max-w-full overflow-x-hidden`}
-      style={{ overscrollBehavior: 'none' }}
+      style={{ overscrollBehavior: 'contain' }}
     >
       {/* Header */}
       <header className="relative flex items-center pl-0 pr-0 flex-shrink-0 min-h-[52px]">
@@ -49,7 +49,7 @@ export default function CollectionsPage({ embedded = false, onNavigateToSpace }:
       {/* Content */}
       <main
         className="flex-1 min-h-0 flex flex-col px-0 overflow-y-auto"
-        style={{ paddingBottom: 'calc(var(--app-safe-bottom, 0px) + 12px)', overscrollBehavior: 'none', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch' }}
+        style={{ paddingBottom: 'calc(var(--app-safe-bottom, 0px) + 12px)', overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch' }}
       >
         {!hasSpaces ? (
           /* ── Empty state ── */
@@ -99,8 +99,7 @@ export default function CollectionsPage({ embedded = false, onNavigateToSpace }:
               {sortedSpaces.map((space, i) => (
                 <motion.button
                   key={space.id}
-                  layout
-                  className="w-full text-left relative overflow-hidden flex-shrink-0 active:scale-[0.982] transition-transform duration-100"
+                  className="w-full text-left relative overflow-hidden flex-shrink-0"
                   style={{ height: CARD_HEIGHT }}
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
