@@ -117,7 +117,7 @@ function AppContent() {
           <Toaster />
           <ErrorPopup />
           {/* OnboardingTutorial is self-managing — renders based on TutorialContext phase */}
-          <OnboardingTutorial />
+          {!isPublicRoute && <OnboardingTutorial />}
           {routes}
         </TooltipProvider>
       </AISettingsProvider>
