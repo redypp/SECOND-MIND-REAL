@@ -51,6 +51,36 @@ Deno.serve(async (req) => {
       formattedUrl = `https://${formattedUrl}`;
     }
 
+    // SSRF protection: block internal/private network URLs
+    try {
+      const parsed = new URL(formattedUrl);
+      const hostname = parsed.hostname.toLowerCase();
+      const blocked =
+        hostname === 'localhost' ||
+        hostname === '127.0.0.1' ||
+        hostname === '0.0.0.0' ||
+        hostname === '::1' ||
+        hostname.endsWith('.local') ||
+        hostname.endsWith('.internal') ||
+        /^10\./.test(hostname) ||
+        /^172\.(1[6-9]|2\d|3[01])\./.test(hostname) ||
+        /^192\.168\./.test(hostname) ||
+        /^169\.254\./.test(hostname) ||
+        hostname.includes('metadata.google') ||
+        hostname.includes('metadata.aws');
+      if (blocked) {
+        return new Response(
+          JSON.stringify({ error: 'URL not allowed' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    } catch {
+      return new Response(
+        JSON.stringify({ error: 'Invalid URL' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Determine source type
     let sourceType = 'website';
     if (/docs\.google\.com|drive\.google\.com/.test(formattedUrl)) {

@@ -44,7 +44,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user]);
 
-  useEffect(() => { loadThemeFromCloud(); }, [loadThemeFromCloud]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { loadThemeFromCloud(); }, [user]);
 
   useEffect(() => {
     const root = document.documentElement;

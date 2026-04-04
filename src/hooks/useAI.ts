@@ -178,15 +178,16 @@ export function useAI() {
     onDelta?: (chunk: string) => void
   ): Promise<AIResponse> => {
     setIsLoading(true);
-    
+
     // Create AbortController for timeout handling on mobile
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
-    
+
     try {
       // Use cached token — avoids async session lookup on every message
       const authToken = await getCachedAuthToken();
       if (!authToken) {
+        clearTimeout(timeoutId);
         return { content: '', error: 'Not authenticated. Please sign in and try again.' };
       }
 
@@ -322,8 +323,6 @@ export function useAI() {
       const data = await response.json();
       return { content: data.content || data.response || '' };
     } catch (error) {
-      clearTimeout(timeoutId);
-      
       if (error instanceof Error) {
         if (error.name === 'AbortError') {
           return { content: '', error: 'Request timed out. Please try again.' };
@@ -332,6 +331,7 @@ export function useAI() {
       }
       return { content: '', error: 'Failed to connect to AI. Check your connection and try again.' };
     } finally {
+      clearTimeout(timeoutId);
       setIsLoading(false);
     }
   }, [buildContext]);

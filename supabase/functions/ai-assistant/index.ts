@@ -352,7 +352,7 @@ serve(async (req) => {
     if (type === "ask_question" || type === "find_connections" || type === "semantic_search") {
       try {
         // Fetch items, spaces, and profile in parallel
-        const [itemsResult, spacesResult, profileResult] = await Promise.all([
+        const [itemsResult, spacesResult, profileResult] = await Promise.allSettled([
           supabase
             .from("items")
             .select("id, title, sub_category, content, blocks, space_ids, scheduled_date, scheduled_time, keywords, ai_summary, created_at, updated_at")
@@ -372,9 +372,9 @@ serve(async (req) => {
             .maybeSingle(),
         ]);
 
-        const { data: dbItems, error: itemsErr } = itemsResult;
-        const { data: dbSpaces, error: spacesErr } = spacesResult;
-        const { data: dbProfile } = profileResult;
+        const { data: dbItems, error: itemsErr } = itemsResult.status === "fulfilled" ? itemsResult.value : { data: null, error: "Query failed" };
+        const { data: dbSpaces, error: spacesErr } = spacesResult.status === "fulfilled" ? spacesResult.value : { data: null, error: "Query failed" };
+        const { data: dbProfile } = profileResult.status === "fulfilled" ? profileResult.value : { data: null };
 
         if (!itemsErr && dbItems && dbItems.length > 0) {
           context.items = dbItems.map((row: any) => ({

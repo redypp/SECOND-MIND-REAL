@@ -1,25 +1,25 @@
 project_id = "rcpcqekcvatzekpoxbkf"
 
 [functions.ai-assistant]
-verify_jwt = false
+verify_jwt = true
 
 [functions.smart-notifications]
-verify_jwt = false
+verify_jwt = true
 
 [functions.import-source]
-verify_jwt = false
+verify_jwt = true
 
 [functions.daily-briefing]
-verify_jwt = false
+verify_jwt = true
 
 [functions.send-push]
-verify_jwt = false
+verify_jwt = false # Called by other edge functions with service_role key
 
 [functions.shared-archive-ask]
-verify_jwt = false
+verify_jwt = false # Public archive access
 
 [functions.check-reminders]
-verify_jwt = false
+verify_jwt = false # Cron-triggered via pg_cron
 
 [functions.ai-notification-scheduler]
-verify_jwt = false
+verify_jwt = false # Cron-triggered via pg_cron

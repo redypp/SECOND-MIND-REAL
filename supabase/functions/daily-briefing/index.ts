@@ -108,21 +108,30 @@ Return a JSON object with these fields:
       });
     }
 
-    const aiResponse = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "x-api-key": ANTHROPIC_API_KEY,
-        "anthropic-version": "2023-06-01",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "claude-haiku-4-5-20251001",
-        max_tokens: 1024,
-        system: "You are a briefing generator. Return ONLY valid JSON, no markdown fences, no extra text.",
-        messages: [{ role: "user", content: prompt }],
-        temperature: 0.7,
-      }),
-    });
+    const aiController = new AbortController();
+    const aiTimeout = setTimeout(() => aiController.abort(), 25000);
+
+    let aiResponse: Response;
+    try {
+      aiResponse = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "x-api-key": ANTHROPIC_API_KEY,
+          "anthropic-version": "2023-06-01",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "claude-haiku-4-5-20251001",
+          max_tokens: 1024,
+          system: "You are a briefing generator. Return ONLY valid JSON, no markdown fences, no extra text.",
+          messages: [{ role: "user", content: prompt }],
+          temperature: 0.7,
+        }),
+        signal: aiController.signal,
+      });
+    } finally {
+      clearTimeout(aiTimeout);
+    }
 
     if (!aiResponse.ok) {
       if (aiResponse.status === 429) {

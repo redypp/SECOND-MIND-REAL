@@ -101,29 +101,38 @@ serve(async (req) => {
       });
     }
 
-    const aiResponse = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "x-api-key": ANTHROPIC_API_KEY,
-        "anthropic-version": "2023-06-01",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "claude-haiku-4-5-20251001",
-        max_tokens: 1024,
-        system: `You are a research assistant summarizing shared notes from a collective archive. Given a user's question and relevant shared notes, provide:
+    const aiController = new AbortController();
+    const aiTimeout = setTimeout(() => aiController.abort(), 25000);
+
+    let aiResponse: Response;
+    try {
+      aiResponse = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "x-api-key": ANTHROPIC_API_KEY,
+          "anthropic-version": "2023-06-01",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "claude-haiku-4-5-20251001",
+          max_tokens: 1024,
+          system: `You are a research assistant summarizing shared notes from a collective archive. Given a user's question and relevant shared notes, provide:
 1. A concise summary of patterns and insights found across the notes (2-4 sentences)
 2. Key themes or commonalities
 
 Be factual. Only reference information present in the notes. Do not hallucinate. Keep the tone calm and informative. Do not use exclamation marks.`,
-        messages: [
-          {
-            role: "user",
-            content: `Question: ${question.slice(0, 500)}\n\nShared notes:\n${notesContext}`,
-          },
-        ],
-      }),
-    });
+          messages: [
+            {
+              role: "user",
+              content: `Question: ${question.slice(0, 500)}\n\nShared notes:\n${notesContext.slice(0, 8000)}`,
+            },
+          ],
+        }),
+        signal: aiController.signal,
+      });
+    } finally {
+      clearTimeout(aiTimeout);
+    }
 
     if (!aiResponse.ok) {
       if (aiResponse.status === 429) {

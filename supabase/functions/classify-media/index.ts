@@ -100,7 +100,7 @@ serve(async (req) => {
         console.warn("[classify-media] Image fetch failed:", e);
         return new Response(
           JSON.stringify({ success: false, error: "Could not fetch image" }),
-          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
@@ -202,7 +202,7 @@ Rules:
       console.error("[classify-media] Claude error:", claudeRes.status, errText);
       return new Response(
         JSON.stringify({ success: false, error: "AI classification failed" }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -224,14 +224,14 @@ Rules:
       console.warn("[classify-media] Failed to parse Claude response:", rawText);
       return new Response(
         JSON.stringify({ success: false, error: "Could not parse AI response" }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     if (!category) {
       return new Response(
         JSON.stringify({ success: false, error: "No category returned" }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 

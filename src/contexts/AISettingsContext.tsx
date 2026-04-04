@@ -87,7 +87,8 @@ export function AISettingsProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     fetchSettings();
-  }, [fetchSettings]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   const updateSettings = (updates: Partial<AISettings>) => {
     const prev = settings;

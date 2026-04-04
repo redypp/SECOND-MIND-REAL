@@ -382,56 +382,65 @@ Be encouraging but specific - cite their actual content.`;
       );
     }
 
-    const aiResponse = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "x-api-key": ANTHROPIC_API_KEY,
-        "anthropic-version": "2023-06-01",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "claude-haiku-4-5-20251001",
-        max_tokens: 2048,
-        system: systemPrompt,
-        messages: [{ role: "user", content: userPrompt }],
-        tools: [{
-          name: "generate_notifications",
-          description: "Generate smart notifications for the user",
-          input_schema: {
-            type: "object",
-            properties: {
-              notifications: {
-                type: "array",
-                items: {
-                  type: "object",
-                  properties: {
-                    title: { type: "string", description: "Short title, max 60 chars" },
-                    message: { type: "string", description: "1-3 short sentences" },
-                    reason: { type: "string", description: "Why this notification now, citing specific items" },
-                    category: {
-                      type: "string",
-                      enum: ["resurface", "connection", "decision", "task", "reminder"]
+    const aiController = new AbortController();
+    const aiTimeout = setTimeout(() => aiController.abort(), 30000);
+
+    let aiResponse: Response;
+    try {
+      aiResponse = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "x-api-key": ANTHROPIC_API_KEY,
+          "anthropic-version": "2023-06-01",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "claude-haiku-4-5-20251001",
+          max_tokens: 2048,
+          system: systemPrompt,
+          messages: [{ role: "user", content: userPrompt }],
+          tools: [{
+            name: "generate_notifications",
+            description: "Generate smart notifications for the user",
+            input_schema: {
+              type: "object",
+              properties: {
+                notifications: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      title: { type: "string", description: "Short title, max 60 chars" },
+                      message: { type: "string", description: "1-3 short sentences" },
+                      reason: { type: "string", description: "Why this notification now, citing specific items" },
+                      category: {
+                        type: "string",
+                        enum: ["resurface", "connection", "decision", "task", "reminder"]
+                      },
+                      priority: { type: "string", enum: ["low", "medium", "high"] },
+                      suggested_action: { type: "string", description: "One actionable next step" },
+                      related_item_ids: {
+                        type: "array",
+                        items: { type: "string" },
+                        description: "IDs of items this notification references"
+                      }
                     },
-                    priority: { type: "string", enum: ["low", "medium", "high"] },
-                    suggested_action: { type: "string", description: "One actionable next step" },
-                    related_item_ids: {
-                      type: "array",
-                      items: { type: "string" },
-                      description: "IDs of items this notification references"
-                    }
-                  },
-                  required: ["title", "message", "reason", "category", "priority"],
-                  additionalProperties: false
+                    required: ["title", "message", "reason", "category", "priority"],
+                    additionalProperties: false
+                  }
                 }
-              }
-            },
-            required: ["notifications"],
-            additionalProperties: false
-          }
-        }],
-        tool_choice: { type: "tool", name: "generate_notifications" }
-      }),
-    });
+              },
+              required: ["notifications"],
+              additionalProperties: false
+            }
+          }],
+          tool_choice: { type: "tool", name: "generate_notifications" }
+        }),
+        signal: aiController.signal,
+      });
+    } finally {
+      clearTimeout(aiTimeout);
+    }
 
     if (!aiResponse.ok) {
       const errorText = await aiResponse.text();
