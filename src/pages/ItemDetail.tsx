@@ -97,23 +97,38 @@ export default function ItemDetail() {
     <div className="min-h-screen bg-background page-transition safe-area-top-ios">
       <Header showBack />
 
-      <div className="px-6 py-4 max-w-2xl mx-auto">
-        {/* Type indicator */}
-        <div className="flex items-center gap-2 mb-4">
-          <div 
-            className="w-6 h-6 rounded-md flex items-center justify-center"
-            style={{ backgroundColor: `${subCat.color}15` }}
+      <div className="px-6 pt-6 pb-12 max-w-2xl mx-auto">
+        {/* Hero type badge */}
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="mb-6"
+        >
+          <div className="inline-flex items-center gap-2.5 px-3.5 py-2 rounded-xl"
+            style={{ backgroundColor: `${subCat.color}12` }}
           >
-            <subCat.icon className="w-3.5 h-3.5" style={{ color: subCat.color }} />
+            <div
+              className="w-8 h-8 rounded-lg flex items-center justify-center"
+              style={{ backgroundColor: `${subCat.color}20` }}
+            >
+              <subCat.icon className="w-4 h-4" style={{ color: subCat.color }} />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[13px] font-semibold" style={{ color: subCat.color }}>{subCat.label}</span>
+              <span className="text-[11px] text-muted-foreground/60">{formatDate(item.createdAt)}</span>
+            </div>
           </div>
-          <span className="text-xs font-medium text-muted-foreground">{subCat.label}</span>
-          <span className="text-muted-foreground/40">•</span>
-          <span className="text-xs text-muted-foreground/60">{formatDate(item.createdAt)}</span>
-        </div>
+        </motion.div>
 
         {/* Thumbnail for images/videos */}
         {item.thumbnail && (item.type === 'image' || item.type === 'video') && (
-          <div className="relative mb-5 rounded-xl overflow-hidden aspect-video bg-secondary">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.4 }}
+            className="relative mb-8 rounded-2xl overflow-hidden aspect-video bg-secondary shadow-lg"
+          >
             <img
               src={item.thumbnail}
               alt=""
@@ -121,12 +136,12 @@ export default function ItemDetail() {
             />
             {item.type === 'video' && (
               <div className="absolute inset-0 flex items-center justify-center bg-foreground/10">
-                <div className="w-12 h-12 rounded-full bg-background/90 flex items-center justify-center">
-                  <Video className="w-5 h-5 text-foreground" />
+                <div className="w-14 h-14 rounded-full bg-background/90 flex items-center justify-center shadow-md">
+                  <Video className="w-6 h-6 text-foreground" />
                 </div>
               </div>
             )}
-          </div>
+          </motion.div>
         )}
 
         {/* Content */}
@@ -134,62 +149,84 @@ export default function ItemDetail() {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="space-y-3"
+            className="space-y-4"
           >
             <input
               type="text"
               value={editTitle}
               onChange={(e) => setEditTitle(e.target.value)}
               placeholder="Title (optional)"
-              className="w-full px-3 py-2 bg-secondary border border-border rounded-lg text-foreground text-base focus:outline-none focus:ring-2 focus:ring-primary/20"
+              className="w-full px-4 py-3 bg-secondary border border-border rounded-xl text-foreground text-lg font-semibold focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
             <RichTextEditor
               value={editContent}
               onChange={setEditContent}
               placeholder="Content... (use **text** for bold)"
-              rows={4}
+              rows={6}
             />
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2.5">
               <button
                 onClick={handleSaveEdit}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-primary-foreground rounded-lg text-sm font-medium"
+                className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl text-sm font-semibold shadow-sm"
               >
-                <Check className="w-3.5 h-3.5" />
+                <Check className="w-4 h-4" />
                 Save
               </button>
               <button
                 onClick={() => setIsEditing(false)}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-secondary text-foreground rounded-lg text-sm"
+                className="flex items-center gap-2 px-4 py-2 bg-secondary text-foreground rounded-xl text-sm"
               >
-                <X className="w-3.5 h-3.5" />
+                <X className="w-4 h-4" />
                 Cancel
               </button>
             </div>
           </motion.div>
         ) : (
-          <div>
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35, delay: 0.05 }}
+          >
             {item.title && (
-              <h1 className="text-lg font-semibold text-foreground mb-2">
+              <h1 className="text-[clamp(1.5rem,5vw,2rem)] font-bold text-foreground leading-tight tracking-[-0.02em] mb-4">
                 {item.title}
               </h1>
             )}
-            <p className="text-foreground/80 leading-relaxed text-[15px] whitespace-pre-wrap">
+            <div className="text-foreground/85 leading-[1.8] text-[17px] whitespace-pre-wrap">
               <FormattedText content={item.content || ''} />
-            </p>
-          </div>
+            </div>
+          </motion.div>
         )}
 
         {/* Link button */}
         {item.url && !isEditing && isValidUrl(item.url) && (
-          <a
+          <motion.a
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.15 }}
             href={item.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-3 py-2 bg-secondary text-foreground rounded-lg text-sm font-medium hover:bg-secondary/80 transition-colors mt-4"
+            className="inline-flex items-center gap-2.5 px-4 py-2.5 bg-secondary/80 text-foreground rounded-xl text-sm font-medium hover:bg-secondary transition-colors mt-6 border border-border/30"
           >
-            <ExternalLink className="w-3.5 h-3.5" />
+            <ExternalLink className="w-4 h-4 text-muted-foreground" />
             Open link
-          </a>
+          </motion.a>
+        )}
+
+        {/* Archive tags */}
+        {!isEditing && itemSpaces.length > 0 && (
+          <div className="mt-8 flex items-center gap-2 flex-wrap">
+            {itemSpaces.map(space => space && (
+              <button
+                key={space.id}
+                onClick={() => navigate(`/space/${space.id}`)}
+                className="text-[13px] font-medium px-3 py-1.5 rounded-full bg-secondary/60 text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors border border-border/20"
+              >
+                {space.name}
+              </button>
+            ))}
+          </div>
         )}
 
         {/* People Tags */}
@@ -206,16 +243,16 @@ export default function ItemDetail() {
           );
 
           return (
-            <div className="mt-5 pt-4 border-t border-border/50">
-              <div className="flex items-center gap-2 mb-2">
-                <User className="w-3.5 h-3.5 text-muted-foreground" />
-                <span className="text-[13px] font-medium text-muted-foreground">People</span>
+            <div className="mt-8 pt-6 border-t border-border/30">
+              <div className="flex items-center gap-2 mb-3">
+                <User className="w-4 h-4 text-muted-foreground/70" />
+                <span className="text-[13px] font-semibold text-muted-foreground uppercase tracking-wider">People</span>
               </div>
 
               {/* Current people chips */}
-              <div className="flex items-center gap-1.5 flex-wrap mb-2">
+              <div className="flex items-center gap-2 flex-wrap mb-3">
                 {itemPeople.map(person => (
-                  <div key={person.id} className="flex items-center gap-1 text-[13px] text-primary bg-primary/10 pl-2 pr-1 py-0.5 rounded-full">
+                  <div key={person.id} className="flex items-center gap-1.5 text-[14px] text-primary bg-primary/10 pl-3 pr-1.5 py-1 rounded-full font-medium">
                     <span>{person.name}</span>
                     <button
                       onClick={() => {
@@ -224,15 +261,15 @@ export default function ItemDetail() {
                       }}
                       className="p-0.5 hover:bg-primary/20 rounded-full"
                     >
-                      <X className="w-3 h-3" />
+                      <X className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 ))}
                 <button
                   onClick={() => setShowPersonSearch(!showPersonSearch)}
-                  className="flex items-center gap-1 text-[13px] text-muted-foreground hover:text-foreground px-2 py-0.5 rounded-full bg-secondary/50 hover:bg-secondary transition-colors"
+                  className="flex items-center gap-1.5 text-[13px] text-muted-foreground hover:text-foreground px-3 py-1 rounded-full bg-secondary/50 hover:bg-secondary transition-colors"
                 >
-                  <Plus className="w-3 h-3" />
+                  <Plus className="w-3.5 h-3.5" />
                   Add
                 </button>
               </div>
@@ -246,7 +283,7 @@ export default function ItemDetail() {
                     onChange={e => setPersonSearch(e.target.value)}
                     placeholder="Type a name..."
                     autoFocus
-                    className="w-full px-3 py-2 bg-secondary border border-border rounded-lg text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    className="w-full px-4 py-2.5 bg-secondary border border-border rounded-xl text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
                     onKeyDown={async e => {
                       if (e.key === 'Enter' && personSearch.trim()) {
                         const person = await addPerson(personSearch.trim());
@@ -263,7 +300,7 @@ export default function ItemDetail() {
                     }}
                   />
                   {(filteredSuggestions.length > 0 || isNewName) && (
-                    <div className="absolute top-full left-0 right-0 mt-1 bg-popover border border-border rounded-lg shadow-lg z-10 overflow-hidden">
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-popover border border-border rounded-xl shadow-lg z-10 overflow-hidden">
                       {filteredSuggestions.map(person => (
                         <button
                           key={person.id}
@@ -273,9 +310,9 @@ export default function ItemDetail() {
                             setPersonSearch('');
                             setShowPersonSearch(false);
                           }}
-                          className="w-full text-left px-3 py-2 text-sm text-foreground hover:bg-secondary transition-colors flex items-center gap-2"
+                          className="w-full text-left px-4 py-2.5 text-sm text-foreground hover:bg-secondary transition-colors flex items-center gap-2"
                         >
-                          <User className="w-3.5 h-3.5 text-muted-foreground" />
+                          <User className="w-4 h-4 text-muted-foreground" />
                           {person.name}
                         </button>
                       ))}
@@ -290,9 +327,9 @@ export default function ItemDetail() {
                             setPersonSearch('');
                             setShowPersonSearch(false);
                           }}
-                          className="w-full text-left px-3 py-2 text-sm text-primary hover:bg-secondary transition-colors flex items-center gap-2 border-t border-border"
+                          className="w-full text-left px-4 py-2.5 text-sm text-primary hover:bg-secondary transition-colors flex items-center gap-2 border-t border-border"
                         >
-                          <Plus className="w-3.5 h-3.5" />
+                          <Plus className="w-4 h-4" />
                           Create "{personSearch.trim()}"
                         </button>
                       )}
@@ -306,19 +343,19 @@ export default function ItemDetail() {
 
         {/* Actions */}
         {!isEditing && (
-          <div className="flex items-center gap-2 mt-4 pt-4 border-t border-border/50">
+          <div className="flex items-center gap-3 mt-8 pt-6 border-t border-border/30">
             <button
               onClick={handleStartEdit}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-muted-foreground hover:text-foreground hover:bg-secondary rounded-lg text-sm transition-colors"
+              className="flex items-center gap-2 px-4 py-2 text-muted-foreground hover:text-foreground hover:bg-secondary rounded-xl text-sm font-medium transition-colors"
             >
-              <Pencil className="w-3.5 h-3.5" />
+              <Pencil className="w-4 h-4" />
               Edit
             </button>
             <button
               onClick={handleDelete}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg text-sm transition-colors"
+              className="flex items-center gap-2 px-4 py-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-xl text-sm font-medium transition-colors"
             >
-              <Trash2 className="w-3.5 h-3.5" />
+              <Trash2 className="w-4 h-4" />
               Delete
             </button>
           </div>
