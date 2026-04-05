@@ -133,14 +133,11 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     // appReady can become true while the profile fetch is still in-flight
     // (SpacesContext may load from cache before the profile round-trip finishes),
     // causing profile=null to be misread as "onboarding incomplete" for existing users.
+    // Use a minimal transparent placeholder instead of the full InitialSyncLoader
+    // to avoid flashing a second loading screen right after AppStartup's splash.
     if (!profileFetched) {
       return (
-        <InitialSyncLoader
-          phase="profile"
-          progress={70}
-          error={null}
-          onRetry={retrySync}
-        />
+        <div className="fixed inset-0 z-[9998] bg-background" />
       );
     }
     if (!isOnboardingComplete && location.pathname !== '/onboarding') {

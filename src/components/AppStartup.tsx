@@ -56,6 +56,11 @@ function logStartup(message: string, data?: Record<string, any>) {
 }
 
 export function AppStartup({ children, onInitialize, onLogout, isDataReady }: AppStartupProps) {
+  // Controls the fade-out overlay that smooths the splash → content transition.
+  // When phase becomes 'ready', we keep a full-screen overlay briefly so the
+  // content underneath can mount and paint before the user sees it.
+  const [showFadeOverlay, setShowFadeOverlay] = useState(true);
+
   // Fade out the HTML initial-loader smoothly instead of removing instantly
   useEffect(() => {
     const loader = document.getElementById('initial-loader');
@@ -349,100 +354,126 @@ export function AppStartup({ children, onInitialize, onLogout, isDataReady }: Ap
     }
   }, [onLogout]);
 
-  // Show loading screen during startup (cold start only)
-  if (phase !== 'ready') {
-    return (
-      <div className="fixed inset-0 z-[9999] bg-background flex flex-col items-center justify-center p-6 overflow-hidden">
-        {phase === 'error' || !isOnline ? (
-          /* Error / offline state */
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="flex flex-col items-center gap-6"
-          >
-            {phase === 'error' ? (
-              <AlertCircle className="w-8 h-8 text-destructive" />
-            ) : (
-              <WifiOff className="w-8 h-8 text-muted-foreground" />
-            )}
-            {phase === 'error' && error && (
-              <div className="text-center space-y-1.5">
-                <p className="text-sm font-medium text-foreground">{error.message}</p>
-                {error.details && (
-                  <p className="text-xs text-muted-foreground max-w-[280px]">{error.details}</p>
-                )}
-              </div>
-            )}
-            {!isOnline && phase !== 'error' && (
-              <p className="text-xs text-muted-foreground">No internet connection</p>
-            )}
-          </motion.div>
-        ) : (
-          /* Editorial typographic splash */
-          <div className="flex flex-col items-center justify-center gap-1">
-            <motion.div
-              initial={{ clipPath: 'inset(0 100% 0 0)' }}
-              animate={{ clipPath: 'inset(0 0% 0 0)' }}
-              transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-            >
-              <span
-                className="block font-display uppercase tracking-[-0.06em] leading-[0.85] text-foreground/90 select-none"
-                style={{ fontSize: 'clamp(4.5rem, 18vw, 9rem)', fontWeight: 700 }}
-              >
-                SECOND
-              </span>
-            </motion.div>
-            <motion.div
-              initial={{ clipPath: 'inset(0 100% 0 0)' }}
-              animate={{ clipPath: 'inset(0 0% 0 0)' }}
-              transition={{ duration: 0.6, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
-            >
-              <span
-                className="block font-display uppercase tracking-[-0.06em] leading-[0.85] text-foreground/90 select-none"
-                style={{ fontSize: 'clamp(4.5rem, 18vw, 9rem)', fontWeight: 700 }}
-              >
-                MIND
-              </span>
-            </motion.div>
-            {/* Thin loading bar */}
-            <motion.div
-              className="mt-6 h-[2px] bg-primary/80 rounded-full"
-              initial={{ width: 0 }}
-              animate={{ width: 80 }}
-              transition={{ duration: 1.5, delay: 0.4, ease: 'easeInOut' }}
-            />
-          </div>
-        )}
+  // When phase transitions to 'ready', start fading out the overlay so children
+  // can mount and paint behind it before the user sees them.
+  useEffect(() => {
+    if (phase === 'ready') {
+      // Small delay lets React render children behind the overlay first
+      const timer = setTimeout(() => setShowFadeOverlay(false), 80);
+      return () => clearTimeout(timer);
+    } else {
+      setShowFadeOverlay(true);
+    }
+  }, [phase]);
 
-        {/* Action buttons */}
-        <AnimatePresence>
-          {(phase === 'error' || !isOnline || showRetry) && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 10 }}
-              className="mt-8 flex flex-col items-center gap-3"
-            >
-              <div className="flex gap-3">
-                <Button variant="default" size="sm" onClick={handleRetry} className="gap-2">
-                  <RefreshCw className="w-4 h-4" /> Retry
-                </Button>
-                {(phase === 'error' || showRetry) && (
-                  <Button variant="outline" size="sm" onClick={handleLogout} className="gap-2">
-                    <LogOut className="w-4 h-4" /> Log out
-                  </Button>
-                )}
-              </div>
-              {!isOnline && (
-                <p className="text-xs text-muted-foreground mt-2">Please check your connection and try again</p>
-              )}
-            </motion.div>
-          )}
-        </AnimatePresence>
+  // Always render children so they can mount and be ready when the overlay fades.
+  // The overlay blocks visibility until the transition is complete.
+  return (
+    <>
+      {/* App content — always mounted so it paints behind the overlay */}
+      <div style={{ visibility: phase === 'ready' ? 'visible' : 'hidden' }}>
+        {phase === 'ready' ? children : null}
       </div>
-    );
-  }
 
-  // Ready - render the app
-  return <>{children}</>;
+      {/* Splash / loading overlay */}
+      <AnimatePresence>
+        {(phase !== 'ready' || showFadeOverlay) && (
+          <motion.div
+            key="startup-overlay"
+            initial={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.35, ease: 'easeOut' }}
+            className="fixed inset-0 z-[9999] bg-background flex flex-col items-center justify-center p-6 overflow-hidden"
+          >
+            {phase === 'error' || !isOnline ? (
+              /* Error / offline state */
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="flex flex-col items-center gap-6"
+              >
+                {phase === 'error' ? (
+                  <AlertCircle className="w-8 h-8 text-destructive" />
+                ) : (
+                  <WifiOff className="w-8 h-8 text-muted-foreground" />
+                )}
+                {phase === 'error' && error && (
+                  <div className="text-center space-y-1.5">
+                    <p className="text-sm font-medium text-foreground">{error.message}</p>
+                    {error.details && (
+                      <p className="text-xs text-muted-foreground max-w-[280px]">{error.details}</p>
+                    )}
+                  </div>
+                )}
+                {!isOnline && phase !== 'error' && (
+                  <p className="text-xs text-muted-foreground">No internet connection</p>
+                )}
+              </motion.div>
+            ) : (
+              /* Editorial typographic splash */
+              <div className="flex flex-col items-center justify-center gap-1">
+                <motion.div
+                  initial={{ clipPath: 'inset(0 100% 0 0)' }}
+                  animate={{ clipPath: 'inset(0 0% 0 0)' }}
+                  transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+                >
+                  <span
+                    className="block font-display uppercase tracking-[-0.06em] leading-[0.85] text-foreground/90 select-none"
+                    style={{ fontSize: 'clamp(4.5rem, 18vw, 9rem)', fontWeight: 700 }}
+                  >
+                    SECOND
+                  </span>
+                </motion.div>
+                <motion.div
+                  initial={{ clipPath: 'inset(0 100% 0 0)' }}
+                  animate={{ clipPath: 'inset(0 0% 0 0)' }}
+                  transition={{ duration: 0.6, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
+                >
+                  <span
+                    className="block font-display uppercase tracking-[-0.06em] leading-[0.85] text-foreground/90 select-none"
+                    style={{ fontSize: 'clamp(4.5rem, 18vw, 9rem)', fontWeight: 700 }}
+                  >
+                    MIND
+                  </span>
+                </motion.div>
+                {/* Thin loading bar */}
+                <motion.div
+                  className="mt-6 h-[2px] bg-primary/80 rounded-full"
+                  initial={{ width: 0 }}
+                  animate={{ width: 80 }}
+                  transition={{ duration: 1.5, delay: 0.4, ease: 'easeInOut' }}
+                />
+              </div>
+            )}
+
+            {/* Action buttons */}
+            <AnimatePresence>
+              {(phase === 'error' || !isOnline || showRetry) && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 10 }}
+                  className="mt-8 flex flex-col items-center gap-3"
+                >
+                  <div className="flex gap-3">
+                    <Button variant="default" size="sm" onClick={handleRetry} className="gap-2">
+                      <RefreshCw className="w-4 h-4" /> Retry
+                    </Button>
+                    {(phase === 'error' || showRetry) && (
+                      <Button variant="outline" size="sm" onClick={handleLogout} className="gap-2">
+                        <LogOut className="w-4 h-4" /> Log out
+                      </Button>
+                    )}
+                  </div>
+                  {!isOnline && (
+                    <p className="text-xs text-muted-foreground mt-2">Please check your connection and try again</p>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
+  );
 }
