@@ -41,7 +41,7 @@ export function Header({ title, showBack = false, backTo, right, showSettings = 
             </motion.button>
           )}
           {title && (
-            <h1 className="text-[17px] font-semibold text-foreground tracking-tight">
+            <h1 className="text-base font-semibold text-foreground tracking-tight">
               {title}
             </h1>
           )}

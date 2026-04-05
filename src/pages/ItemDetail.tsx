@@ -115,8 +115,8 @@ export default function ItemDetail() {
               <subCat.icon className="w-4 h-4" style={{ color: subCat.color }} />
             </div>
             <div className="flex flex-col">
-              <span className="text-[13px] font-semibold" style={{ color: subCat.color }}>{subCat.label}</span>
-              <span className="text-[11px] text-muted-foreground/60">{formatDate(item.createdAt)}</span>
+              <span className="text-xs font-semibold" style={{ color: subCat.color }}>{subCat.label}</span>
+              <span className="text-xs text-muted-foreground/60">{formatDate(item.createdAt)}</span>
             </div>
           </div>
         </motion.div>
@@ -188,11 +188,11 @@ export default function ItemDetail() {
             transition={{ duration: 0.35, delay: 0.05 }}
           >
             {item.title && (
-              <h1 className="text-[clamp(1.5rem,5vw,2rem)] font-bold text-foreground leading-tight tracking-[-0.02em] mb-4">
+              <h1 className="text-2xl font-bold text-foreground leading-tight tracking-tight mb-4">
                 {item.title}
               </h1>
             )}
-            <div className="text-foreground/85 leading-[1.8] text-[17px] whitespace-pre-wrap">
+            <div className="text-foreground/85 leading-relaxed text-[15px] whitespace-pre-wrap">
               <FormattedText content={item.content || ''} />
             </div>
           </motion.div>
@@ -207,7 +207,7 @@ export default function ItemDetail() {
             href={item.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2.5 px-4 py-2.5 bg-secondary/80 text-foreground rounded-xl text-sm font-medium hover:bg-secondary transition-colors mt-6 border border-border/30"
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-secondary/80 text-foreground rounded-xl text-sm font-medium hover:bg-secondary transition-colors mt-6 border border-border/30"
           >
             <ExternalLink className="w-4 h-4 text-muted-foreground" />
             Open link
@@ -221,7 +221,7 @@ export default function ItemDetail() {
               <button
                 key={space.id}
                 onClick={() => navigate(`/space/${space.id}`)}
-                className="text-[13px] font-medium px-3 py-1.5 rounded-full bg-secondary/60 text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors border border-border/20"
+                className="text-xs font-medium px-3 py-1.5 rounded-full bg-secondary/60 text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors border border-border/20"
               >
                 {space.name}
               </button>
@@ -246,13 +246,13 @@ export default function ItemDetail() {
             <div className="mt-8 pt-6 border-t border-border/30">
               <div className="flex items-center gap-2 mb-3">
                 <User className="w-4 h-4 text-muted-foreground/70" />
-                <span className="text-[13px] font-semibold text-muted-foreground uppercase tracking-wider">People</span>
+                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">People</span>
               </div>
 
               {/* Current people chips */}
               <div className="flex items-center gap-2 flex-wrap mb-3">
                 {itemPeople.map(person => (
-                  <div key={person.id} className="flex items-center gap-1.5 text-[14px] text-primary bg-primary/10 pl-3 pr-1.5 py-1 rounded-full font-medium">
+                  <div key={person.id} className="flex items-center gap-1.5 text-sm text-primary bg-primary/10 pl-3 pr-1.5 py-1 rounded-full font-medium">
                     <span>{person.name}</span>
                     <button
                       onClick={() => {
@@ -267,7 +267,7 @@ export default function ItemDetail() {
                 ))}
                 <button
                   onClick={() => setShowPersonSearch(!showPersonSearch)}
-                  className="flex items-center gap-1.5 text-[13px] text-muted-foreground hover:text-foreground px-3 py-1 rounded-full bg-secondary/50 hover:bg-secondary transition-colors"
+                  className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground px-3 py-1 rounded-full bg-secondary/50 hover:bg-secondary transition-colors"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   Add

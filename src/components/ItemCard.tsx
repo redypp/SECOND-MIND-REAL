@@ -92,12 +92,12 @@ export const ItemCard = memo(function ItemCard({ item, compact = false, archiveM
           <div className="space-y-0.5">
             {block.items.slice(0, 3).map((listItem, i) => (
               <div key={i} className="flex items-center gap-1.5 text-[15px] text-muted-foreground leading-snug">
-                <span className="text-primary text-[11px]">•</span>
+                <span className="text-primary text-xs">•</span>
                 <span className="truncate">{listItem}</span>
               </div>
             ))}
             {block.items.length > 3 && (
-              <span className="text-[13px] text-muted-foreground">+{block.items.length - 3} more</span>
+              <span className="text-xs text-muted-foreground">+{block.items.length - 3} more</span>
             )}
           </div>
         );
@@ -130,9 +130,9 @@ export const ItemCard = memo(function ItemCard({ item, compact = false, archiveM
               </div>
             ))}
             {block.items.length > 3 && (
-              <span className="text-[13px] text-muted-foreground">+{block.items.length - 3} more</span>
+              <span className="text-xs text-muted-foreground">+{block.items.length - 3} more</span>
             )}
-            <div className="mt-1.5 text-[13px] text-muted-foreground">
+            <div className="mt-1.5 text-xs text-muted-foreground">
               {completed}/{block.items.length} done
             </div>
           </div>
@@ -188,11 +188,11 @@ export const ItemCard = memo(function ItemCard({ item, compact = false, archiveM
           </div>
 
           <div className="flex-1 min-w-0">
-            <h3 className="text-[16px] font-medium text-foreground truncate group-hover:text-primary transition-colors leading-tight">
+            <h3 className="text-[15px] font-medium text-foreground truncate group-hover:text-primary transition-colors leading-tight">
               {displayTitle}
             </h3>
 
-            <p className="text-[14px] text-muted-foreground truncate mt-0.5 flex items-center gap-1.5">
+            <p className="text-sm text-muted-foreground truncate mt-0.5 flex items-center gap-1.5">
               <span className="inline-block w-1.5 h-1.5 rounded-full bg-primary/40" />
               {domain}
             </p>
@@ -290,7 +290,6 @@ export const ItemCard = memo(function ItemCard({ item, compact = false, archiveM
             archiveTitleText && (
               <h3
                 className="text-[15px] font-semibold text-foreground truncate leading-tight"
-                style={{ fontFamily: 'Helvetica Neue, Helvetica, Arial, sans-serif' }}
               >
                 {archiveTitleText}
               </h3>
@@ -298,12 +297,11 @@ export const ItemCard = memo(function ItemCard({ item, compact = false, archiveM
           ) : (
             item.title && (
               <h3
-                className={`${isPureNote ? 'text-[15px] leading-snug' : 'text-[16px] line-clamp-2 leading-tight'} ${
+                className={`${isPureNote ? 'text-[15px] leading-snug' : 'text-[15px] line-clamp-2 leading-tight'} ${
                   isImportant
                     ? 'font-bold text-white dark:text-gray-900'
                     : 'font-semibold text-foreground'
                 }`}
-                style={{ fontFamily: 'Helvetica Neue, Helvetica, Arial, sans-serif' }}
               >
                 {item.title}
               </h3>
@@ -314,10 +312,10 @@ export const ItemCard = memo(function ItemCard({ item, compact = false, archiveM
             <p
               className={`whitespace-pre-wrap break-words ${
                 isPureNote && !archiveMode
-                  ? 'text-[16px] leading-relaxed'
+                  ? 'text-[15px] leading-relaxed'
                   : archiveMode && isPureNote
                   ? 'text-[15px] line-clamp-4 leading-relaxed'
-                  : 'text-[16px] line-clamp-3 leading-relaxed'
+                  : 'text-[15px] line-clamp-3 leading-relaxed'
               } ${(archiveMode ? archiveTitleText : (!archiveMode && item.title)) ? 'mt-0.5' : ''} ${
                 isImportant
                   ? 'font-bold text-white dark:text-gray-900'
@@ -329,7 +327,7 @@ export const ItemCard = memo(function ItemCard({ item, compact = false, archiveM
                   ? 'font-normal text-foreground'
                   : 'font-semibold text-foreground'
               }`}
-              style={{ wordBreak: 'break-word', fontFamily: 'Helvetica Neue, Helvetica, Arial, sans-serif' }}
+              style={{ wordBreak: 'break-word' }}
             >
               <FormattedText content={textContent} />
             </p>
@@ -353,25 +351,25 @@ export const ItemCard = memo(function ItemCard({ item, compact = false, archiveM
           {item.blocks && item.blocks.length > 1 && (
             <div className="mt-1.5 flex items-center gap-1.5 flex-wrap">
               {item.blocks.some(b => b.type === 'list') && (
-                <div className="flex items-center gap-1 text-[13px] text-muted-foreground bg-secondary/50 px-1.5 py-0.5 rounded">
+                <div className="flex items-center gap-1 text-xs text-muted-foreground bg-secondary/50 px-1.5 py-0.5 rounded">
                   <List className="w-3 h-3" />
                   List
                 </div>
               )}
               {item.blocks.some(b => b.type === 'checklist') && (
-                <div className="flex items-center gap-1 text-[13px] text-muted-foreground bg-secondary/50 px-1.5 py-0.5 rounded">
+                <div className="flex items-center gap-1 text-xs text-muted-foreground bg-secondary/50 px-1.5 py-0.5 rounded">
                   <CheckSquare className="w-3 h-3" />
                   Tasks
                 </div>
               )}
               {item.blocks.some(b => b.type === 'table') && (
-                <div className="flex items-center gap-1 text-[13px] text-muted-foreground bg-secondary/50 px-1.5 py-0.5 rounded">
+                <div className="flex items-center gap-1 text-xs text-muted-foreground bg-secondary/50 px-1.5 py-0.5 rounded">
                   <Table className="w-3 h-3" />
                   Table
                 </div>
               )}
               {item.blocks.filter(b => b.type === 'media').length > 1 && (
-                <div className="flex items-center gap-1 text-[13px] text-muted-foreground bg-secondary/50 px-1.5 py-0.5 rounded">
+                <div className="flex items-center gap-1 text-xs text-muted-foreground bg-secondary/50 px-1.5 py-0.5 rounded">
                   +{item.blocks.filter(b => b.type === 'media').length - 1} media
                 </div>
               )}
@@ -381,13 +379,13 @@ export const ItemCard = memo(function ItemCard({ item, compact = false, archiveM
           {itemPeople.length > 0 && (
             <div className="mt-1.5 flex items-center gap-1 flex-wrap">
               {itemPeople.slice(0, 3).map(person => (
-                <div key={person.id} className="flex items-center gap-1 text-[12px] text-primary/80 bg-primary/10 px-1.5 py-0.5 rounded-full">
+                <div key={person.id} className="flex items-center gap-1 text-xs text-primary/80 bg-primary/10 px-1.5 py-0.5 rounded-full">
                   <User className="w-2.5 h-2.5" />
                   {person.name}
                 </div>
               ))}
               {itemPeople.length > 3 && (
-                <span className="text-[12px] text-muted-foreground">+{itemPeople.length - 3}</span>
+                <span className="text-xs text-muted-foreground">+{itemPeople.length - 3}</span>
               )}
             </div>
           )}

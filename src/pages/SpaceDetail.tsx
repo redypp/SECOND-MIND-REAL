@@ -286,12 +286,12 @@ export default function SpaceDetail({ embedded = false, spaceId: propSpaceId, on
             <Folder className="w-7 h-7 text-muted-foreground" />
           </div>
           <h2 className="text-lg font-semibold text-foreground mb-1.5">Archive not found</h2>
-          <p className="text-muted-foreground text-[15px] mb-5">
+          <p className="text-muted-foreground text-sm mb-5">
             This archive may have been deleted.
           </p>
           <button
             onClick={() => embedded ? onBack?.() : navigate('/archive', { replace: true })}
-            className="inline-flex items-center gap-1.5 text-[14px] text-primary font-medium hover:underline"
+            className="inline-flex items-center gap-1.5 text-sm text-primary font-medium hover:underline"
           >
             Back to archives
           </button>
@@ -356,7 +356,7 @@ export default function SpaceDetail({ embedded = false, spaceId: propSpaceId, on
             >
               {space.name}
             </h2>
-            <p className="text-white/80 text-[13px] mt-0.5">
+            <p className="text-white/80 text-xs mt-0.5">
               {isSharedMember && <span className="text-primary/80 mr-1.5">Shared with you ·</span>}
               {items.length} {items.length === 1 ? 'item' : 'items'}
             </p>
@@ -396,7 +396,7 @@ export default function SpaceDetail({ embedded = false, spaceId: propSpaceId, on
             </div>
             <div className="flex-1 min-w-0">
               <h1 className="text-lg font-semibold text-foreground truncate">{space.name}</h1>
-              <p className="text-muted-foreground text-[13px]">
+              <p className="text-muted-foreground text-xs">
                 {items.length} {items.length === 1 ? 'item' : 'items'}
                 {isOrganizing && (
                   <span className="ml-1.5 inline-flex items-center gap-1 text-muted-foreground/70">
@@ -488,8 +488,8 @@ export default function SpaceDetail({ embedded = false, spaceId: propSpaceId, on
             animate={{ opacity: 1, y: 0 }}
             className="text-center py-20 px-6"
           >
-            <p className="text-muted-foreground/70 text-[14px] mb-4">Nothing here yet</p>
-            <p className="text-muted-foreground/55 text-[13px] mb-6">
+            <p className="text-muted-foreground/70 text-sm mb-4">Nothing here yet</p>
+            <p className="text-muted-foreground/55 text-xs mb-6">
               Tap + to add notes, images, or links
             </p>
             <motion.button
@@ -587,7 +587,7 @@ export default function SpaceDetail({ embedded = false, spaceId: propSpaceId, on
             >
               {/* Options — anchored to bottom */}
               <div className="flex-1 flex flex-col justify-end px-7 pb-4 pt-16">
-                <p className="text-[10px] uppercase tracking-[0.2em] font-semibold text-white/50 mb-2">Manage</p>
+                <p className="text-xs uppercase tracking-wide font-semibold text-white/50 mb-2">Manage</p>
 
                 <motion.button
                   whileTap={{ scale: 0.97 }}
@@ -647,7 +647,7 @@ export default function SpaceDetail({ embedded = false, spaceId: propSpaceId, on
                 )}
 
                 <div className="mt-5 pt-4 border-t border-white/15">
-                  <p className="text-[10px] uppercase tracking-[0.2em] font-semibold text-white/50 mb-1">Danger</p>
+                  <p className="text-xs uppercase tracking-wide font-semibold text-white/50 mb-1">Danger</p>
                   <motion.button
                     whileTap={{ scale: 0.97 }}
                     className="text-left py-1.5"

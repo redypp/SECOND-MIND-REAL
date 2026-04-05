@@ -75,7 +75,7 @@ export default function CollectionsPage({ embedded = false, onNavigateToSpace }:
               <h3 className="text-xl font-bold text-foreground mb-2">
                 Create your first section
               </h3>
-              <p className="text-muted-foreground text-[15px] max-w-[280px] mx-auto mb-8 leading-relaxed">
+              <p className="text-muted-foreground text-sm max-w-[280px] mx-auto mb-8 leading-relaxed">
                 Sections help you organize your thoughts, ideas, and hobbies into meaningful archives.
               </p>
             </motion.div>
@@ -187,7 +187,7 @@ export default function CollectionsPage({ embedded = false, onNavigateToSpace }:
               <div className="mt-2">
                 <div className="flex items-center gap-2 px-5 py-3">
                   <Users className="w-3.5 h-3.5 text-muted-foreground" />
-                  <span className="text-[11px] uppercase tracking-[0.2em] font-semibold text-muted-foreground">Shared with me</span>
+                  <span className="text-xs uppercase tracking-wide font-semibold text-muted-foreground">Shared with me</span>
                 </div>
                 {sharedSpaces.map((space, i) => (
                   <motion.button

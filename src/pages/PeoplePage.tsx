@@ -82,10 +82,10 @@ export default function PeoplePage() {
         >
           <ArrowLeft className="w-5 h-5 text-foreground" />
         </button>
-        <h1 className="font-display text-[clamp(1.5rem,6vw,2rem)] font-bold uppercase tracking-[-0.04em] text-foreground">
+        <h1 className="text-xl font-bold uppercase tracking-tight text-foreground">
           People
         </h1>
-        <span className="text-muted-foreground text-[14px]">{people.length}</span>
+        <span className="text-muted-foreground text-sm">{people.length}</span>
       </header>
 
       {/* Content */}
@@ -99,7 +99,7 @@ export default function PeoplePage() {
               <User className="w-7 h-7 text-muted-foreground/50" />
             </div>
             <h3 className="text-lg font-semibold text-foreground mb-1">No people yet</h3>
-            <p className="text-muted-foreground text-[14px] max-w-[260px]">
+            <p className="text-muted-foreground text-sm max-w-[260px]">
               When you capture notes mentioning people, they'll automatically appear here.
             </p>
           </div>
@@ -122,24 +122,24 @@ export default function PeoplePage() {
                     <div className="flex items-center gap-3 px-4 py-3.5">
                       {/* Avatar */}
                       <div className="w-11 h-11 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
-                        <span className="text-[14px] font-bold text-primary uppercase">
+                        <span className="text-sm font-bold text-primary uppercase">
                           {getInitials(person.name)}
                         </span>
                       </div>
 
                       {/* Info */}
                       <div className="flex-1 min-w-0">
-                        <h3 className="text-[16px] font-semibold text-foreground truncate">
+                        <h3 className="text-base font-semibold text-foreground truncate">
                           {person.name}
                         </h3>
                         <div className="flex items-center gap-2 mt-0.5">
-                          <span className="text-[13px] text-muted-foreground">
+                          <span className="text-xs text-muted-foreground">
                             {person.mentionCount} {person.mentionCount === 1 ? 'mention' : 'mentions'}
                           </span>
                           {person.archiveNames.length > 0 && (
                             <>
                               <span className="w-1 h-1 rounded-full bg-muted-foreground/30" />
-                              <span className="text-[13px] text-muted-foreground truncate">
+                              <span className="text-xs text-muted-foreground truncate">
                                 {person.archiveNames.slice(0, 2).join(', ')}
                                 {person.archiveNames.length > 2 && ` +${person.archiveNames.length - 2}`}
                               </span>
@@ -168,7 +168,7 @@ export default function PeoplePage() {
                         <div className="px-4 py-3 space-y-4">
                           {expandedItems.map(group => (
                             <div key={group.space}>
-                              <p className="text-[11px] uppercase tracking-[0.2em] font-semibold text-muted-foreground mb-2">
+                              <p className="text-xs uppercase tracking-wide font-semibold text-muted-foreground mb-2">
                                 {group.space}
                               </p>
                               <div className="space-y-1.5">
@@ -178,16 +178,16 @@ export default function PeoplePage() {
                                     onClick={() => navigate(`/item/${item.id}`)}
                                     className="w-full text-left px-3 py-2 rounded-xl bg-secondary/30 dark:bg-white/[0.03] hover:bg-secondary/50 dark:hover:bg-white/[0.06] transition-colors"
                                   >
-                                    <p className="text-[14px] text-foreground truncate">
+                                    <p className="text-sm text-foreground truncate">
                                       {item.title || item.content?.slice(0, 60) || 'Untitled'}
                                     </p>
-                                    <p className="text-[12px] text-muted-foreground mt-0.5">
+                                    <p className="text-xs text-muted-foreground mt-0.5">
                                       {item.createdAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                                     </p>
                                   </button>
                                 ))}
                                 {group.items.length > 5 && (
-                                  <p className="text-[13px] text-muted-foreground px-3">
+                                  <p className="text-xs text-muted-foreground px-3">
                                     +{group.items.length - 5} more
                                   </p>
                                 )}
@@ -196,23 +196,23 @@ export default function PeoplePage() {
                           ))}
 
                           {expandedItems.length === 0 && (
-                            <p className="text-[14px] text-muted-foreground">No items found.</p>
+                            <p className="text-sm text-muted-foreground">No items found.</p>
                           )}
 
                           {/* Delete person */}
                           <div className="pt-2 border-t border-border/20">
                             {confirmDeleteId === person.id ? (
                               <div className="flex items-center gap-2">
-                                <span className="text-[13px] text-destructive">Remove this person?</span>
+                                <span className="text-xs text-destructive">Remove this person?</span>
                                 <button
                                   onClick={() => { deletePerson(person.id); setConfirmDeleteId(null); setExpandedPersonId(null); }}
-                                  className="text-[13px] text-destructive font-medium px-2 py-1 rounded bg-destructive/10"
+                                  className="text-xs text-destructive font-medium px-2 py-1 rounded bg-destructive/10"
                                 >
                                   Yes
                                 </button>
                                 <button
                                   onClick={() => setConfirmDeleteId(null)}
-                                  className="text-[13px] text-muted-foreground px-2 py-1"
+                                  className="text-xs text-muted-foreground px-2 py-1"
                                 >
                                   Cancel
                                 </button>
@@ -220,7 +220,7 @@ export default function PeoplePage() {
                             ) : (
                               <button
                                 onClick={() => setConfirmDeleteId(person.id)}
-                                className="flex items-center gap-1.5 text-[13px] text-muted-foreground hover:text-destructive"
+                                className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-destructive"
                               >
                                 <Trash2 className="w-3 h-3" />
                                 Remove person
