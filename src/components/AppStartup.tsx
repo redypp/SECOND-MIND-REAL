@@ -410,40 +410,8 @@ export function AppStartup({ children, onInitialize, onLogout, isDataReady }: Ap
                 )}
               </motion.div>
             ) : (
-              /* Editorial typographic splash */
-              <div className="flex flex-col items-center justify-center gap-1">
-                <motion.div
-                  initial={{ clipPath: 'inset(0 100% 0 0)' }}
-                  animate={{ clipPath: 'inset(0 0% 0 0)' }}
-                  transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-                >
-                  <span
-                    className="block font-display uppercase tracking-[-0.06em] leading-[0.85] text-foreground/90 select-none"
-                    style={{ fontSize: 'clamp(4.5rem, 18vw, 9rem)', fontWeight: 700 }}
-                  >
-                    SECOND
-                  </span>
-                </motion.div>
-                <motion.div
-                  initial={{ clipPath: 'inset(0 100% 0 0)' }}
-                  animate={{ clipPath: 'inset(0 0% 0 0)' }}
-                  transition={{ duration: 0.6, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
-                >
-                  <span
-                    className="block font-display uppercase tracking-[-0.06em] leading-[0.85] text-foreground/90 select-none"
-                    style={{ fontSize: 'clamp(4.5rem, 18vw, 9rem)', fontWeight: 700 }}
-                  >
-                    MIND
-                  </span>
-                </motion.div>
-                {/* Thin loading bar */}
-                <motion.div
-                  className="mt-6 h-[2px] bg-primary/80 rounded-full"
-                  initial={{ width: 0 }}
-                  animate={{ width: 80 }}
-                  transition={{ duration: 1.5, delay: 0.4, ease: 'easeInOut' }}
-                />
-              </div>
+              /* Minimal blank loading — no splash branding */
+              <div />
             )}
 
             {/* Action buttons */}
