@@ -41,6 +41,7 @@ export default function SpaceDetail({ embedded = false, spaceId: propSpaceId, on
   const [editedName, setEditedName] = useState('');
   const [isOrganizing, setIsOrganizing] = useState(false);
   const [showSettingsPanel, setShowSettingsPanel] = useState(false);
+  const [confirmDeleteArchive, setConfirmDeleteArchive] = useState(false);
   // organizedGroups is only populated by an explicit user-initiated Re-organize action.
   // It is never auto-computed — the default view is always a flat chronological feed.
   const [organizedGroups, setOrganizedGroups] = useState<{ label: string; item_ids: string[] }[] | null>(null);
@@ -648,13 +649,31 @@ export default function SpaceDetail({ embedded = false, spaceId: propSpaceId, on
 
                 <div className="mt-5 pt-4 border-t border-white/15">
                   <p className="text-xs uppercase tracking-wide font-semibold text-white/50 mb-1">Danger</p>
-                  <motion.button
-                    whileTap={{ scale: 0.97 }}
-                    className="text-left py-1.5"
-                    onClick={() => { if (id) { deleteSpace(id); embedded ? onBack?.() : navigate('/archive', { replace: true }); } }}
-                  >
-                    <p className="text-[clamp(2rem,8vw,2.8rem)] font-display font-bold uppercase tracking-[-0.04em] leading-none text-white/60">Delete</p>
-                  </motion.button>
+                  {confirmDeleteArchive ? (
+                    <div className="flex items-center gap-3 py-2">
+                      <span className="text-sm text-red-400 font-medium">Delete this archive?</span>
+                      <button
+                        onClick={() => { if (id) { deleteSpace(id); embedded ? onBack?.() : navigate('/archive', { replace: true }); } }}
+                        className="text-sm text-red-400 font-semibold px-3 py-1.5 rounded-lg bg-red-500/20 active:scale-95 transition-transform"
+                      >
+                        Yes, delete
+                      </button>
+                      <button
+                        onClick={() => setConfirmDeleteArchive(false)}
+                        className="text-sm text-white/50 px-3 py-1.5"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <motion.button
+                      whileTap={{ scale: 0.97 }}
+                      className="text-left py-1.5"
+                      onClick={() => setConfirmDeleteArchive(true)}
+                    >
+                      <p className="text-[clamp(2rem,8vw,2.8rem)] font-display font-bold uppercase tracking-[-0.04em] leading-none text-white/60">Delete</p>
+                    </motion.button>
+                  )}
                 </div>
               </div>
 

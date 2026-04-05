@@ -25,9 +25,14 @@ export function SpaceCard({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState(space.name);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (!confirmDelete) {
+      setConfirmDelete(true);
+      return;
+    }
     deleteSpace(space.id);
   };
 
@@ -161,13 +166,30 @@ export function SpaceCard({
               <Pin className={`w-4 h-4 ${space.isPinned ? 'fill-primary text-primary' : 'text-muted-foreground'}`} />
             </button>
             
-            <button
-              onClick={handleDelete}
-              className="p-2 rounded-lg hover:bg-destructive/10 transition-colors"
-              title="Delete"
-            >
-              <Trash2 className="w-4 h-4 text-destructive/80" />
-            </button>
+            {confirmDelete ? (
+              <>
+                <button
+                  onClick={handleDelete}
+                  className="text-xs font-semibold text-destructive bg-destructive/10 px-2.5 py-1.5 rounded-lg active:scale-95 transition-transform"
+                >
+                  Confirm
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); setConfirmDelete(false); }}
+                  className="text-xs text-muted-foreground px-2 py-1.5"
+                >
+                  Cancel
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={handleDelete}
+                className="p-2 rounded-lg hover:bg-destructive/10 transition-colors"
+                title="Delete"
+              >
+                <Trash2 className="w-4 h-4 text-destructive/80" />
+              </button>
+            )}
           </div>
         </div>
       </div>

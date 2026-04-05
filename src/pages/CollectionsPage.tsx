@@ -19,6 +19,7 @@ export default function CollectionsPage({ embedded = false, onNavigateToSpace }:
   const navigate = useNavigate();
   const { spaces, sharedSpaces, deleteSpace } = useSpaces();
   const [selectedCollectionId, setSelectedCollectionId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const hasSpaces = spaces.length > 0;
 
@@ -158,7 +159,7 @@ export default function CollectionsPage({ embedded = false, onNavigateToSpace }:
 
                   {/* Delete button — shown on long-press / context-menu */}
                   <AnimatePresence>
-                    {selectedCollectionId === space.id && (
+                    {selectedCollectionId === space.id && confirmDeleteId !== space.id && (
                       <motion.button
                         initial={{ opacity: 0, scale: 0.8 }}
                         animate={{ opacity: 1, scale: 1 }}
@@ -167,8 +168,7 @@ export default function CollectionsPage({ embedded = false, onNavigateToSpace }:
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
-                          deleteSpace(space.id);
-                          setSelectedCollectionId(null);
+                          setConfirmDeleteId(space.id);
                         }}
                         className="absolute z-10 flex items-center justify-center w-7 h-7 rounded-full bg-foreground/80 backdrop-blur-sm border border-background/20 shadow-md active:scale-90"
                         style={{ top: 8, right: 8 }}
@@ -176,6 +176,31 @@ export default function CollectionsPage({ embedded = false, onNavigateToSpace }:
                       >
                         <X className="w-4 h-4 text-background" />
                       </motion.button>
+                    )}
+                    {confirmDeleteId === space.id && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.9 }}
+                        className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-foreground/90 backdrop-blur-sm rounded-2xl"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <p className="text-xs font-semibold text-background">Delete?</p>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); deleteSpace(space.id); setConfirmDeleteId(null); setSelectedCollectionId(null); }}
+                            className="text-xs font-semibold text-red-400 bg-red-500/20 px-2.5 py-1 rounded-lg active:scale-95"
+                          >
+                            Yes
+                          </button>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(null); setSelectedCollectionId(null); }}
+                            className="text-xs text-background/60 px-2.5 py-1"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </motion.div>
                     )}
                   </AnimatePresence>
                 </motion.button>
