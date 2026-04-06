@@ -51,6 +51,17 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const hadUserRef = useRef(!!user);
   const [graceActive, setGraceActive] = useState(false);
   const [forcedReady, setForcedReady] = useState(false);
+
+  // Cold-start grace: don't redirect to /auth for the first few seconds after mount.
+  // This prevents a flash of the login page when authReady becomes true before user
+  // state is set (React batching race condition on cold start).
+  const COLD_START_GRACE_MS = 3000;
+  const [coldStartExpired, setColdStartExpired] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setColdStartExpired(true), COLD_START_GRACE_MS);
+    return () => clearTimeout(timer);
+  }, []);
   
   // Safety timeout: if loader is stuck for too long, force dismiss.
   // Fires for all states including errors — the error screen's retry button
@@ -158,10 +169,10 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     );
   }
 
-  // Not authenticated — but if we just lost the session transiently (iOS resume),
-  // show loader during grace period instead of redirecting
+  // Not authenticated — but if we just lost the session transiently (iOS resume)
+  // or are still within the cold-start grace window, show loader instead of redirecting.
   if (!user) {
-    if (graceActive) {
+    if (graceActive || !coldStartExpired) {
       return (
         <InitialSyncLoader
           phase="connecting"
