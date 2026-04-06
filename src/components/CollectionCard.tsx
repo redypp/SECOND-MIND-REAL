@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { Space } from '@/types';
 import { BookOpen, X } from 'lucide-react';
 import { useSpaces } from '@/contexts/SpacesContext';
@@ -29,6 +29,7 @@ export function CollectionCard({ space, variant = 'default', selectedId, onSelec
   const { deleteSpace } = useSpaces();
 
   const isSelected = selectedId === space.id;
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const handleClick = useCallback(() => {
     if (isSelected) {
@@ -127,15 +128,37 @@ export function CollectionCard({ space, variant = 'default', selectedId, onSelec
       <FillText text={space.name} />
 
       {/* X delete button — only when selected */}
-      {isSelected && (
+      {isSelected && !confirmDelete && (
         <button
-          onClick={handleDelete}
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); setConfirmDelete(true); }}
           className="absolute z-10 flex items-center justify-center w-7 h-7 rounded-full bg-foreground/80 backdrop-blur-sm border border-background/20 shadow-md transition-transform active:scale-90"
           style={{ top: 8, right: 8 }}
           aria-label={`Delete ${space.name}`}
         >
           <X className="w-4 h-4 text-background" />
         </button>
+      )}
+      {confirmDelete && (
+        <div
+          className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-foreground/90 backdrop-blur-sm"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <p className="text-xs font-semibold text-background">Delete?</p>
+          <div className="flex gap-2">
+            <button
+              onClick={handleDelete}
+              className="text-xs font-semibold text-red-400 bg-red-500/20 px-2.5 py-1 rounded-lg active:scale-95"
+            >
+              Yes
+            </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); setConfirmDelete(false); onSelect?.(null); }}
+              className="text-xs text-background/60 px-2.5 py-1"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
       )}
     </button>
   );
