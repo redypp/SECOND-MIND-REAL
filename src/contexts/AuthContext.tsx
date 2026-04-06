@@ -83,9 +83,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const sessionRef = useRef<Session | null>(null);
   const lastHiddenAtRef = useRef<number>(0);
 
+  const loadingRef = useRef(loading);
+
   // Keep refs in sync with state
   useEffect(() => { userRef.current = user; }, [user]);
   useEffect(() => { sessionRef.current = session; }, [session]);
+  useEffect(() => { loadingRef.current = loading; }, [loading]);
 
   // Track when app was last hidden for resume-aware auth suppression
   useEffect(() => {
@@ -429,16 +432,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           // Start session monitor when user signs in
           startSessionMonitor();
 
-          // Reset data loading state when:
-          //  1. initializeAuth hasn't run yet (cold start race where SIGNED_IN fires first)
-          //  2. User was previously signed out (re-login after sign-out in the same session)
-          //
-          // Without this, after sign-out dataLoaded=true and loadingPhase='complete' are still
-          // set from the sign-out path.  When the user signs back in, user becomes non-null
-          // and appReady immediately flips true — but spaces/items were cleared by sign-out,
-          // so the app renders with empty data until the cloud fetch completes.
+          // If initializeAuth is currently running (initRef.current = true and loading
+          // is still true), let it handle everything — don't compete with state resets.
+          // This prevents the glitchy state cascade during Google OAuth where both
+          // initializeAuth AND this handler fight over loading state.
+          if (initRef.current && loadingRef.current) {
+            logLifecycle('SIGNED_IN: initializeAuth in progress, deferring to it');
+            return;
+          }
+
+          // Reset data loading state when user was previously signed out
+          // (re-login after sign-out in the same session). Without this, after sign-out
+          // dataLoaded=true and loadingPhase='complete' are still set from the sign-out
+          // path, so the app renders with empty data.
           const wasSignedOut = !userRef.current;
-          if (!initRef.current || wasSignedOut) {
+          if (wasSignedOut) {
             setDataLoaded(false);
             setDataReady(false);
             setLoadingPhase('profile');
@@ -462,7 +470,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           // Signal that profile fetch is complete (success or failure) so
           // ProtectedRoute can safely evaluate isOnboardingComplete.
           setProfileFetched(true);
-          if (!initRef.current || wasSignedOut) {
+          if (wasSignedOut) {
             setLoadingProgress(50);
           }
         }
