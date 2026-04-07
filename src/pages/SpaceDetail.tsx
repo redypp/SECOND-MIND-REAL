@@ -586,8 +586,8 @@ export default function SpaceDetail({ embedded = false, spaceId: propSpaceId, on
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 30, stiffness: 300 }}
             >
-              {/* Options — anchored to bottom */}
-              <div className="flex-1 flex flex-col justify-end px-7 pb-4 pt-16">
+              {/* Options — anchored to top */}
+              <div className="flex flex-col px-7 pb-4 pt-16">
                 <p className="text-xs uppercase tracking-wide font-semibold text-white/50 mb-2">Manage</p>
 
                 <motion.button
@@ -679,7 +679,7 @@ export default function SpaceDetail({ embedded = false, spaceId: propSpaceId, on
 
               {/* Close button */}
               <div
-                className="px-7 flex justify-end"
+                className="mt-auto px-7 flex justify-end"
                 style={{ paddingBottom: 'calc(max(var(--app-safe-bottom, 0px), 24px) + 8px)' }}
               >
                 <motion.button
