@@ -415,7 +415,7 @@ export function FloatingTodoBubbles({ todos, onDeleteTodo, onUpdatePosition, onT
               }}
             >
               <motion.div
-                className={`relative flex items-center justify-center px-4 py-2 rounded-2xl backdrop-blur-xl transition-all duration-300 ${
+                className={`relative flex items-center justify-center px-5 py-3 rounded-2xl backdrop-blur-xl transition-all duration-300 ${
                   todo.isImportant ? '' : 'bg-background/90'
                 } ${isDraggingThis ? "shadow-2xl" : ""}`}
                 style={{
@@ -435,7 +435,7 @@ export function FloatingTodoBubbles({ todos, onDeleteTodo, onUpdatePosition, onT
                     : todo.isImportant 
                       ? '2px solid hsl(var(--primary))'
                       : `2px solid ${colors.solid}`,
-                  maxWidth: "160px",
+                  maxWidth: "190px",
                 }}
               >
                 {isPopping ? (
@@ -449,7 +449,7 @@ export function FloatingTodoBubbles({ todos, onDeleteTodo, onUpdatePosition, onT
                     }`}
                     style={{
                       color: todo.isImportant ? 'hsl(var(--important-fg))' : colors.solid,
-                      fontSize: todo.label.length > 20 ? '0.65rem' : todo.label.length > 12 ? '0.75rem' : '0.875rem',
+                      fontSize: todo.label.length > 20 ? '0.75rem' : todo.label.length > 12 ? '0.85rem' : '1rem',
                       display: '-webkit-box',
                       WebkitLineClamp: 3,
                       WebkitBoxOrient: 'vertical' as const,
