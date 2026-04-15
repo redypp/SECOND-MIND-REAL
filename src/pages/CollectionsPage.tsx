@@ -37,20 +37,20 @@ export default function CollectionsPage({ embedded = false, onNavigateToSpace }:
 
   return (
     <div
-      className={`${embedded ? 'relative w-full min-h-full' : 'fixed inset-0 safe-area-top-ios overflow-y-auto'} flex flex-col bg-background max-w-full overflow-x-hidden`}
-      style={{ overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch' }}
+      className={`${embedded ? 'relative w-full h-full' : 'fixed inset-0 safe-area-top-ios'} flex flex-col bg-background max-w-full overflow-hidden`}
+      style={{ overscrollBehavior: 'contain' }}
     >
       {/* Header */}
-      <header className="relative flex items-center pl-0 pr-0 flex-shrink-0 min-h-[52px] sticky top-0 z-20 bg-background">
+      <header className="relative flex items-center pl-0 pr-0 flex-shrink-0 min-h-[52px]">
         <div className="flex-1 min-w-0 overflow-hidden">
           <MarqueeHeader text="ARCHIVE" />
         </div>
       </header>
 
-      {/* Content */}
+      {/* Content — scrollable */}
       <main
-        className="flex-1 flex flex-col gap-2 px-3 py-2"
-        style={{ paddingBottom: 'calc(var(--app-safe-bottom, 0px) + 60px)' }}
+        className="flex-1 min-h-0 flex flex-col gap-2 px-3 py-2 overflow-y-auto"
+        style={{ paddingBottom: 'calc(var(--app-safe-bottom, 0px) + 60px)', overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch' }}
       >
         {!hasSpaces ? (
           /* ── Empty state ── */
