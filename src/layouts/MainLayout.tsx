@@ -408,10 +408,13 @@ export default function MainLayout() {
         style={{ WebkitOverflowScrolling: 'touch', overscrollBehaviorX: 'none' }}
       >
         {/* Page 1: LIFE */}
-        <div className="min-w-full h-full snap-start snap-always flex-shrink-0 overflow-hidden relative bg-background">
+        <div className="min-w-full h-full snap-start snap-always flex-shrink-0 overflow-hidden relative bg-background"
+          style={{ overscrollBehavior: 'contain' }}
+        >
           {/* LIFE dashboard — always rendered underneath; parallax tracks swipeDx during back-swipe */}
           <div
-            className="absolute inset-0"
+            className="absolute inset-0 overflow-y-auto"
+            style={{ overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch' }}
             style={{
               transform: (() => {
                 if (!lifeSubPage) return 'translateX(0)';
@@ -457,11 +460,12 @@ export default function MainLayout() {
 
         {/* Page 2: ARCHIVE */}
         <div className="min-w-full h-full snap-start snap-always flex-shrink-0 overflow-hidden w-full relative bg-background"
-          style={{ overscrollBehavior: 'none' }}
+          style={{ overscrollBehavior: 'contain' }}
         >
           {/* Archive list — parallax shifts left during sub-page back-swipe */}
           <div
-            className="absolute inset-0"
+            className="absolute inset-0 overflow-y-auto"
+            style={{ overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch' }}
             style={{
               transform: (() => {
                 if (!archiveSubPage) return 'translateX(0)';

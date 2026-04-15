@@ -79,18 +79,18 @@ export default function LifePage({ embedded = false, onNavigateToSection }: Life
 
   return (
     <div
-      className={`${embedded ? 'relative w-full h-full' : 'fixed inset-0 safe-area-top-ios'} flex flex-col bg-background overflow-hidden`}
-      style={{ overscrollBehavior: 'none', touchAction: 'pan-x' }}
+      className={`${embedded ? 'relative w-full min-h-full' : 'fixed inset-0 safe-area-top-ios overflow-y-auto'} flex flex-col bg-background overflow-x-hidden`}
+      style={{ overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch' }}
     >
       {/* Scrolling marquee header */}
-      <div className="relative flex items-center pl-0 pr-0 flex-shrink-0 min-h-[52px]">
+      <div className="relative flex items-center pl-0 pr-0 flex-shrink-0 min-h-[52px] sticky top-0 z-20 bg-background">
         <div className="flex-1 min-w-0 overflow-hidden">
           <MarqueeHeader text="LIFE" />
         </div>
       </div>
 
       {/* Section cards — floating glass cards */}
-      <main className="flex-1 min-h-0 flex flex-col gap-2 px-3 py-2 overflow-y-auto" style={{ paddingBottom: 'calc(var(--app-safe-bottom, 0px) + 12px)' }}>
+      <main className="flex-1 flex flex-col gap-2 px-3 py-2" style={{ paddingBottom: 'calc(var(--app-safe-bottom, 0px) + 12px)' }}>
         {sections.map((section, i) => (
           <motion.button
             key={section.id}
