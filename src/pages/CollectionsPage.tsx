@@ -49,8 +49,8 @@ export default function CollectionsPage({ embedded = false, onNavigateToSpace }:
 
       {/* Content — scrollable */}
       <main
-        className="flex-1 min-h-0 flex flex-col gap-2 px-3 py-2 overflow-y-auto"
-        style={{ paddingBottom: 'calc(var(--app-safe-bottom, 0px) + 60px)', overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch' }}
+        className="flex-1 min-h-0 flex flex-col gap-2 px-3 py-2 overflow-y-auto scrollbar-hide"
+        style={{ paddingBottom: 'calc(var(--app-safe-bottom, 0px) + 60px)', WebkitOverflowScrolling: 'touch', willChange: 'scroll-position' }}
       >
         {!hasSpaces ? (
           /* ── Empty state ── */
@@ -96,17 +96,14 @@ export default function CollectionsPage({ embedded = false, onNavigateToSpace }:
         ) : (
           <>
             {/* ── Archive cards — fixed height, never compressed ── */}
-            <AnimatePresence initial={false}>
               {sortedSpaces.map((space, i) => (
                 <motion.button
                   key={space.id}
-                  className="w-full text-left relative overflow-hidden flex-shrink-0 rounded-2xl archive-glass-card"
-                  style={{ height: CARD_HEIGHT }}
+                  className="w-full text-left relative overflow-hidden flex-shrink-0 rounded-2xl archive-glass-card active:scale-[0.97] transition-transform duration-100"
+                  style={{ height: CARD_HEIGHT, willChange: 'transform' }}
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, x: -20, scale: 0.97, transition: { duration: 0.2 } }}
                   transition={{ duration: 0.5, delay: i * 0.06, ease: [0.16, 1, 0.3, 1] }}
-                  whileTap={{ scale: 0.97 }}
                   onClick={() => {
                     if (selectedCollectionId === space.id) {
                       setSelectedCollectionId(null);
@@ -121,13 +118,15 @@ export default function CollectionsPage({ embedded = false, onNavigateToSpace }:
                     setSelectedCollectionId(selectedCollectionId === space.id ? null : space.id);
                   }}
                 >
-                  {/* Background */}
-                  <div className="absolute inset-0">
+                  {/* Background — GPU-promoted for smooth scroll */}
+                  <div className="absolute inset-0" style={{ transform: 'translateZ(0)' }}>
                     {space.image ? (
                       <>
                         <img
                           src={space.image}
                           alt=""
+                          loading="lazy"
+                          decoding="async"
                           className="absolute inset-0 w-full h-full object-cover"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
@@ -206,7 +205,6 @@ export default function CollectionsPage({ embedded = false, onNavigateToSpace }:
                   </AnimatePresence>
                 </motion.button>
               ))}
-            </AnimatePresence>
 
             {/* ── Shared with me ── */}
             {sharedSpaces.length > 0 && (
@@ -228,10 +226,10 @@ export default function CollectionsPage({ embedded = false, onNavigateToSpace }:
                       else navigate(`/space/${space.id}`);
                     }}
                   >
-                    <div className="absolute inset-0">
+                    <div className="absolute inset-0" style={{ transform: 'translateZ(0)' }}>
                       {space.image ? (
                         <>
-                          <img src={space.image} alt="" className="absolute inset-0 w-full h-full object-cover" />
+                          <img src={space.image} alt="" loading="lazy" decoding="async" className="absolute inset-0 w-full h-full object-cover" />
                           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
                         </>
                       ) : (
