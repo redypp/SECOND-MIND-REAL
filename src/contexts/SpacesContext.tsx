@@ -1525,8 +1525,13 @@ export function SpacesProvider({ children }: { children: ReactNode }) {
   };
  
    const addItemAsync = async (itemData: Omit<Item, 'id' | 'createdAt'>): Promise<string | null> => {
-     if (!user) return null;
- 
+     if (!user) {
+       // Fallback: use synchronous addItem which checks user internally
+       // and shows its own error. This prevents silent null returns.
+       console.warn('[addItemAsync] No user, falling back to addItem');
+       return addItem(itemData);
+     }
+
      let blocks = itemData.blocks;
      if (!blocks || blocks.length === 0) {
        if (itemData.content) {
@@ -1535,39 +1540,45 @@ export function SpacesProvider({ children }: { children: ReactNode }) {
          blocks = [];
        }
      }
- 
+
+     // Prepare fallback data upfront so the catch block can't fail
+     const fallbackItemId = crypto.randomUUID();
+     const nowIso = new Date().toISOString();
+     const dbItemData = {
+       id: fallbackItemId,
+       user_id: user.id,
+       sub_category: itemData.subCategory,
+       title: itemData.title || null,
+       content: itemData.content || null,
+       blocks: blocks as any,
+       space_ids: itemData.spaceIds || [],
+       people_ids: itemData.peopleIds || null,
+       keywords: itemData.keywords || null,
+       scheduled_date: itemData.scheduledDate || null,
+       scheduled_time: itemData.scheduledTime || null,
+       color: itemData.color || null,
+       item_type: itemData.type || null,
+       thumbnail: itemData.thumbnail || null,
+       url: itemData.url || null,
+       canvas_x: itemData.canvasX ?? null,
+       canvas_y: itemData.canvasY ?? null,
+       canvas_z: itemData.canvasZ ?? null,
+       canvas_scale: itemData.canvasScale ?? null,
+     };
+
      try {
        const { data, error } = await supabase
          .from('items')
-          .insert([{
-           user_id: user.id,
-           sub_category: itemData.subCategory,
-           title: itemData.title || null,
-           content: itemData.content || null,
-           blocks: blocks as any,
-           space_ids: itemData.spaceIds || [],
-           people_ids: itemData.peopleIds || null,
-           keywords: itemData.keywords || null,
-           scheduled_date: itemData.scheduledDate || null,
-           scheduled_time: itemData.scheduledTime || null,
-           color: itemData.color || null,
-           item_type: itemData.type || null,
-           thumbnail: itemData.thumbnail || null,
-           url: itemData.url || null,
-           canvas_x: itemData.canvasX ?? null,
-           canvas_y: itemData.canvasY ?? null,
-           canvas_z: itemData.canvasZ ?? null,
-           canvas_scale: itemData.canvasScale ?? null,
-          }])
+          .insert([dbItemData])
          .select()
          .single();
- 
+
        if (error) throw error;
- 
+
        const dbItem = data as DbItem;
        const newItem = dbItemToItem(dbItem);
        setItems(prev => [newItem, ...prev]);
- 
+
        const itemSpaceIds = itemData.spaceIds;
        const shouldUpdateSpaceCount = itemSpaceIds &&
          itemSpaceIds.length > 0 &&
@@ -1575,7 +1586,6 @@ export function SpacesProvider({ children }: { children: ReactNode }) {
          itemData.subCategory !== 'scheduling';
 
         if (shouldUpdateSpaceCount) {
-          const nowIso = new Date().toISOString();
           setSpaces(prev => prev.map(space =>
             itemSpaceIds.includes(space.id)
               ? { ...space, itemCount: space.itemCount + 1, lastUsedAt: new Date() }
@@ -1586,41 +1596,36 @@ export function SpacesProvider({ children }: { children: ReactNode }) {
             queueOperation('spaces', 'update', { id: spaceId, last_used_at: nowIso }, user.id);
           });
         }
- 
+
        return dbItem.id;
      } catch (err) {
        console.error('Error creating item (direct insert failed, falling back to queue):', err);
        // Fall back to sync queue so the item is retried automatically
-       const newItemId = crypto.randomUUID();
-       const nowIso = new Date().toISOString();
-       const dbItemData = {
-         id: newItemId,
-         user_id: user.id,
-         sub_category: itemData.subCategory,
-         title: itemData.title || null,
-         content: itemData.content || null,
-         blocks: blocks as any,
-         space_ids: itemData.spaceIds || [],
-         people_ids: itemData.peopleIds || null,
-         keywords: itemData.keywords || null,
-         scheduled_date: itemData.scheduledDate || null,
-         scheduled_time: itemData.scheduledTime || null,
-         color: itemData.color || null,
-         item_type: itemData.type || null,
-         thumbnail: itemData.thumbnail || null,
-         url: itemData.url || null,
-         canvas_x: itemData.canvasX ?? null,
-         canvas_y: itemData.canvasY ?? null,
-         canvas_z: itemData.canvasZ ?? null,
-         canvas_scale: itemData.canvasScale ?? null,
-       };
-       const newItem = dbItemToItem({ ...dbItemData, created_at: nowIso, updated_at: nowIso, deleted_at: null, version: 1, ai_processed: null, extracted_people: null, ai_summary: null, suggested_space: null, ai_tags: null } as DbItem);
-       setItems(prev => [newItem, ...prev]);
+       try {
+         const newItem: Item = {
+           id: fallbackItemId,
+           subCategory: itemData.subCategory,
+           title: itemData.title || undefined,
+           content: itemData.content || undefined,
+           blocks: blocks || [],
+           spaceIds: itemData.spaceIds || [],
+           peopleIds: itemData.peopleIds || undefined,
+           keywords: itemData.keywords || undefined,
+           scheduledDate: itemData.scheduledDate || undefined,
+           scheduledTime: itemData.scheduledTime || undefined,
+           color: itemData.color || undefined,
+           type: itemData.type || undefined,
+           thumbnail: itemData.thumbnail || undefined,
+           url: itemData.url || undefined,
+           createdAt: new Date(),
+         };
+         setItems(prev => [newItem, ...prev]);
+       } catch { /* item display is non-critical */ }
        queueOperation('items', 'insert', dbItemData, user.id);
        try {
-         getItemsCache().set({ id: newItemId, user_id: user.id, data: { ...dbItemData, created_at: nowIso, updated_at: nowIso, deleted_at: null, version: 1, ai_processed: null, extracted_people: null, ai_summary: null, suggested_space: null, ai_tags: null }, version: 1, updated_at: nowIso, deleted_at: null, synced: false, last_synced_at: null }, false);
+         getItemsCache().set({ id: fallbackItemId, user_id: user.id, data: { ...dbItemData, created_at: nowIso, updated_at: nowIso, deleted_at: null, version: 1, ai_processed: null, extracted_people: null, ai_summary: null, suggested_space: null, ai_tags: null }, version: 1, updated_at: nowIso, deleted_at: null, synced: false, last_synced_at: null }, false);
        } catch { /* non-critical */ }
-       return newItemId;
+       return fallbackItemId;
      }
    };
 

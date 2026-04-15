@@ -231,7 +231,12 @@ export default function SpaceDetail({ embedded = false, spaceId: propSpaceId, on
   }, [updateItem]);
 
   const handleAddItem = useCallback(async (item: Parameters<typeof addItemAsync>[0]) => {
-    const newItemId = await addItemAsync(item);
+    let newItemId: string | null = null;
+    try {
+      newItemId = await addItemAsync(item);
+    } catch (err) {
+      console.error('[SpaceDetail] addItemAsync threw:', err);
+    }
     if (!newItemId) {
       showErrorPopup('Failed to add item. Please try again.');
       return;
@@ -265,7 +270,7 @@ export default function SpaceDetail({ embedded = false, spaceId: propSpaceId, on
 
       const updatedGroups = organizedGroups.map(g =>
         g.label === targetLabel
-          ? { ...g, item_ids: [newItemId, ...g.item_ids] }
+          ? { ...g, item_ids: [newItemId!, ...g.item_ids] }
           : g
       );
       setOrganizedGroups(updatedGroups);
