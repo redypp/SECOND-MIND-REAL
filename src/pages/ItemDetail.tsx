@@ -63,7 +63,7 @@ export default function ItemDetail() {
   }
 
   const Icon = typeIcons[item.type];
-  const subCat = subCategoryConfig[item.subCategory];
+  const subCat = subCategoryConfig[item.subCategory] || { icon: FileText, color: '#6b7280', label: 'Item' };
   const itemSpaces = (item.spaceIds || []).map(sid => spaces.find(s => s.id === sid)).filter(Boolean);
 
   const formatDate = (date: Date) => {

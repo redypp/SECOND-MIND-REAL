@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -27,11 +27,11 @@ export default function OnboardingPage() {
   const navigate = useNavigate();
 
   // Pre-fill with existing data if available
-  useState(() => {
+  useEffect(() => {
     if (profile?.full_name) setFullName(profile.full_name);
     if (profile?.birthday) setBirthday(profile.birthday);
     if (profile?.location) setLocation(profile.location);
-  });
+  }, [profile]);
 
   const handleNext = () => {
     if (step === 1) {

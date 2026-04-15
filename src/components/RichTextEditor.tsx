@@ -162,8 +162,8 @@ export function RichTextEditor({
 export function renderFormattedText(text: string): React.ReactNode {
   if (!text) return null;
   
-  // Split by bold markers **text**
-  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  // Split by bold markers **text** (non-greedy to handle asterisks in content)
+  const parts = text.split(/(\*\*.+?\*\*)/g);
   
   return parts.map((part, index) => {
     if (part.startsWith('**') && part.endsWith('**')) {

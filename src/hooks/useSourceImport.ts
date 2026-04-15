@@ -30,7 +30,6 @@ export function useSourceImport(itemId: string | undefined, content: string) {
 
     for (const url of newUrls) {
       isImportingRef.current.add(url);
-      importedUrlsRef.current.add(url);
 
       // Add placeholder source for UI
       const placeholder: ArchiveSource = {
@@ -47,6 +46,9 @@ export function useSourceImport(itemId: string | undefined, content: string) {
       const result = await importSource(url, itemId);
 
       if (result.sourceId) {
+        // Mark as imported only on success
+        importedUrlsRef.current.add(url);
+
         // Update placeholder with real source, poll for completion
         setSources(prev =>
           prev.map(s =>
@@ -59,7 +61,7 @@ export function useSourceImport(itemId: string | undefined, content: string) {
         // Poll for status
         pollSourceStatus(result.sourceId, url);
       } else {
-        // Mark as failed
+        // Mark as failed, don't add to importedUrls so retry is possible
         setSources(prev =>
           prev.map(s =>
             s.source_url === url && s.status === 'importing'

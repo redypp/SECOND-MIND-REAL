@@ -107,6 +107,14 @@ export function FloatingTodoBubbles({ todos, onDeleteTodo, onUpdatePosition, onT
     }, 500);
   }, [onUpdatePosition]);
 
+  // Cleanup all timers on unmount
+  useEffect(() => {
+    return () => {
+      if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
+      Object.values(saveTimeoutRef.current).forEach(clearTimeout);
+    };
+  }, []);
+
   // Initialize positions from database or compute new ones
   const onUpdatePositionRef = useRef(onUpdatePosition);
   onUpdatePositionRef.current = onUpdatePosition;
