@@ -13,7 +13,7 @@ interface CollectionsPageProps {
 }
 
 // Fixed card height — cards never resize when adding/removing archives.
-const CARD_HEIGHT = 'calc((100dvh - 4rem - var(--app-safe-bottom, 0px)) / 5)';
+const CARD_HEIGHT = 'calc((100dvh - 4rem - var(--app-safe-bottom, 0px) - 3rem) / 5)';
 
 export default function CollectionsPage({ embedded = false, onNavigateToSpace }: CollectionsPageProps) {
   const navigate = useNavigate();
@@ -49,7 +49,7 @@ export default function CollectionsPage({ embedded = false, onNavigateToSpace }:
 
       {/* Content */}
       <main
-        className="flex-1 min-h-0 flex flex-col px-0 overflow-y-auto"
+        className="flex-1 min-h-0 flex flex-col gap-2 px-3 py-2 overflow-y-auto"
         style={{ paddingBottom: 'calc(var(--app-safe-bottom, 0px) + 12px)', overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch' }}
       >
         {!hasSpaces ? (
@@ -100,12 +100,13 @@ export default function CollectionsPage({ embedded = false, onNavigateToSpace }:
               {sortedSpaces.map((space, i) => (
                 <motion.button
                   key={space.id}
-                  className="w-full text-left relative overflow-hidden flex-shrink-0"
+                  className="w-full text-left relative overflow-hidden flex-shrink-0 rounded-2xl archive-glass-card"
                   style={{ height: CARD_HEIGHT }}
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, x: -20, scale: 0.97, transition: { duration: 0.2 } }}
                   transition={{ duration: 0.5, delay: i * 0.06, ease: [0.16, 1, 0.3, 1] }}
+                  whileTap={{ scale: 0.97 }}
                   onClick={() => {
                     if (selectedCollectionId === space.id) {
                       setSelectedCollectionId(null);
@@ -217,8 +218,8 @@ export default function CollectionsPage({ embedded = false, onNavigateToSpace }:
                 {sharedSpaces.map((space, i) => (
                   <motion.button
                     key={space.id}
-                    className="w-full text-left relative overflow-hidden flex-shrink-0 active:scale-[0.982] transition-transform duration-100"
-                    style={{ height: 'calc((100dvh - 4rem - var(--app-safe-bottom, 0px)) / 7)' }}
+                    className="w-full text-left relative overflow-hidden flex-shrink-0 rounded-2xl archive-glass-card"
+                    style={{ height: 'calc((100dvh - 4rem - var(--app-safe-bottom, 0px) - 3rem) / 7)' }}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.4, delay: i * 0.05 }}

@@ -525,57 +525,96 @@
   perspective: 1000px;
 }
 
-/* Life section cards — gradient depth that works in all themes */
+/* Life section cards — floating glass cards (Apple glassmorphism) */
 .life-section-card {
-  border-bottom: 1px solid hsl(0 0% 0% / 0.06);
-}
-.life-section-card:last-child {
-  border-bottom: none;
+  backdrop-filter: blur(40px) saturate(180%);
+  -webkit-backdrop-filter: blur(40px) saturate(180%);
+  border: 1px solid hsl(0 0% 100% / 0.18);
+  box-shadow:
+    0 4px 24px -4px hsl(0 0% 0% / 0.08),
+    0 1px 3px hsl(0 0% 0% / 0.04),
+    inset 0 1px 0 hsl(0 0% 100% / 0.25);
+  transition: box-shadow 0.3s ease, background 0.3s ease;
 }
 
-/* Ask card — red gradient, overrides all themes */
+/* Ask card — red gradient glass, overrides all themes */
 .life-section-card.life-section-ask {
-  background: linear-gradient(135deg, #ff6b8a 0%, #e8305a 45%, #c0154a 100%) !important;
-  box-shadow: 0 2px 12px 0 hsl(0 85% 50% / 0.25) !important;
+  background: linear-gradient(135deg, rgba(255, 107, 138, 0.85) 0%, rgba(232, 48, 90, 0.9) 45%, rgba(192, 21, 74, 0.92) 100%) !important;
+  backdrop-filter: blur(40px) saturate(200%) !important;
+  -webkit-backdrop-filter: blur(40px) saturate(200%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  box-shadow:
+    0 8px 32px -4px hsl(0 85% 50% / 0.3),
+    0 2px 8px hsl(0 85% 50% / 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
 }
 .life-section-ask .life-section-label  { color: #ffffff !important; }
-.life-section-ask .life-section-meta   { color: rgba(255, 255, 255, 0.65) !important; }
+.life-section-ask .life-section-meta   { color: rgba(255, 255, 255, 0.7) !important; }
 .life-section-ask .life-section-chevron { color: rgba(255, 255, 255, 0.4) !important; }
 
-/* Day (light) — 6 depth steps, more dramatic contrast for editorial feel */
-.life-section-card[data-depth="0"] { background: hsl(0 0% 94%); }
-.life-section-card[data-depth="1"] { background: hsl(0 0% 82%); }
-.life-section-card[data-depth="2"] { background: hsl(0 0% 68%); }
-.life-section-card[data-depth="3"] { background: hsl(0 0% 52%); }
-.life-section-card[data-depth="4"] { background: hsl(0 0% 38%); }
-.life-section-card[data-depth="5"] { background: hsl(0 0% 26%); }
+/* Day (light) — translucent glass with subtle depth variation */
+.life-section-card[data-depth="0"] { background: hsl(0 0% 96% / 0.7); }
+.life-section-card[data-depth="1"] { background: hsl(0 0% 88% / 0.65); }
+.life-section-card[data-depth="2"] { background: hsl(0 0% 76% / 0.6); }
+.life-section-card[data-depth="3"] { background: hsl(0 0% 62% / 0.6); }
+.life-section-card[data-depth="4"] { background: hsl(0 0% 48% / 0.6); }
+.life-section-card[data-depth="5"] { background: hsl(0 0% 36% / 0.6); }
 .life-section-label { color: hsl(0 0% 10%); }
 .life-section-meta  { color: hsl(0 0% 10% / 0.65); }
 .life-section-chevron { color: hsl(0 0% 10% / 0.3); }
 
-/* Blu */
-.blu .life-section-card[data-depth="0"] { background: hsl(240 100% 30%); }
-.blu .life-section-card[data-depth="1"] { background: hsl(240 100% 28%); }
-.blu .life-section-card[data-depth="2"] { background: hsl(240 100% 26%); }
-.blu .life-section-card[data-depth="3"] { background: hsl(240 100% 24%); }
-.blu .life-section-card[data-depth="4"] { background: hsl(240 100% 22%); }
-.blu .life-section-card[data-depth="5"] { background: hsl(240 100% 20%); }
-.blu .life-section-card { border-bottom-color: hsl(0 0% 100% / 0.08); }
+/* Blu — translucent blue glass */
+.blu .life-section-card { border-color: hsl(240 100% 80% / 0.15); }
+.blu .life-section-card[data-depth="0"] { background: hsl(240 80% 50% / 0.35); }
+.blu .life-section-card[data-depth="1"] { background: hsl(240 80% 45% / 0.35); }
+.blu .life-section-card[data-depth="2"] { background: hsl(240 80% 40% / 0.35); }
+.blu .life-section-card[data-depth="3"] { background: hsl(240 80% 35% / 0.35); }
+.blu .life-section-card[data-depth="4"] { background: hsl(240 80% 30% / 0.35); }
+.blu .life-section-card[data-depth="5"] { background: hsl(240 80% 25% / 0.35); }
 .blu .life-section-label { color: white; }
-.blu .life-section-meta  { color: hsl(0 0% 100% / 0.5); }
-.blu .life-section-chevron { color: hsl(0 0% 100% / 0.2); }
+.blu .life-section-meta  { color: hsl(0 0% 100% / 0.6); }
+.blu .life-section-chevron { color: hsl(0 0% 100% / 0.25); }
 
-/* Night (dark) — starts bright, plunges to near-black */
-.dark .life-section-card[data-depth="0"] { background: hsl(0 0% 22%); }
-.dark .life-section-card[data-depth="1"] { background: hsl(0 0% 18%); }
-.dark .life-section-card[data-depth="2"] { background: hsl(0 0% 14%); }
-.dark .life-section-card[data-depth="3"] { background: hsl(0 0% 10%); }
-.dark .life-section-card[data-depth="4"] { background: hsl(0 0% 7%); }
-.dark .life-section-card[data-depth="5"] { background: hsl(0 0% 4%); }
-.dark .life-section-card { border-bottom-color: hsl(0 0% 100% / 0.07); }
+/* Night (dark) — translucent dark glass */
+.dark .life-section-card { border-color: hsl(0 0% 100% / 0.08); }
+.dark .life-section-card[data-depth="0"] { background: hsl(0 0% 100% / 0.1); }
+.dark .life-section-card[data-depth="1"] { background: hsl(0 0% 100% / 0.08); }
+.dark .life-section-card[data-depth="2"] { background: hsl(0 0% 100% / 0.06); }
+.dark .life-section-card[data-depth="3"] { background: hsl(0 0% 100% / 0.05); }
+.dark .life-section-card[data-depth="4"] { background: hsl(0 0% 100% / 0.04); }
+.dark .life-section-card[data-depth="5"] { background: hsl(0 0% 100% / 0.03); }
+.dark .life-section-card {
+  box-shadow:
+    0 4px 24px -4px hsl(0 0% 0% / 0.4),
+    0 1px 3px hsl(0 0% 0% / 0.2),
+    inset 0 1px 0 hsl(0 0% 100% / 0.06);
+}
 .dark .life-section-label { color: white; }
 .dark .life-section-meta  { color: hsl(0 0% 100% / 0.65); }
 .dark .life-section-chevron { color: hsl(0 0% 100% / 0.3); }
+
+/* Archive glass cards — floating rounded cards */
+.archive-glass-card {
+  box-shadow:
+    0 4px 24px -4px hsl(0 0% 0% / 0.12),
+    0 1px 3px hsl(0 0% 0% / 0.06),
+    inset 0 1px 0 hsl(0 0% 100% / 0.15);
+  border: 1px solid hsl(0 0% 100% / 0.12);
+}
+.dark .archive-glass-card {
+  box-shadow:
+    0 4px 24px -4px hsl(0 0% 0% / 0.5),
+    0 1px 3px hsl(0 0% 0% / 0.3),
+    inset 0 1px 0 hsl(0 0% 100% / 0.06);
+  border-color: hsl(0 0% 100% / 0.08);
+}
+.blu .archive-glass-card {
+  box-shadow:
+    0 4px 24px -4px hsl(240 100% 10% / 0.3),
+    0 1px 3px hsl(240 100% 10% / 0.15),
+    inset 0 1px 0 hsl(240 100% 90% / 0.1);
+  border-color: hsl(240 100% 80% / 0.12);
+}
 
 /* Hide page indicators and floating buttons when Chamber modal is open */
 html[data-chamber-open] .page-indicators,

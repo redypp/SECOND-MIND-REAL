@@ -89,22 +89,21 @@ export default function LifePage({ embedded = false, onNavigateToSection }: Life
         </div>
       </div>
 
-      {/* Section cards — evenly fill remaining height, editorial layout */}
-      <main className="flex-1 min-h-0 flex flex-col px-0" style={{ paddingBottom: 'calc(var(--app-safe-bottom, 0px) + 12px)' }}>
+      {/* Section cards — floating glass cards */}
+      <main className="flex-1 min-h-0 flex flex-col gap-2 px-3 py-2 overflow-y-auto" style={{ paddingBottom: 'calc(var(--app-safe-bottom, 0px) + 12px)' }}>
         {sections.map((section, i) => (
           <motion.button
             key={section.id}
-            className="flex-1 w-full relative"
-            style={{ minHeight: 0 }}
+            className="flex-1 w-full relative min-h-[56px]"
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: i * 0.06, ease: [0.16, 1, 0.3, 1] }}
-            whileTap={{ scale: 0.982 }}
+            whileTap={{ scale: 0.97 }}
             onClick={() => handleTap(section.path, section.isExternal)}
             aria-label={`Open ${section.label}`}
           >
             <div
-              className={`w-full h-full relative overflow-hidden life-section-card${section.isAsk ? ' life-section-ask' : ''}`}
+              className={`w-full h-full relative overflow-hidden rounded-2xl life-section-card${section.isAsk ? ' life-section-ask' : ''}`}
               data-depth={section.isAsk ? undefined : getDepth(i)}
             >
               {/* Left-center aligned layout */}
