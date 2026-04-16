@@ -194,15 +194,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             supabase.auth.refreshSession()
               .then(({ data, error }) => {
                 if (error) {
-                  logLifecycle('Silent token refresh failed', { message: error.message });
+                  logLifecycle('Silent token refresh failed, falling back to getSession', { message: error.message });
+                  // Fall back to full session check instead of staying with stale token
+                  return supabase.auth.getSession().then(({ data: sessionData }) => {
+                    if (sessionData.session?.user) {
+                      setSession(sessionData.session);
+                      setUser(sessionData.session.user);
+                      if (sessionData.session.expires_at) {
+                        setSessionExpiry(sessionData.session.expires_at * 1000);
+                      }
+                    }
+                  });
                 } else if (data.session?.expires_at) {
-                  // Update expiry so warm-resume logic stays accurate
                   setSessionExpiry(data.session.expires_at * 1000);
                 }
-                // onAuthStateChange will update session/user state on success
               })
               .catch(() => {
-                logLifecycle('Silent token refresh failed, keeping current state');
+                logLifecycle('Silent token refresh failed completely, keeping current state');
               });
           }
           // Ensure loading states are correct so appReady stays true

@@ -348,8 +348,33 @@ export default function MainLayout() {
     lastIndexRef.current = targetIndex;
   }, []);
 
-  // Return to LIFE on foreground resume after 10s
+  // Handle app resume: reset stale touch state, re-snap scroll, return home on long absence
   useEffect(() => {
+    let rafId: number | null = null;
+
+    const handleResume = () => {
+      if (document.visibilityState !== 'visible') return;
+
+      // Clear any in-progress swipe/touch state that got stuck when backgrounded
+      swipeTouchId.current = null;
+      swipeStartX.current = 0;
+      swipeStartY.current = 0;
+      isSwiping.current = false;
+      setSwipeDx(0);
+      isArchiveSwiping.current = false;
+      setArchiveSwipeDx(0);
+
+      // Re-snap scroll position after a short delay to let layout settle
+      rafId = requestAnimationFrame(() => {
+        rafId = requestAnimationFrame(() => {
+          if (containerRef.current) {
+            const targetLeft = lastIndexRef.current * window.innerWidth;
+            containerRef.current.scrollLeft = targetLeft;
+          }
+        });
+      });
+    };
+
     const unsubscribe = subscribeLifecycle((event) => {
       if (event.type === 'foreground' && event.wasBackground && event.backgroundDuration > 10_000) {
         setCurrentIndex(0);
@@ -359,27 +384,13 @@ export default function MainLayout() {
         if (containerRef.current) containerRef.current.scrollLeft = 0;
       }
     });
-    return unsubscribe;
-  }, []);
 
-  // Re-snap scroll position when returning from an external link (short absence)
-  useEffect(() => {
-    const handleVisibility = () => {
-      if (document.visibilityState !== 'visible') return;
-      // Re-snap the scroll container to the current index to fix glitched layout
-      requestAnimationFrame(() => {
-        if (containerRef.current) {
-          const targetLeft = lastIndexRef.current * window.innerWidth;
-          const currentLeft = containerRef.current.scrollLeft;
-          // Only snap if noticeably off position (> 2px drift)
-          if (Math.abs(currentLeft - targetLeft) > 2) {
-            containerRef.current.scrollLeft = targetLeft;
-          }
-        }
-      });
+    document.addEventListener('visibilitychange', handleResume);
+    return () => {
+      document.removeEventListener('visibilitychange', handleResume);
+      unsubscribe();
+      if (rafId) cancelAnimationFrame(rafId);
     };
-    document.addEventListener('visibilitychange', handleVisibility);
-    return () => document.removeEventListener('visibilitychange', handleVisibility);
   }, []);
 
   const handlePageSelect = useCallback((index: number) => {
