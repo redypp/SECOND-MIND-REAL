@@ -26,6 +26,25 @@ const REVISIT_RE = /\b(revisit|come back|check back|follow.?up|to review|in prog
 
 const REMEMBER_RE = /\b(remember|don't forget|keep in mind|note to self|important|must know|always|never forget|key (fact|point|insight|takeaway|lesson)|pro tip|tip|trick|hack|how to|cheat sheet|quick (note|reminder)|fyi|heads up|just (noted|learned|realized|found out)|learned that|discovered)\b/i;
 
+// ─── Extended content patterns for keyword-less categorization ───────────────
+const RESEARCH_RE = /\b(research|study|article|paper|thesis|analysis|findings|evidence|data shows|according to|journal|literature|report|survey|statistics|hypothesis|methodology|peer.?review|publication|citation|source|reference|learn(ed|ing)|course|class|lecture|tutorial|lesson|textbook|exam|test|quiz|training|workshop|seminar|degree|certificate)\b/i;
+
+const HEALTH_RE = /\b(health|workout|exercise|gym|yoga|meditat(e|ion)|fitness|diet|nutrition|calories|protein|vitamin|supplement|weight|cardio|stretch|muscle|run(ning)?|jog|walk|step|sleep|rest|recovery|mental health|therap(y|ist)|doctor|appointment|prescription|medicine|symptom|diagnosis|blood pressure|cholesterol|heart rate|bmi|hydrat(e|ion)|water intake)\b/i;
+
+const FINANCE_RE = /\b(budget|expense|income|salary|tax|invest(ment|ing)?|stock|crypto|bitcoin|savings|debt|loan|mortgage|credit|payment|billing|subscription|cost|price|afford|financial|money|bank|account|portfolio|dividend|roi|interest rate|net worth|retirement|401k|ira)\b/i;
+
+const WORK_RE = /\b(meeting|project|deadline|client|presentation|report|sprint|standup|retro|review|feedback|performance|promotion|resign|interview|resume|cv|onboard|deliverable|milestone|kpi|okr|stakeholder|manager|team lead|scope|requirement|specification|deploy|launch|release|ship|prod(uction)?|staging|code review|pull request|pr|ticket|jira|sprint)\b/i;
+
+const TRAVEL_RE = /\b(travel|trip|flight|hotel|airbnb|booking|itinerary|passport|visa|airport|airline|destination|vacation|holiday|road trip|backpack|luggage|suitcase|resort|beach|mountain|hiking|camping|tour|explore|sightsee|landmark|museum|attraction|cruise)\b/i;
+
+const FOOD_RE = /\b(recipe|cook(ing|ed)?|bake|ingredient|tablespoon|teaspoon|cup|oven|preheat|simmer|saut[eé]|chop|dice|mince|marinate|season|spice|broth|sauce|dressing|meal prep|breakfast|lunch|dinner|snack|dessert|appetizer|entree|restaurant|cafe|bistro|menu|reservation|food|dish|cuisine)\b/i;
+
+const REFLECTION_RE = /\b(reflect(ion|ing)?|journal|gratitude|grateful|thankful|thought(s)?|feeling(s)?|emotion|mood|process(ing)?|self.?care|mindful|aware(ness)?|introspect|insight|realization|growth|personal|experience|perspective|looking back|i (feel|think|believe|wonder|realized|noticed|learned)|today i|this week|lately|recently)\b/i;
+
+const DECISION_RE = /\b(decid(e|ing)|decision|pros? (and|&|vs) cons?|compar(e|ison|ing)|option|alternative|trade.?off|choice|choose|pick|select|weigh(ing)?|evaluat(e|ing)|assess|should i|which (one|is)|between|versus|vs\.?)\b/i;
+
+const PEOPLE_RE = /\b(birthday|anniversary|call|text|catch up|meet(ing)? with|coffee with|lunch with|dinner with|hang out|get together|reunion|party|wedding|baby shower|gift for|present for|invite|rsvp|contact|phone number|email|address|colleague|friend|family|relative|neighbor|classmate)\b/i;
+
 /**
  * Derive a short, descriptive smart title for an archive item.
  * Priority: stored title → first text line → link domain → type label
@@ -187,6 +206,15 @@ export function getSmartCategory(item: Item): string {
 
   if (item.subCategory === 'idea' || IDEAS_RE.test(text)) return 'Ideas';
   if (FUTURE_PLANS_RE.test(text)) return 'Plans & Goals';
+  if (DECISION_RE.test(text)) return 'Decisions';
+  if (RESEARCH_RE.test(text)) return 'Research & Learning';
+  if (FOOD_RE.test(text)) return 'Food & Recipes';
+  if (HEALTH_RE.test(text)) return 'Health & Wellness';
+  if (FINANCE_RE.test(text)) return 'Finance';
+  if (TRAVEL_RE.test(text)) return 'Travel';
+  if (WORK_RE.test(text)) return 'Work & Career';
+  if (PEOPLE_RE.test(text)) return 'People & Contacts';
+  if (REFLECTION_RE.test(text)) return 'Reflections';
   if (INSPIRATION_RE.test(text)) return 'Inspiration';
   if (REVISIT_RE.test(text)) return 'Things to Revisit';
   if (REMEMBER_RE.test(text)) return 'Notes';
