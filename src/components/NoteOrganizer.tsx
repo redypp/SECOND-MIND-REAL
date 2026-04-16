@@ -222,7 +222,7 @@ export function NoteOrganizer({ noteText, attachments = [], spaceId, onDone }: N
       console.warn('[NoteOrganizer] AI organize failed, saving raw note:', result.error);
       const detectedTags = detectKeywords(noteText);
       const fallbackItem: DumpItem = {
-        title: noteText.trim().slice(0, 60),
+        title: '',
         content: noteText.trim(),
         destination: 'archive',
         sub_category: 'notes',
