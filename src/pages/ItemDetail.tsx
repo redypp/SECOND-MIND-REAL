@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSpaces } from '@/contexts/SpacesContext';
 import { ArrowLeft, Pencil, Trash2, Check, X, FileText, Loader2 } from 'lucide-react';
@@ -13,10 +13,15 @@ export default function ItemDetail() {
 
   const item = id ? items.find(i => i.id === id) : undefined;
 
+  // Cache the last valid item so we don't flash "not found" during re-renders
+  const lastItemRef = useRef(item);
+  if (item) lastItemRef.current = item;
+  const displayItem = item ?? lastItemRef.current;
+
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState('');
 
-  if (!item) {
+  if (!displayItem) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center safe-area-top-ios">
         <div className="text-center px-6">
@@ -37,15 +42,15 @@ export default function ItemDetail() {
   }
 
   // Extract text content
-  const textBlock = item.blocks?.find(b => b.type === 'text') as TextBlock | undefined;
-  const noteText = textBlock?.content || item.content || '';
+  const textBlock = displayItem.blocks?.find(b => b.type === 'text') as TextBlock | undefined;
+  const noteText = textBlock?.content || displayItem.content || '';
 
   // Extract images
-  const imageBlocks = (item.blocks?.filter(
+  const imageBlocks = (displayItem.blocks?.filter(
     b => b.type === 'media' && (b as MediaBlock).mediaType === 'image'
   ) || []) as MediaBlock[];
 
-  const dateStr = item.createdAt
+  const dateStr = displayItem.createdAt
     ? item.createdAt.toLocaleDateString('en-US', {
         weekday: 'short',
         month: 'short',
@@ -60,7 +65,7 @@ export default function ItemDetail() {
   };
 
   const handleSave = () => {
-    const otherBlocks = item.blocks.filter(
+    const otherBlocks = displayItem.blocks.filter(
       b => b.type !== 'text'
     );
     const updatedBlocks: ContentBlock[] = [];
@@ -72,12 +77,12 @@ export default function ItemDetail() {
       );
     }
     updatedBlocks.push(...otherBlocks);
-    updateItem(item.id, { blocks: updatedBlocks, content: editContent.trim() });
+    updateItem(displayItem.id, { blocks: updatedBlocks, content: editContent.trim() });
     setIsEditing(false);
   };
 
   const handleDelete = () => {
-    deleteItem(item.id);
+    deleteItem(displayItem.id);
     navigate(-1);
   };
 
