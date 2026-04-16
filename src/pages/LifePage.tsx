@@ -57,7 +57,6 @@ export default function LifePage({ embedded = false, onNavigateToSection }: Life
 
   // Sections: external=true means navigate() directly (not embedded sub-page)
   const sections = [
-    { id: 'ask',           path: '/ask',           label: 'Ask',           meta: "What's on your mind?",   isExternal: true,  isAsk: true },
     { id: 'daily-plan',    path: '/daily-plan',    label: 'Daily Plan',    meta: subheadings.daily_plan,   isExternal: false, isAsk: false },
     { id: 'todos',         path: '/todos',         label: 'To-Do',         meta: subheadings.todo,         isExternal: false, isAsk: false },
     { id: 'habits',        path: '/habits',        label: 'Habits',        meta: subheadings.habits,       isExternal: false, isAsk: false },
