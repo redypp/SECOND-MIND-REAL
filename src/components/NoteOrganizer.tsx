@@ -217,12 +217,14 @@ export function NoteOrganizer({ noteText, attachments = [], spaceId, onDone }: N
     setIsOrganizing(false);
 
     if (result.error) {
-      // Still save any image/link attachments even if AI organization failed
-      if (attachments.length > 0) {
-        await saveItems([]);
-      } else {
-        setError(result.error);
-      }
+      // AI failed — save the raw note directly so the user's content is never lost
+      console.warn('[NoteOrganizer] AI organize failed, saving raw note:', result.error);
+      const fallbackItem: DumpItem = {
+        title: noteText.trim().slice(0, 60),
+        content: noteText.trim(),
+        destination: 'archive',
+      };
+      await saveItems([fallbackItem]);
       return;
     }
     if (result.data) {
