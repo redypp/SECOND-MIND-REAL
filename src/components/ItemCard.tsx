@@ -2,7 +2,6 @@ import { useNavigate } from 'react-router-dom';
 
 import { Item, ContentBlock, TableBlock } from '@/types';
 import { ExternalLink, Check, List, CheckSquare, Globe, Table, User } from 'lucide-react';
-import { motion } from 'framer-motion';
 import { useSpaces } from '@/contexts/SpacesContext';
 import { isValidUrl, safeOpenUrl } from '@/lib/urlValidation';
 import { useUrlMetadata, getDomainFromUrl, getFaviconUrl } from '@/hooks/useUrlMetadata';
@@ -161,15 +160,9 @@ export const ItemCard = memo(function ItemCard({ item, compact = false, archiveM
     const faviconUrl = favicon || getFaviconUrl(mediaBlock.url);
 
     return (
-      <motion.article
-        layout
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.95 }}
-        whileTap={{ scale: 0.98 }}
-        transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
+      <article
         onClick={handleClick}
-        className="group overflow-hidden cursor-pointer rounded-2xl bg-secondary/50 dark:bg-white/[0.07] backdrop-blur-xl border border-border/40 dark:border-white/[0.08] shadow-card hover:bg-secondary/70 dark:hover:bg-white/[0.11] transition-all duration-200"
+        className="group overflow-hidden cursor-pointer rounded-2xl bg-secondary/50 dark:bg-white/[0.07] border border-border/40 dark:border-white/[0.08] shadow-card hover:bg-secondary/70 dark:hover:bg-white/[0.11] transition-colors duration-200 active:scale-[0.98]"
       >
         <div className="px-3.5 py-3 flex items-center gap-3">
           <div className="w-10 h-10 bg-secondary/30 dark:bg-white/[0.08] rounded-lg flex items-center justify-center shrink-0 group-hover:bg-secondary/50 dark:group-hover:bg-white/[0.12] transition-colors overflow-hidden">
@@ -200,46 +193,34 @@ export const ItemCard = memo(function ItemCard({ item, compact = false, archiveM
 
           <ExternalLink className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
         </div>
-      </motion.article>
+      </article>
     );
   }
 
   // Render table card
   if (tableBlock) {
     return (
-      <motion.article
-        layout
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.95 }}
-        whileTap={{ scale: 0.98 }}
-        transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
+      <article
         onClick={handleClick}
-        className="group overflow-hidden cursor-pointer rounded-2xl bg-secondary/50 dark:bg-white/[0.07] backdrop-blur-xl border border-border/40 dark:border-white/[0.08] shadow-card hover:bg-secondary/70 dark:hover:bg-white/[0.11] transition-all duration-200"
+        className="group overflow-hidden cursor-pointer rounded-2xl bg-secondary/50 dark:bg-white/[0.07] border border-border/40 dark:border-white/[0.08] shadow-card hover:bg-secondary/70 dark:hover:bg-white/[0.11] transition-colors duration-200 active:scale-[0.98]"
       >
         <div className="p-2">
           <TableDisplay headers={tableBlock.headers} rows={tableBlock.rows} compact />
         </div>
-      </motion.article>
+      </article>
     );
   }
 
   return (
-    <motion.article
-      layout={!isPureNote || archiveMode}
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.95 }}
-      whileTap={{ scale: 0.98 }}
-      transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
+    <article
       onClick={handleClick}
-      className={`group overflow-hidden cursor-pointer transition-all duration-200 ${
+      className={`group overflow-hidden cursor-pointer transition-colors duration-200 active:scale-[0.98] ${
         isPureNote && !archiveMode
-          ? 'inline-block w-fit rounded-2xl bg-secondary/55 dark:bg-white/[0.07] backdrop-blur-xl border border-border/40 dark:border-white/[0.08] shadow-card hover:bg-secondary/75 dark:hover:bg-white/[0.11]'
+          ? 'inline-block w-fit rounded-2xl bg-secondary/55 dark:bg-white/[0.07] border border-border/40 dark:border-white/[0.08] shadow-card hover:bg-secondary/75 dark:hover:bg-white/[0.11]'
           : archiveMode && isPureNote
-          ? 'w-full rounded-none bg-secondary/30 dark:bg-white/[0.05] backdrop-blur-xl border-l-2 border-l-primary/30 border-y-0 border-r-0 shadow-none hover:bg-secondary/50 dark:hover:bg-white/[0.09] hover:border-l-primary/50'
-          : 'w-full rounded-2xl bg-secondary/50 dark:bg-white/[0.07] backdrop-blur-xl border border-border/40 dark:border-white/[0.08] shadow-card hover:bg-secondary/70 dark:hover:bg-white/[0.11]'
-      } ${isImportant ? '' : ''}`}
+          ? 'w-full rounded-none bg-secondary/30 dark:bg-white/[0.05] border-l-2 border-l-primary/30 border-y-0 border-r-0 shadow-none hover:bg-secondary/50 dark:hover:bg-white/[0.09] hover:border-l-primary/50'
+          : 'w-full rounded-2xl bg-secondary/50 dark:bg-white/[0.07] border border-border/40 dark:border-white/[0.08] shadow-card hover:bg-secondary/70 dark:hover:bg-white/[0.11]'
+      }`}
       style={{
         flexShrink: 0,
         flexGrow: 0,
@@ -392,6 +373,6 @@ export const ItemCard = memo(function ItemCard({ item, compact = false, archiveM
 
         </div>
       )}
-    </motion.article>
+    </article>
   );
 });

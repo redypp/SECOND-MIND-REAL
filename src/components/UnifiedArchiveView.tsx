@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { Item } from '@/types';
 import { ItemCard } from './ItemCard';
 import { EditNoteModal } from './EditNoteModal';
@@ -113,12 +112,12 @@ export function UnifiedArchiveView({ items, onDeleteItem }: UnifiedArchiveViewPr
   }, []);
 
   return (
-    <div ref={scrollContainerRef} className="h-full overflow-y-auto overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
+    <div ref={scrollContainerRef} className="h-full overflow-y-auto scrollbar-hide" style={{ WebkitOverflowScrolling: 'touch', overscrollBehavior: 'contain', willChange: 'scroll-position' }}>
       {/* Sticky horizontal section navigation — shown only when there are 2+ categories */}
       {showNav && (
         <div
           ref={navRef}
-          className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border/20"
+          className="sticky top-0 z-10 bg-background border-b border-border/20"
         >
           <div className="flex items-center gap-1.5 px-4 py-2.5 overflow-x-auto scrollbar-hide">
             {groups.map((group) => {
@@ -155,18 +154,14 @@ export function UnifiedArchiveView({ items, onDeleteItem }: UnifiedArchiveViewPr
 
       {/* Section list */}
       <div className="px-4 pt-5 pb-24 space-y-8">
-        <AnimatePresence initial={false}>
-          {groups.map((group, gi) => (
-            <motion.section
+          {groups.map((group) => (
+            <section
               key={group.label}
               ref={el => {
-                if (el) sectionRefs.current.set(group.label, el as HTMLElement);
+                if (el) sectionRefs.current.set(group.label, el);
                 else sectionRefs.current.delete(group.label);
               }}
               data-section={group.label}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: gi * 0.04, type: 'spring', stiffness: 380, damping: 32 }}
             >
               {/* Section header */}
               <div className="flex items-center gap-2.5 mb-3">
@@ -181,13 +176,9 @@ export function UnifiedArchiveView({ items, onDeleteItem }: UnifiedArchiveViewPr
 
               {/* Items */}
               <div className="space-y-2.5">
-                {group.items.map((item, ii) => (
-                  <motion.div
+                {group.items.map((item) => (
+                  <div
                     key={item.id}
-                    initial={{ opacity: 0, x: -6 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -6 }}
-                    transition={{ delay: gi * 0.04 + ii * 0.02, type: 'spring', stiffness: 400, damping: 30 }}
                     className="relative"
                   >
                     <div
@@ -210,31 +201,24 @@ export function UnifiedArchiveView({ items, onDeleteItem }: UnifiedArchiveViewPr
                       <ItemCard item={item} archiveMode />
                     </div>
 
-                    <AnimatePresence>
-                      {longPressItemId === item.id && onDeleteItem && (
-                        <motion.button
-                          initial={{ opacity: 0, scale: 0.8 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          exit={{ opacity: 0, scale: 0.8 }}
-                          transition={{ type: 'spring', stiffness: 500, damping: 28 }}
-                          className="absolute top-1.5 right-1.5 z-10 w-7 h-7 rounded-full bg-destructive flex items-center justify-center shadow-md"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onDeleteItem(item.id);
-                            setLongPressItemId(null);
-                          }}
-                          aria-label="Delete item"
-                        >
-                          <Trash2 className="w-3.5 h-3.5 text-destructive-foreground" />
-                        </motion.button>
-                      )}
-                    </AnimatePresence>
-                  </motion.div>
+                    {longPressItemId === item.id && onDeleteItem && (
+                      <button
+                        className="absolute top-1.5 right-1.5 z-10 w-7 h-7 rounded-full bg-destructive flex items-center justify-center shadow-md"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onDeleteItem(item.id);
+                          setLongPressItemId(null);
+                        }}
+                        aria-label="Delete item"
+                      >
+                        <Trash2 className="w-3.5 h-3.5 text-destructive-foreground" />
+                      </button>
+                    )}
+                  </div>
                 ))}
               </div>
-            </motion.section>
+            </section>
           ))}
-        </AnimatePresence>
       </div>
 
       <EditNoteModal
