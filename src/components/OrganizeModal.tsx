@@ -1,9 +1,13 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { X, Image, Link2, Check, Plus } from 'lucide-react';
-import { NoteOrganizer } from './NoteOrganizer';
 import { AnimatePresence, motion } from 'framer-motion';
 import { compressImage } from '@/lib/imageCompression';
+import { uploadImageToStorage } from '@/lib/imageUpload';
 import { showErrorPopup } from '@/contexts/ErrorPopupContext';
+import { useSpaces } from '@/contexts/SpacesContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { detectKeywords } from '@/lib/smartTitle';
+import { TextBlock, MediaBlock } from '@/types';
 
 export interface Attachment {
   type: 'image' | 'link';
@@ -20,11 +24,10 @@ interface OrganizeModalProps {
 }
 
 export function OrganizeModal({ isOpen, onClose, spaceId, spaceName, onItemSaved }: OrganizeModalProps) {
+  const { addItem } = useSpaces();
+  const { user } = useAuth();
   const [text, setText] = useState('');
   const [attachments, setAttachments] = useState<Attachment[]>([]);
-  const [submittedText, setSubmittedText] = useState('');
-  const [submittedAttachments, setSubmittedAttachments] = useState<Attachment[]>([]);
-  const [showOrganizer, setShowOrganizer] = useState(false);
   const [showLinkInput, setShowLinkInput] = useState(false);
   const [linkInput, setLinkInput] = useState('');
 
@@ -45,9 +48,6 @@ export function OrganizeModal({ isOpen, onClose, spaceId, spaceName, onItemSaved
   const handleClose = useCallback(() => {
     setText('');
     setAttachments([]);
-    setSubmittedText('');
-    setSubmittedAttachments([]);
-    setShowOrganizer(false);
     setShowLinkInput(false);
     setLinkInput('');
     onClose();
@@ -65,20 +65,64 @@ export function OrganizeModal({ isOpen, onClose, spaceId, spaceName, onItemSaved
     setTimeout(() => textareaRef.current?.focus(), 50);
   }, [linkInput]);
 
-  const handleSubmit = useCallback(() => {
+  const handleSubmit = useCallback(async () => {
     const hasContent = text.trim().length > 0 || attachments.length > 0;
     if (!hasContent) return;
-    setSubmittedText(text.trim());
-    setSubmittedAttachments([...attachments]);
-    setText('');
-    setAttachments([]);
-    setShowOrganizer(true);
-  }, [text, attachments]);
 
-  const handleDone = useCallback(() => {
+    const noteText = text.trim();
+    const keywords = noteText ? detectKeywords(noteText) : [];
+
+    // Save text note
+    if (noteText) {
+      const textBlock: TextBlock = {
+        id: `text-${Date.now()}`,
+        type: 'text',
+        content: noteText,
+      };
+      addItem({
+        subCategory: 'notes',
+        content: noteText,
+        blocks: [textBlock],
+        spaceIds: spaceId ? [spaceId] : [],
+        keywords: keywords.length > 0 ? keywords : undefined,
+      });
+    }
+
+    // Save image attachments
+    for (const att of attachments) {
+      if (att.type === 'image') {
+        const imageUrl = user
+          ? await uploadImageToStorage(att.value, user.id)
+          : att.value;
+        const mediaBlock: MediaBlock = {
+          id: `img-${Date.now()}-${Math.random()}`,
+          type: 'media',
+          url: imageUrl,
+          mediaType: 'image',
+        };
+        addItem({
+          subCategory: 'misc',
+          blocks: [mediaBlock],
+          spaceIds: spaceId ? [spaceId] : [],
+        });
+      } else if (att.type === 'link') {
+        const mediaBlock: MediaBlock = {
+          id: `link-${Date.now()}-${Math.random()}`,
+          type: 'media',
+          url: att.value,
+          mediaType: 'link',
+        };
+        addItem({
+          subCategory: 'misc',
+          blocks: [mediaBlock],
+          spaceIds: spaceId ? [spaceId] : [],
+        });
+      }
+    }
+
     onItemSaved?.();
     handleClose();
-  }, [handleClose, onItemSaved]);
+  }, [text, attachments, spaceId, addItem, user, handleClose, onItemSaved]);
 
   const handleImageUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     Array.from(e.target.files || []).forEach(file => {
@@ -154,13 +198,6 @@ export function OrganizeModal({ isOpen, onClose, spaceId, spaceName, onItemSaved
     if (isOpen) setTimeout(() => textareaRef.current?.focus(), 120);
   }, [isOpen]);
 
-  useEffect(() => {
-    if (showOrganizer && scrollRef.current) {
-      setTimeout(() => {
-        scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
-      }, 100);
-    }
-  }, [showOrganizer]);
 
   if (!isOpen) return null;
 
@@ -204,48 +241,6 @@ export function OrganizeModal({ isOpen, onClose, spaceId, spaceName, onItemSaved
         className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-5"
         style={{ touchAction: 'pan-y', WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
       >
-        {showOrganizer ? (
-          /* ── AI organizer results (after save) ── */
-          <div className="py-6">
-            {submittedText && (
-              <div className="mb-4 px-4 py-3 rounded-2xl bg-muted/20 border border-border/15">
-                <p className="text-[15px] leading-relaxed text-foreground/80 whitespace-pre-wrap">{submittedText}</p>
-              </div>
-            )}
-            {submittedAttachments.filter(a => a.type === 'image').length > 0 && (
-              <div className="mb-4 grid grid-cols-2 gap-2">
-                {submittedAttachments.filter(a => a.type === 'image').map((att, i) => (
-                  <div key={i} className="rounded-2xl overflow-hidden bg-secondary border border-border/20">
-                    <img src={att.value} alt="" className="w-full aspect-square object-cover" />
-                  </div>
-                ))}
-              </div>
-            )}
-            {submittedAttachments.filter(a => a.type === 'link').length > 0 && (
-              <div className="mb-4 space-y-2">
-                {submittedAttachments.filter(a => a.type === 'link').map((att, i) => (
-                  <div key={i} className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-muted/15 border border-border/15">
-                    <Link2 className="w-4 h-4 text-muted-foreground/50 shrink-0" />
-                    <span className="text-[14px] text-muted-foreground truncate">{getDomain(att.value)}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-            <motion.div
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ type: 'spring', stiffness: 400, damping: 32 }}
-            >
-              <NoteOrganizer
-                noteText={submittedText}
-                attachments={submittedAttachments}
-                spaceId={spaceId}
-                onDone={handleDone}
-              />
-            </motion.div>
-          </div>
-        ) : (
-          /* ── Editor layout ── */
           <div className="py-4 space-y-5">
             {/* Large textarea */}
             <textarea
@@ -385,11 +380,9 @@ export function OrganizeModal({ isOpen, onClose, spaceId, spaceName, onItemSaved
               </button>
             </div>
           </div>
-        )}
       </div>
 
       {/* ── Save button (bottom) ───────────────────────────────── */}
-      {!showOrganizer && (
         <div
           className="shrink-0 px-5 pt-3 bg-background"
           style={{ paddingBottom: 'max(var(--app-safe-bottom), 16px)' }}
@@ -403,7 +396,6 @@ export function OrganizeModal({ isOpen, onClose, spaceId, spaceName, onItemSaved
             {spaceName ? `Save to ${spaceName}` : 'Save'}
           </button>
         </div>
-      )}
 
       <input
         ref={fileInputRef}
