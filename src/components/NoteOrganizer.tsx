@@ -6,6 +6,7 @@ import { useSpaces } from '@/contexts/SpacesContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/app-client';
 import { uploadImageToStorage } from '@/lib/imageUpload';
+import { detectKeywords } from '@/lib/smartTitle';
 import type { Attachment } from './OrganizeModal';
 
 interface NoteOrganizerProps {
@@ -217,12 +218,17 @@ export function NoteOrganizer({ noteText, attachments = [], spaceId, onDone }: N
     setIsOrganizing(false);
 
     if (result.error) {
-      // AI failed — save the raw note directly so the user's content is never lost
+      // AI failed — save the raw note directly with local keyword detection
       console.warn('[NoteOrganizer] AI organize failed, saving raw note:', result.error);
+      const detectedTags = detectKeywords(noteText);
       const fallbackItem: DumpItem = {
         title: noteText.trim().slice(0, 60),
         content: noteText.trim(),
         destination: 'archive',
+        sub_category: 'notes',
+        target_space: '',
+        needs_clarification: false,
+        tags: detectedTags,
       };
       await saveItems([fallbackItem]);
       return;

@@ -50,7 +50,6 @@ export default function SpaceDetail({ embedded = false, spaceId: propSpaceId, on
   const [showShareSheet, setShowShareSheet] = useState(false);
   const coverInputRef = useRef<HTMLInputElement>(null);
   const goHomeRef = useRef<(() => void) | null>(null);
-  const autoOrganizeAttempted = useRef(false);
 
   // Edge swipe-right to go back
   const swipeTouchRef = useRef<{ startX: number; startY: number } | null>(null);
@@ -102,25 +101,14 @@ export default function SpaceDetail({ embedded = false, spaceId: propSpaceId, on
   }, [id, markSpaceUsed]);
 
   // Restore persisted AI groups if the space was previously organized
+  // (only loads them — doesn't force the view mode; user must switch manually)
   useEffect(() => {
     if (space?.groupAssignments?.groups?.length) {
       setOrganizedGroups(space.groupAssignments.groups);
-      setViewMode('grouped');
     }
   }, [space?.groupAssignments]);
 
   const items = id ? getItemsBySpaceId(id) : [];
-
-  // Auto-organize silently on first visit when no AI groups exist yet
-  const hasExistingGroups = !!(space?.groupAssignments?.groups?.length);
-  useEffect(() => {
-    if (autoOrganizeAttempted.current) return;
-    if (items.length === 0) return;
-    if (hasExistingGroups) return;
-    autoOrganizeAttempted.current = true;
-    handleOrganizeArchive(true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [items.length, hasExistingGroups]);
 
   // Simple chronological sort — no group reordering
   // Deduplicate by content fingerprint: if multiple items share the same normalized

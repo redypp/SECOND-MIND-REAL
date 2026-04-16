@@ -222,6 +222,40 @@ export function getSmartCategory(item: Item): string {
   return 'Notes';
 }
 
+/**
+ * Lightweight local keyword detection from text content.
+ * Returns keywords that map to TAG_CATEGORY_MAP for smart categorization.
+ * Used as a fallback when AI enrichment is unavailable.
+ */
+export function detectKeywords(text: string): string[] {
+  const keywords: string[] = [];
+  const lower = text.toLowerCase();
+
+  const KEYWORD_PATTERNS: [RegExp, string][] = [
+    [IDEAS_RE, 'idea'],
+    [FUTURE_PLANS_RE, 'plan'],
+    [DECISION_RE, 'decision'],
+    [RESEARCH_RE, 'research'],
+    [FOOD_RE, 'recipe'],
+    [HEALTH_RE, 'health'],
+    [FINANCE_RE, 'finance'],
+    [TRAVEL_RE, 'travel'],
+    [WORK_RE, 'work'],
+    [PEOPLE_RE, 'people'],
+    [REFLECTION_RE, 'reflection'],
+    [INSPIRATION_RE, 'inspiration'],
+    [REVISIT_RE, 'revisit'],
+  ];
+
+  for (const [pattern, keyword] of KEYWORD_PATTERNS) {
+    if (pattern.test(lower)) {
+      keywords.push(keyword);
+    }
+  }
+
+  return keywords;
+}
+
 const CATEGORY_ORDER = [
   'Ideas',
   'Plans & Goals',
