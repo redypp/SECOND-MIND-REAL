@@ -5,7 +5,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTutorial } from '@/contexts/TutorialContext';
-import { JournalPrompts } from '@/components/JournalPrompts';
 import { showErrorPopup } from '@/contexts/ErrorPopupContext';
 
 interface JournalPageProps {
@@ -265,22 +264,6 @@ export default function JournalPage({ embedded = false, onBack }: JournalPagePro
     el.focus({ preventScroll: true });
   }, [save]);
 
-  const handlePromptSelect = useCallback((promptText: string) => {
-    const el = textareaRef.current;
-    if (!el) return;
-    const prefix = el.value.length > 0 ? '\n\n' : '';
-    const insertion = `${prefix}${promptText}\n`;
-    el.value += insertion;
-    contentRef.current = el.value;
-    el.style.height = '0px';
-    el.style.height = Math.max(el.scrollHeight, 100) + 'px';
-    // Place cursor after the prompt
-    el.selectionStart = el.selectionEnd = el.value.length;
-    el.focus({ preventScroll: true });
-    // Save
-    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
-    saveTimerRef.current = setTimeout(() => save(contentRef.current), 1200);
-  }, [save]);
 
   return (
     <div
@@ -329,7 +312,6 @@ export default function JournalPage({ embedded = false, onBack }: JournalPagePro
             </div>
           ) : (
             <>
-              <JournalPrompts onSelectPrompt={handlePromptSelect} />
               <textarea
                 data-tutorial="journal-input"
                 ref={textareaRef}
