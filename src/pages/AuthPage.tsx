@@ -1,12 +1,36 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Navigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Eye, EyeOff, ArrowRight, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { showErrorPopup } from '@/contexts/ErrorPopupContext';
 import { supabase } from '@/integrations/supabase/client';
+import { SUPABASE_AUTH_STORAGE_KEY } from '@/integrations/supabase/app-client';
 import { z } from 'zod';
 import splashLogo from '@/assets/splash-logo.png';
+
+/**
+ * Synchronous check for a valid cached session.
+ * Runs before the component renders any UI so the login screen is never
+ * drawn when the user is already signed in (e.g., iOS/Capacitor resume,
+ * direct navigation to /auth, browser restoring the last URL). Without
+ * this, AuthPage would render, the onAuthStateChange event would fire,
+ * and the useEffect would navigate away — producing the login flash.
+ */
+function hasValidCachedSession(): boolean {
+  try {
+    const raw = localStorage.getItem(SUPABASE_AUTH_STORAGE_KEY);
+    if (!raw) return false;
+    const parsed = JSON.parse(raw);
+    return (
+      typeof parsed?.user?.id === 'string' &&
+      typeof parsed?.expires_at === 'number' &&
+      parsed.expires_at * 1000 > Date.now()
+    );
+  } catch {
+    return false;
+  }
+}
 
 /* ── Validation ────────────────────────────────────────────────────── */
 const signUpSchema = z.object({
@@ -122,6 +146,12 @@ export default function AuthPage() {
   const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
 
+  // Synchronous session check — cached once per render so we don't re-read
+  // localStorage on every re-render. If a valid session is present at mount,
+  // we'll redirect below (after all hooks have run, to respect the Rules of
+  // Hooks).
+  const [hasCachedSession] = useState(hasValidCachedSession);
+
   useEffect(() => {
     if (user) navigate('/', { replace: true });
   }, [user, navigate]);
@@ -137,6 +167,15 @@ export default function AuthPage() {
     const t = setTimeout(() => setLogoSettled(true), 1600);
     return () => clearTimeout(t);
   }, [logoReady]);
+
+  // Redirect synchronously on first render if a session already exists —
+  // prevents the login screen from flashing when the app opens with URL /auth
+  // while a valid session is cached (iOS resume, browser restoring last URL,
+  // or a ProtectedRoute race during cold start). Runs after all hooks so the
+  // Rules of Hooks are respected.
+  if (user || hasCachedSession) {
+    return <Navigate to="/" replace />;
+  }
 
   const handleOAuth = async (provider: 'google' | 'apple') => {
     const setProviderLoading = provider === 'google' ? setGoogleLoading : setAppleLoading;
