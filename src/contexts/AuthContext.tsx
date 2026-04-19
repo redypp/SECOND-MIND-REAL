@@ -126,7 +126,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // start. Running them concurrently causes LockManager contention and can
   // make both return null even when the profile row exists.  Sharing a single
   // in-flight promise eliminates the duplicate request.
-  const profileFetchInFlightRef = useRef<Promise<Profile | null> | null>(null);
+  // Tracks both the in-flight promise AND the userId it's fetching for, so a
+  // concurrent request for a *different* user (e.g., account switch in the same
+  // tab) doesn't get the wrong user's profile back from the dedupe path.
+  const profileFetchInFlightRef = useRef<{ userId: string; promise: Promise<Profile | null> } | null>(null);
 
   const getSessionOnce = useCallback(() => {
     if (!getSessionInFlightRef.current) {
@@ -168,15 +171,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // Deduplicated profile fetch — if a fetch is already in-flight, return the
-  // same promise rather than firing a second concurrent Supabase request.
+  // Deduplicated profile fetch — if a fetch for the SAME userId is already
+  // in-flight, return the same promise rather than firing a second concurrent
+  // Supabase request. Fetches for a different userId always start a fresh
+  // request to avoid returning the previous user's profile.
   const fetchProfileOnce = useCallback((userId: string): Promise<Profile | null> => {
-    if (!profileFetchInFlightRef.current) {
-      profileFetchInFlightRef.current = fetchProfile(userId).finally(() => {
-        profileFetchInFlightRef.current = null;
-      });
+    const inFlight = profileFetchInFlightRef.current;
+    if (inFlight && inFlight.userId === userId) {
+      return inFlight.promise;
     }
-    return profileFetchInFlightRef.current;
+    const promise = fetchProfile(userId).finally(() => {
+      // Only clear the ref if it still points to THIS request — otherwise a
+      // newer in-flight fetch for a different user has already taken over.
+      if (profileFetchInFlightRef.current?.promise === promise) {
+        profileFetchInFlightRef.current = null;
+      }
+    });
+    profileFetchInFlightRef.current = { userId, promise };
+    return promise;
   }, [fetchProfile]);
 
   // Manual initialization function - called by AppStartup AFTER first render
@@ -441,11 +453,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           startSessionMonitor();
 
           // If initializeAuth is currently running (initRef.current = true and loading
-          // is still true), let it handle everything — don't compete with state resets.
-          // This prevents the glitchy state cascade during Google OAuth where both
-          // initializeAuth AND this handler fight over loading state.
+          // is still true), avoid the loading-progress setState cascade — that competition
+          // caused glitchy UI during Google OAuth. BUT we must still fetch the profile
+          // ourselves: if initializeAuth's getSession() returned null and committed to the
+          // "no session" branch, it will NEVER call setProfileFetched(true). Without that,
+          // ProtectedRoute permanently shows the transparent profile-fetch placeholder
+          // even though the user is signed in. fetchProfileOnce() dedupes against any
+          // concurrent fetch initializeAuth might have started, so this is safe in both
+          // races (init found same session OR init found no session).
           if (initRef.current && loadingRef.current) {
-            logLifecycle('SIGNED_IN: initializeAuth in progress, deferring to it');
+            logLifecycle('SIGNED_IN: initializeAuth in progress, deferring loading state but fetching profile');
+            (async () => {
+              try {
+                let profileData = await fetchProfileOnce(currentSession.user.id);
+                if (!profileData) {
+                  await new Promise(r => setTimeout(r, 1500));
+                  profileData = await fetchProfile(currentSession.user.id);
+                }
+                setProfile(profileData);
+              } catch (err) {
+                console.error('[Auth] Deferred profile fetch failed:', err);
+              } finally {
+                // Always unblock ProtectedRoute even on profile fetch failure.
+                setProfileFetched(true);
+              }
+            })();
             return;
           }
 
