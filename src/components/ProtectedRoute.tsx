@@ -46,7 +46,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     setLoadingProgress,
   } = useAuth();
   const location = useLocation();
-  
+
   // Track if we ever had a user to enable grace period
   const hadUserRef = useRef(!!user);
   const [graceActive, setGraceActive] = useState(false);

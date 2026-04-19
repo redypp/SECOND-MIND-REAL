@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FileText, Image, Link2, Table, X, Plus, Minus, ArrowLeft, ChevronRight, ExternalLink } from 'lucide-react';
+import { FileText, Image, Link2, Table, X, Plus, Minus, ArrowLeft, ChevronRight, ExternalLink, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { TextBlock, MediaBlock, TableBlock, SubCategory } from '@/types';
 import { isValidUrl } from '@/lib/urlValidation';
@@ -21,7 +21,7 @@ interface AddMemoryPanelProps {
     content?: string;
     blocks: (TextBlock | MediaBlock | TableBlock)[];
     spaceIds: string[];
-  }) => void;
+  }) => void | Promise<void>;
 }
 
 export function AddMemoryPanel({ spaceId, isOpen, onClose, onAddItem }: AddMemoryPanelProps) {
@@ -34,6 +34,7 @@ export function AddMemoryPanel({ spaceId, isOpen, onClose, onAddItem }: AddMemor
 
   // Image state
   const [images, setImages] = useState<{ preview: string; caption: string }[]>([]);
+  const [savingImages, setSavingImages] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // URL state
@@ -154,32 +155,76 @@ export function AddMemoryPanel({ spaceId, isOpen, onClose, onAddItem }: AddMemor
   }, [noteInput, spaceId, onAddItem, handleClose]);
 
   const handleSaveImages = useCallback(async () => {
-    if (images.length === 0) return;
-
-    for (const img of images) {
-      // Upload to storage, fall back to base64 if it fails
-      const imageUrl = user
-        ? await uploadImageToStorage(img.preview, user.id)
-        : img.preview;
-
-      const mediaBlock: MediaBlock = {
-        id: generateId(),
-        type: 'media',
-        url: imageUrl,
-        mediaType: 'image',
-        caption: img.caption.trim() || undefined,
-      };
-      onAddItem({
-        subCategory: 'misc',
-        blocks: [mediaBlock],
-        spaceIds: [spaceId],
-      });
+    if (images.length === 0 || savingImages) return;
+    if (!user) {
+      showErrorPopup('Please sign in to save images.');
+      return;
     }
 
-    setImages([]);
-    setActiveScreen('select');
-    handleClose();
-  }, [images, spaceId, onAddItem, handleClose, user]);
+    setSavingImages(true);
+    let anyFailed = false;
+    let storageFallbackCount = 0;
+
+    try {
+      for (const img of images) {
+        // Upload to storage; uploadImageToStorage returns the original base64
+        // data URL if the upload fails. Detect that case so we can warn the user
+        // instead of silently embedding a huge base64 payload in the item.
+        let imageUrl: string;
+        try {
+          imageUrl = await uploadImageToStorage(img.preview, user.id);
+        } catch (err) {
+          console.error('[AddMemoryPanel] uploadImageToStorage threw:', err);
+          imageUrl = img.preview;
+        }
+        if (imageUrl === img.preview) {
+          storageFallbackCount += 1;
+        }
+
+        const mediaBlock: MediaBlock = {
+          id: generateId(),
+          type: 'media',
+          url: imageUrl,
+          mediaType: 'image',
+          caption: img.caption.trim() || undefined,
+        };
+
+        try {
+          // Await so we know the insert actually landed before we close the
+          // panel. Previously this was fire-and-forget, which meant a failed
+          // insert could happen after the panel unmounted — the error popup
+          // would fire but the image simply wouldn't appear in the archive.
+          await onAddItem({
+            subCategory: 'misc',
+            blocks: [mediaBlock],
+            spaceIds: [spaceId],
+          });
+        } catch (err) {
+          console.error('[AddMemoryPanel] onAddItem failed:', err);
+          anyFailed = true;
+        }
+      }
+
+      if (storageFallbackCount > 0) {
+        showErrorPopup(
+          storageFallbackCount === images.length
+            ? "Couldn't upload image to storage — saved a local copy instead. Check your connection."
+            : `Couldn't upload ${storageFallbackCount} image(s) to storage — saved local copies instead.`
+        );
+      }
+
+      if (anyFailed) {
+        // Don't close the panel on outright failure so the user can retry.
+        return;
+      }
+
+      setImages([]);
+      setActiveScreen('select');
+      handleClose();
+    } finally {
+      setSavingImages(false);
+    }
+  }, [images, savingImages, spaceId, onAddItem, handleClose, user]);
 
   const handleSaveUrls = useCallback(async () => {
     // Auto-add any URL still in the input field
@@ -413,11 +458,18 @@ export function AddMemoryPanel({ spaceId, isOpen, onClose, onAddItem }: AddMemor
           </div>
           <Button
             onClick={handleSaveImages}
-            disabled={images.length === 0}
+            disabled={images.length === 0 || savingImages}
             size="sm"
             className="bg-primary hover:bg-primary/90"
           >
-            Save
+            {savingImages ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
+                Saving…
+              </>
+            ) : (
+              'Save'
+            )}
           </Button>
         </div>
       </header>

@@ -220,14 +220,18 @@ export default function SpaceDetail({ embedded = false, spaceId: propSpaceId, on
 
   const handleAddItem = useCallback(async (item: Parameters<typeof addItemAsync>[0]) => {
     let newItemId: string | null = null;
+    let caughtErr: unknown = null;
     try {
       newItemId = await addItemAsync(item);
     } catch (err) {
       console.error('[SpaceDetail] addItemAsync threw:', err);
+      caughtErr = err;
     }
     if (!newItemId) {
       showErrorPopup('Failed to add item. Please try again.');
-      return;
+      // Re-throw so callers awaiting this (e.g. AddMemoryPanel.handleSaveImages)
+      // can detect the failure and avoid closing the panel on a failed save.
+      throw caughtErr instanceof Error ? caughtErr : new Error('addItemAsync returned no id');
     }
 
     // Background media classification (non-blocking)
