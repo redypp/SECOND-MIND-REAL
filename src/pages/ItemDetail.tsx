@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useSpaces } from '@/contexts/SpacesContext';
 import { ArrowLeft, Pencil, Trash2, Check, X, FileText, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -9,6 +9,15 @@ import { TextBlock, MediaBlock, ContentBlock } from '@/types';
 export default function ItemDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
+  const fromSpaceId = (location.state as { fromSpaceId?: string } | null)?.fromSpaceId;
+  const handleBack = () => {
+    if (fromSpaceId) {
+      navigate(`/space/${fromSpaceId}`, { replace: true });
+    } else {
+      navigate(-1);
+    }
+  };
   const { items, updateItem, deleteItem } = useSpaces();
 
   const item = id ? items.find(i => i.id === id) : undefined;
@@ -31,7 +40,7 @@ export default function ItemDetail() {
           <p className="text-foreground font-medium mb-1">Item not found</p>
           <p className="text-muted-foreground text-sm mb-4">This item may have been deleted.</p>
           <button
-            onClick={() => navigate(-1)}
+            onClick={handleBack}
             className="text-sm text-primary font-medium hover:underline"
           >
             Go back
@@ -83,7 +92,7 @@ export default function ItemDetail() {
 
   const handleDelete = () => {
     deleteItem(displayItem.id);
-    navigate(-1);
+    handleBack();
   };
 
   return (
@@ -91,7 +100,7 @@ export default function ItemDetail() {
       {/* Back button */}
       <div className="px-4 pt-3 pb-1">
         <button
-          onClick={() => navigate(-1)}
+          onClick={handleBack}
           className="p-2 -ml-2 rounded-lg hover:bg-secondary transition-colors touch-manipulation"
         >
           <ArrowLeft className="w-5 h-5 text-muted-foreground" />

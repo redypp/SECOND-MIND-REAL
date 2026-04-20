@@ -15,10 +15,11 @@ interface ItemCardProps {
   item: Item;
   compact?: boolean;
   archiveMode?: boolean;
+  fromSpaceId?: string;
 }
 
 // Memoized to prevent re-renders when parent state changes
-export const ItemCard = memo(function ItemCard({ item, compact = false, archiveMode = false }: ItemCardProps) {
+export const ItemCard = memo(function ItemCard({ item, compact = false, archiveMode = false, fromSpaceId }: ItemCardProps) {
   const isImageItem = !!(item.blocks?.find(b => b.type === 'media' && b.mediaType !== 'link'));
   const isImportant = item.color === 'important' && !isImageItem;
   const navigate = useNavigate();
@@ -80,7 +81,7 @@ export const ItemCard = memo(function ItemCard({ item, compact = false, archiveM
     if (isLink && item.url) {
       safeOpenUrl(item.url);
     } else {
-      navigate(`/item/${item.id}`);
+      navigate(`/item/${item.id}`, fromSpaceId ? { state: { fromSpaceId } } : undefined);
     }
   };
 

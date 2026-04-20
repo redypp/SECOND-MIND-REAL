@@ -506,12 +506,14 @@ export default function SpaceDetail({ embedded = false, spaceId: propSpaceId, on
             onUpdatePosition={(itemId, pos) => updateItemPosition(itemId, pos)}
             onEditItem={(item) => updateItem(item.id, { color: item.color })}
             goHomeRef={goHomeRef}
+            fromSpaceId={id}
           />
         ) : viewMode === 'grouped' && hasGroups ? (
           <GroupedArchiveView
             items={sortedItems}
             groups={organizedGroups!}
             onDeleteItem={deleteItem}
+            fromSpaceId={id}
             onGroupsChange={(newGroups) => {
               setOrganizedGroups(newGroups);
               if (id) {
@@ -528,6 +530,7 @@ export default function SpaceDetail({ embedded = false, spaceId: propSpaceId, on
           <UnifiedArchiveView
             items={sortedItems}
             onDeleteItem={deleteItem}
+            fromSpaceId={id}
           />
         )}
       </main>

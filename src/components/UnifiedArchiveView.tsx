@@ -9,9 +9,10 @@ import { groupBySmartCategory } from '@/lib/smartTitle';
 interface UnifiedArchiveViewProps {
   items: Item[];
   onDeleteItem?: (id: string) => void;
+  fromSpaceId?: string;
 }
 
-export function UnifiedArchiveView({ items, onDeleteItem }: UnifiedArchiveViewProps) {
+export function UnifiedArchiveView({ items, onDeleteItem, fromSpaceId }: UnifiedArchiveViewProps) {
   const [editingItem, setEditingItem] = useState<Item | null>(null);
   const [longPressItemId, setLongPressItemId] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState<string>('');
@@ -198,7 +199,7 @@ export function UnifiedArchiveView({ items, onDeleteItem }: UnifiedArchiveViewPr
                       onTouchEnd={handleTouchEnd}
                       onTouchMove={handleTouchEnd}
                     >
-                      <ItemCard item={item} archiveMode />
+                      <ItemCard item={item} archiveMode fromSpaceId={fromSpaceId} />
                     </div>
 
                     {longPressItemId === item.id && onDeleteItem && (

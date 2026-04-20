@@ -16,9 +16,10 @@ interface GroupedArchiveViewProps {
   groups: ArchiveGroupData[];
   onDeleteItem?: (id: string) => void;
   onGroupsChange?: (groups: ArchiveGroupData[]) => void;
+  fromSpaceId?: string;
 }
 
-export function GroupedArchiveView({ items, groups, onDeleteItem, onGroupsChange }: GroupedArchiveViewProps) {
+export function GroupedArchiveView({ items, groups, onDeleteItem, onGroupsChange, fromSpaceId }: GroupedArchiveViewProps) {
   const [editingItem, setEditingItem] = useState<Item | null>(null);
   const [longPressItemId, setLongPressItemId] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState<string>('');
@@ -241,7 +242,7 @@ export function GroupedArchiveView({ items, groups, onDeleteItem, onGroupsChange
                         handleLongPress(item.id);
                       }}
                     >
-                      <ItemCard item={item} archiveMode />
+                      <ItemCard item={item} archiveMode fromSpaceId={fromSpaceId} />
                     </div>
 
                     {/* Action buttons on long-press */}

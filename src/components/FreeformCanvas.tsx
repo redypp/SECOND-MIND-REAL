@@ -25,6 +25,7 @@ interface FreeformCanvasProps {
   onFocusComplete?: () => void;
   getViewportCenterRef?: React.MutableRefObject<(() => { x: number; y: number }) | null>;
   goHomeRef?: React.MutableRefObject<(() => void) | null>;
+  fromSpaceId?: string;
 }
 
 const CARD_WIDTH = 260;
@@ -44,7 +45,7 @@ const DRAG_THRESHOLD = 8; // Pixels moved before considered a drag
 const RESIZE_HANDLE_SIZE = 24;
 const MAGNETIC_SNAP_DISTANCE = 12; // Pixels proximity to trigger magnetic snap
 
-export function FreeformCanvas({ items, onDeleteItem, onUpdatePosition, onEditItem, focusItemId, onFocusComplete, getViewportCenterRef, goHomeRef }: FreeformCanvasProps) {
+export function FreeformCanvas({ items, onDeleteItem, onUpdatePosition, onEditItem, focusItemId, onFocusComplete, getViewportCenterRef, goHomeRef, fromSpaceId }: FreeformCanvasProps) {
   const [positions, setPositions] = useState<Record<string, Position>>({});
   const [dragging, setDragging] = useState<string | null>(null);
   const [draggedWidth, setDraggedWidth] = useState<number | null>(null); // Store width during drag
@@ -914,7 +915,7 @@ export function FreeformCanvas({ items, onDeleteItem, onUpdatePosition, onEditIt
                     overflowWrap: 'anywhere',
                   }}
                 >
-                  <ItemCard item={item} archiveMode />
+                  <ItemCard item={item} archiveMode fromSpaceId={fromSpaceId} />
 
                 </div>
               </motion.div>
