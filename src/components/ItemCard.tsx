@@ -65,8 +65,13 @@ export const ItemCard = memo(function ItemCard({ item, compact = false, archiveM
 
   // Smart title for archive mode: only show for non-text items (images, links, tables).
   // Pure text notes intentionally show no title on the card — content speaks for itself.
+  // When the item has body text but no explicit title, skip the derived smart title —
+  // getSmartTitle would return the first line of the text, which then duplicates the
+  // body paragraph rendered below. Only derive a title for media-only items.
   const archiveTitleText = archiveMode
-    ? (!isPureNote ? (item.title?.trim() || getSmartTitle(item)) : '')
+    ? (!isPureNote
+        ? (item.title?.trim() || (textContent?.trim() ? '' : getSmartTitle(item)))
+        : '')
     : '';
 
   const handleClick = (e: React.MouseEvent) => {
