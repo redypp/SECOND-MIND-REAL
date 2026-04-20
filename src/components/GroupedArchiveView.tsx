@@ -3,8 +3,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Item } from '@/types';
 import { ItemCard } from './ItemCard';
 import { EditNoteModal } from './EditNoteModal';
-import { Trash2, ArrowRightLeft, X } from 'lucide-react';
+import { Trash2, ArrowRightLeft, X, Pencil, Plus, ChevronUp, ChevronDown, Check } from 'lucide-react';
 import { safeOpenUrl } from '@/lib/urlValidation';
+
+const NOTES_FALLBACK_LABEL = 'Notes';
 
 export interface ArchiveGroupData {
   label: string;
@@ -25,6 +27,10 @@ export function GroupedArchiveView({ items, groups, onDeleteItem, onGroupsChange
   const [activeSection, setActiveSection] = useState<string>('');
   // item being moved: { itemId, fromGroup }
   const [movingItem, setMovingItem] = useState<{ itemId: string; fromGroup: string } | null>(null);
+  // Header edit mode + which header is being renamed inline
+  const [headerEditMode, setHeaderEditMode] = useState(false);
+  const [renamingLabel, setRenamingLabel] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState('');
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const navRef = useRef<HTMLDivElement>(null);
@@ -51,10 +57,18 @@ export function GroupedArchiveView({ items, groups, onDeleteItem, onGroupsChange
     }
   }
 
-  // Any items not covered by groups go into a catch-all bucket
+  // Any items not covered by groups go into a catch-all bucket.
+  // Always show empty user-defined groups in edit mode so they can be renamed/deleted.
   const ungrouped = items.filter(i => !assignedIds.has(i.id));
   if (ungrouped.length > 0) {
-    groupedItems.push({ label: 'Notes', items: ungrouped });
+    groupedItems.push({ label: NOTES_FALLBACK_LABEL, items: ungrouped });
+  }
+  if (headerEditMode) {
+    for (const group of groups) {
+      if (!group.item_ids.length && !groupedItems.some(g => g.label === group.label)) {
+        groupedItems.push({ label: group.label, items: [] });
+      }
+    }
   }
 
   const showNav = groupedItems.length > 1;
@@ -150,8 +164,105 @@ export function GroupedArchiveView({ items, groups, onDeleteItem, onGroupsChange
     setLongPressItemId(null);
   }, [groups, onGroupsChange]);
 
+  // ── Header edit handlers ───────────────────────────────────────────────
+  const startRename = useCallback((label: string) => {
+    setRenamingLabel(label);
+    setRenameValue(label);
+  }, []);
+
+  const commitRename = useCallback(() => {
+    if (!renamingLabel || !onGroupsChange) {
+      setRenamingLabel(null);
+      return;
+    }
+    const next = renameValue.trim();
+    if (!next || next === renamingLabel) {
+      setRenamingLabel(null);
+      return;
+    }
+    // Skip if label collides with an existing header (case-insensitive).
+    if (groups.some(g => g.label.toLowerCase() === next.toLowerCase() && g.label !== renamingLabel)) {
+      setRenamingLabel(null);
+      return;
+    }
+    const updatedGroups = groups.map(g =>
+      g.label === renamingLabel ? { ...g, label: next } : g
+    );
+    onGroupsChange(updatedGroups);
+    setRenamingLabel(null);
+  }, [renamingLabel, renameValue, groups, onGroupsChange]);
+
+  const deleteGroup = useCallback((label: string) => {
+    if (!onGroupsChange) return;
+    // Remove the group; its items fall through to the "Notes" catch-all bucket.
+    const updatedGroups = groups.filter(g => g.label !== label);
+    onGroupsChange(updatedGroups);
+  }, [groups, onGroupsChange]);
+
+  const moveGroup = useCallback((label: string, direction: -1 | 1) => {
+    if (!onGroupsChange) return;
+    const idx = groups.findIndex(g => g.label === label);
+    if (idx < 0) return;
+    const target = idx + direction;
+    if (target < 0 || target >= groups.length) return;
+    const updatedGroups = [...groups];
+    const [moved] = updatedGroups.splice(idx, 1);
+    updatedGroups.splice(target, 0, moved);
+    onGroupsChange(updatedGroups);
+  }, [groups, onGroupsChange]);
+
+  const addGroup = useCallback(() => {
+    if (!onGroupsChange) return;
+    // Generate a unique default label: "New section", "New section 2", etc.
+    let base = 'New section';
+    let label = base;
+    let n = 2;
+    const existing = new Set(groups.map(g => g.label.toLowerCase()));
+    while (existing.has(label.toLowerCase())) {
+      label = `${base} ${n++}`;
+    }
+    onGroupsChange([...groups, { label, item_ids: [] }]);
+    setRenamingLabel(label);
+    setRenameValue(label);
+  }, [groups, onGroupsChange]);
+
+  const canEditGroups = !!onGroupsChange;
+
   return (
     <div ref={scrollContainerRef} className="h-full overflow-y-auto overscroll-contain">
+      {/* Edit-mode toggle */}
+      {canEditGroups && (
+        <div className="px-4 pt-3 flex items-center justify-end">
+          <button
+            onClick={() => {
+              setHeaderEditMode(v => !v);
+              setRenamingLabel(null);
+              setLongPressItemId(null);
+            }}
+            className={`
+              inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-medium
+              transition-colors touch-manipulation
+              ${headerEditMode
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-secondary/60 text-muted-foreground hover:text-foreground hover:bg-secondary'}
+            `}
+            aria-pressed={headerEditMode}
+          >
+            {headerEditMode ? (
+              <>
+                <Check className="w-3.5 h-3.5" />
+                Done
+              </>
+            ) : (
+              <>
+                <Pencil className="w-3.5 h-3.5" />
+                Edit sections
+              </>
+            )}
+          </button>
+        </div>
+      )}
+
       {/* Sticky horizontal section navigation — shown only when there are 2+ groups */}
       {showNav && (
         <div
@@ -207,15 +318,85 @@ export function GroupedArchiveView({ items, groups, onDeleteItem, onGroupsChange
               transition={{ delay: gi * 0.04, type: 'spring', stiffness: 380, damping: 32 }}
             >
               {/* Section header */}
-              <div className="flex items-center gap-2.5 mb-3">
-                <span className="text-[14px] font-semibold uppercase tracking-wider text-muted-foreground/85">
-                  {group.label}
-                </span>
-                <span className="text-[13px] text-muted-foreground/60 font-medium tabular-nums">
-                  {group.items.length}
-                </span>
-                <div className="flex-1 h-px bg-border/50" />
-              </div>
+              {(() => {
+                const isNotesFallback = group.label === NOTES_FALLBACK_LABEL && !groups.some(g => g.label === NOTES_FALLBACK_LABEL);
+                const isRenaming = renamingLabel === group.label;
+                const showEditControls = headerEditMode && canEditGroups && !isNotesFallback;
+
+                return (
+                  <div className="flex items-center gap-2.5 mb-3">
+                    {isRenaming ? (
+                      <input
+                        autoFocus
+                        value={renameValue}
+                        onChange={(e) => setRenameValue(e.target.value)}
+                        onBlur={commitRename}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            commitRename();
+                          } else if (e.key === 'Escape') {
+                            e.preventDefault();
+                            setRenamingLabel(null);
+                          }
+                        }}
+                        className="bg-secondary/60 border border-primary/40 rounded-md px-2 py-1 text-[14px] font-semibold uppercase tracking-wider text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 min-w-0 flex-1"
+                        maxLength={40}
+                      />
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={showEditControls ? () => startRename(group.label) : undefined}
+                        className={`text-[14px] font-semibold uppercase tracking-wider text-muted-foreground/85 text-left ${
+                          showEditControls ? 'hover:text-foreground cursor-text' : 'cursor-default'
+                        }`}
+                      >
+                        {group.label}
+                      </button>
+                    )}
+                    {!isRenaming && (
+                      <span className="text-[13px] text-muted-foreground/60 font-medium tabular-nums">
+                        {group.items.length}
+                      </span>
+                    )}
+                    {showEditControls && !isRenaming && (
+                      <div className="flex items-center gap-1 ml-1">
+                        <button
+                          onClick={() => moveGroup(group.label, -1)}
+                          disabled={gi === 0 || isNotesFallback}
+                          className="w-6 h-6 rounded-md flex items-center justify-center text-muted-foreground hover:bg-secondary disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                          aria-label="Move section up"
+                        >
+                          <ChevronUp className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => moveGroup(group.label, 1)}
+                          disabled={gi === groups.length - 1 || isNotesFallback}
+                          className="w-6 h-6 rounded-md flex items-center justify-center text-muted-foreground hover:bg-secondary disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                          aria-label="Move section down"
+                        >
+                          <ChevronDown className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => startRename(group.label)}
+                          className="w-6 h-6 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+                          aria-label="Rename section"
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => deleteGroup(group.label)}
+                          className="w-6 h-6 rounded-md flex items-center justify-center text-destructive hover:bg-destructive/10 transition-colors"
+                          aria-label="Delete section"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    )}
+                    <div className="flex-1 h-px bg-border/50" />
+                  </div>
+                );
+              })()}
 
               {/* Items */}
               <div className="space-y-2.5">
@@ -290,6 +471,16 @@ export function GroupedArchiveView({ items, groups, onDeleteItem, onGroupsChange
             </motion.section>
           ))}
         </AnimatePresence>
+
+        {headerEditMode && canEditGroups && (
+          <button
+            onClick={addGroup}
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-dashed border-border/70 text-muted-foreground hover:text-foreground hover:border-primary/40 hover:bg-secondary/40 transition-colors touch-manipulation"
+          >
+            <Plus className="w-4 h-4" />
+            <span className="text-sm font-medium">Add section</span>
+          </button>
+        )}
       </div>
 
       {/* Section picker sheet */}

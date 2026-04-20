@@ -14,8 +14,9 @@ import { useTutorial } from '@/contexts/TutorialContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Item, GroupAssignments } from '@/types';
 import { supabase } from '@/integrations/supabase/app-client';
-import { getSmartCategory } from '@/lib/smartTitle';
+import { pickBestGroupForItem } from '@/lib/smartTitle';
 import { ShareArchiveSheet } from '@/components/ShareArchiveSheet';
+import { GroupPickerSheet } from '@/components/GroupPickerSheet';
 
 interface SpaceDetailProps {
   embedded?: boolean;
@@ -48,6 +49,9 @@ export default function SpaceDetail({ embedded = false, spaceId: propSpaceId, on
   // 'list' = smart-categorised feed (default & fallback), 'grouped' = AI-organised sections, 'canvas' = freeform
   const [viewMode, setViewMode] = useState<'list' | 'grouped' | 'canvas'>('list');
   const [showShareSheet, setShowShareSheet] = useState(false);
+  // Pending-add picker state: set after a new item is saved into an organized
+  // archive, cleared when the user picks a section or cancels.
+  const [pendingGroupPick, setPendingGroupPick] = useState<{ itemId: string; defaultLabel: string } | null>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
   const goHomeRef = useRef<(() => void) | null>(null);
 
@@ -151,6 +155,11 @@ export default function SpaceDetail({ embedded = false, spaceId: propSpaceId, on
           input: `Organize the ${items.length} items in the "${space?.name}" archive`,
           context: {
             spaces: spaces.map(s => ({ id: s.id, name: s.name, itemCount: s.itemCount })),
+            archiveName: space?.name ?? '',
+            // Preserve user-customised headers across re-organize. When this is
+            // non-empty the prompt instructs the model to reuse these labels
+            // verbatim and only add new headers for items that truly don't fit.
+            existingGroups: (organizedGroups ?? []).map(g => g.label),
             items: items.map(i => ({
               id: i.id,
               title: i.title,
@@ -190,7 +199,7 @@ export default function SpaceDetail({ embedded = false, spaceId: propSpaceId, on
     } finally {
       setIsOrganizing(false);
     }
-  }, [isOrganizing, items, space, spaces, id, saveGroupAssignments]);
+  }, [isOrganizing, items, space, spaces, id, saveGroupAssignments, organizedGroups]);
 
   // Fire background AI classification for images and links, updating aiTags after save.
   const classifyMediaItem = useCallback(async (itemId: string, item: Parameters<typeof addItemAsync>[0], spaceName: string) => {
@@ -238,9 +247,10 @@ export default function SpaceDetail({ embedded = false, spaceId: propSpaceId, on
     const spaceName = space?.name ?? '';
     classifyMediaItem(newItemId, item, spaceName);
 
-    // Auto-route the new item into the best existing group when in grouped mode
+    // In an organized archive, open a picker so the user can confirm which
+    // section the item belongs in. The classifier's best guess is highlighted
+    // but Confirm requires an explicit tap (per user preference).
     if (organizedGroups && organizedGroups.length > 0 && id) {
-      // Build a synthetic Item object from the input so we can classify it
       const syntheticItem: Item = {
         id: newItemId,
         subCategory: item.subCategory,
@@ -251,30 +261,40 @@ export default function SpaceDetail({ embedded = false, spaceId: propSpaceId, on
         url: item.url,
         createdAt: new Date(),
       };
-      const smartCat = getSmartCategory(syntheticItem);
-
-      // Find a group whose label best matches the smart category (case-insensitive)
-      const match = organizedGroups.find(
-        g => g.label.toLowerCase() === smartCat.toLowerCase()
-      );
-      // Target: matched group, or first group as fallback
-      const targetLabel = match ? match.label : organizedGroups[0].label;
-
-      const updatedGroups = organizedGroups.map(g =>
-        g.label === targetLabel
-          ? { ...g, item_ids: [newItemId!, ...g.item_ids] }
-          : g
-      );
-      setOrganizedGroups(updatedGroups);
-
-      const assignments: GroupAssignments = {
-        groups: updatedGroups,
-        organized_at: new Date().toISOString(),
-        item_count_at_organize: sortedItems.length + 1,
-      };
-      saveGroupAssignments(id, assignments);
+      const defaultLabel = pickBestGroupForItem(syntheticItem, organizedGroups);
+      setPendingGroupPick({ itemId: newItemId, defaultLabel });
     }
-  }, [addItemAsync, organizedGroups, id, sortedItems.length, saveGroupAssignments, space, classifyMediaItem]);
+  }, [addItemAsync, organizedGroups, id, space, classifyMediaItem]);
+
+  // Commit a picker choice: add the new item to the chosen section and persist.
+  const handleConfirmGroupPick = useCallback((label: string) => {
+    if (!pendingGroupPick || !organizedGroups || !id) {
+      setPendingGroupPick(null);
+      return;
+    }
+    const { itemId } = pendingGroupPick;
+    // Ensure the chosen label exists as a group (user may have added one since).
+    const hasLabel = organizedGroups.some(g => g.label === label);
+    const baseGroups = hasLabel
+      ? organizedGroups
+      : [...organizedGroups, { label, item_ids: [] }];
+    // Remove the item from any other group first in case it was already placed.
+    const updatedGroups = baseGroups.map(g => ({
+      ...g,
+      item_ids:
+        g.label === label
+          ? [itemId, ...g.item_ids.filter(x => x !== itemId)]
+          : g.item_ids.filter(x => x !== itemId),
+    }));
+    setOrganizedGroups(updatedGroups);
+    const assignments: GroupAssignments = {
+      groups: updatedGroups,
+      organized_at: new Date().toISOString(),
+      item_count_at_organize: items.length,
+    };
+    saveGroupAssignments(id, assignments);
+    setPendingGroupPick(null);
+  }, [pendingGroupPick, organizedGroups, id, items.length, saveGroupAssignments]);
 
   if (!space) {
     return (
@@ -555,6 +575,15 @@ export default function SpaceDetail({ embedded = false, spaceId: propSpaceId, on
         isOpen={showAddMemoryPanel}
         onClose={() => setShowAddMemoryPanel(false)}
         onAddItem={handleAddItem}
+      />
+
+      {/* After-add section picker: shown for new items added to an organized archive. */}
+      <GroupPickerSheet
+        isOpen={!!pendingGroupPick}
+        groups={organizedGroups ?? []}
+        defaultLabel={pendingGroupPick?.defaultLabel ?? ''}
+        onConfirm={handleConfirmGroupPick}
+        onClose={() => setPendingGroupPick(null)}
       />
 
       {/* ── Archive settings side panel ── */}

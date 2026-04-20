@@ -302,3 +302,111 @@ export function groupBySmartCategory(items: Item[]): { label: string; items: Ite
     })
     .map(([label, items]) => ({ label, items }));
 }
+
+// ─── Best-group guess for a new item against existing user headers ────────────
+
+function tokenize(s: string): string[] {
+  return s
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}\s]/gu, ' ')
+    .split(/\s+/)
+    .filter(t => t.length > 2);
+}
+
+const STOPWORDS = new Set([
+  'the', 'and', 'for', 'with', 'from', 'this', 'that', 'into', 'your', 'you',
+  'are', 'was', 'were', 'have', 'has', 'had', 'but', 'not', 'all', 'any',
+  'can', 'will', 'would', 'should', 'could', 'a', 'an', 'to', 'of', 'in', 'on',
+]);
+
+// Group labels → themes (regex) the local classifier already recognises. Used
+// to credit an existing header when item text matches the same theme even if
+// the label text itself doesn't share vocabulary (e.g. "Kitchen Wins" vs FOOD_RE).
+const LABEL_THEME_HINTS: Array<[RegExp, RegExp]> = [
+  [/food|recipe|cook|kitchen|meal|eat|dish/i, FOOD_RE],
+  [/health|fitness|wellness|workout|gym|body/i, HEALTH_RE],
+  [/travel|trip|place|destination|vacation|adventure/i, TRAVEL_RE],
+  [/work|career|job|project|professional/i, WORK_RE],
+  [/money|finance|budget|invest/i, FINANCE_RE],
+  [/research|learn|study|knowledge|education/i, RESEARCH_RE],
+  [/idea|concept|brainstorm|spark/i, IDEAS_RE],
+  [/plan|goal|future|roadmap|vision|dream/i, FUTURE_PLANS_RE],
+  [/inspir|quote|motivation|wisdom/i, INSPIRATION_RE],
+  [/people|contact|friend|family|relationship/i, PEOPLE_RE],
+  [/reflect|journal|thought|feeling/i, REFLECTION_RE],
+  [/decision|choice|compare|option/i, DECISION_RE],
+];
+
+/**
+ * Score each of the user's existing groups against a new item and pick the
+ * best match. Used to pre-fill the group-picker default when an item is added
+ * to an organized archive. Never returns "Notes" silently — falls back to the
+ * first group if nothing scores above zero, so the user always sees a concrete
+ * guess they can confirm or override.
+ */
+export function pickBestGroupForItem(
+  item: Item,
+  groups: Array<{ label: string; item_ids: string[] }>,
+): string {
+  if (!groups.length) return '';
+  const smartCat = getSmartCategory(item);
+  const itemText = extractItemText(item);
+  const itemTokens = new Set(tokenize(itemText).filter(t => !STOPWORDS.has(t)));
+  const aiTags = (item.aiTags ?? []).map(t => t.toLowerCase());
+  const keywords = (item.keywords ?? []).map(k => k.toLowerCase());
+
+  let bestScore = 0;
+  let bestLabel = groups[0].label;
+
+  for (const group of groups) {
+    const label = group.label;
+    const labelLower = label.toLowerCase();
+    const labelTokens = tokenize(label).filter(t => !STOPWORDS.has(t));
+    let score = 0;
+
+    // Exact smart-category match is the strongest signal.
+    if (labelLower === smartCat.toLowerCase()) score += 100;
+
+    // AI tag appears as a token in the label.
+    for (const tag of aiTags) {
+      if (labelTokens.some(lt => lt === tag || tag.includes(lt) || lt.includes(tag))) {
+        score += 40;
+      }
+    }
+
+    // Item keyword overlap with label tokens.
+    for (const kw of keywords) {
+      if (labelTokens.some(lt => lt === kw || kw.includes(lt) || lt.includes(kw))) {
+        score += 15;
+      }
+    }
+
+    // Raw text token overlap with label tokens (word-level).
+    for (const lt of labelTokens) {
+      if (itemTokens.has(lt)) score += 8;
+    }
+
+    // Theme hint: the label suggests a theme the item text also matches.
+    for (const [labelRe, textRe] of LABEL_THEME_HINTS) {
+      if (labelRe.test(label) && textRe.test(itemText)) score += 10;
+    }
+
+    if (score > bestScore) {
+      bestScore = score;
+      bestLabel = label;
+    }
+  }
+
+  // Media-type fallback: only route to "Images"/"References" style labels when
+  // nothing else scored, so these don't crowd out thematic buckets.
+  if (bestScore === 0) {
+    const mediaBlock = item.blocks?.find(b => b.type === 'media');
+    if (mediaBlock?.type === 'media') {
+      const mediaHint = mediaBlock.mediaType === 'link' ? /reference|link|bookmark/i : /image|photo|picture|media/i;
+      const mediaMatch = groups.find(g => mediaHint.test(g.label));
+      if (mediaMatch) return mediaMatch.label;
+    }
+  }
+
+  return bestLabel;
+}
