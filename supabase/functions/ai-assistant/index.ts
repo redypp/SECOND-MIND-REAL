@@ -1779,29 +1779,51 @@ RULES:
       // ============================================================
       // ORGANIZE ARCHIVE — Group items within a single collection by theme
       // ============================================================
+      const archiveName: string = typeof context.archiveName === "string" ? context.archiveName : "";
+      const existingGroups: string[] = Array.isArray(context.existingGroups)
+        ? context.existingGroups.filter((l: unknown) => typeof l === "string" && l.trim().length > 0)
+        : [];
+      const hasExistingGroups = existingGroups.length > 0;
+
       systemPrompt = `${secondMindCore}
 
-The user wants to organize entries within a single archive collection. You will receive a list of items that all belong to the same collection.
+The user wants to organize entries within a single archive collection. You will receive a list of items that all belong to the same collection${archiveName ? ` called "${archiveName}"` : ""}.
 
 Your job:
-1. Analyze all items and identify 2-6 thematic groups based on semantic similarity and intent
+1. Analyze all items and identify thematic groups based on semantic similarity and intent
 2. Assign each item to exactly ONE group
 3. Within each group, order items by recency (newest first) — use createdAt dates
 4. Give each group a natural, human-friendly label (2-5 words, Title Case)
 5. Order the groups themselves by relevance/importance (most active/recent group first)
 
+THEME-FIRST, NOT MEDIA-TYPE:
+- Group items by WHAT they are about, not by whether they are images, links, or text.
+- An image of a pasta dish belongs in a food/cooking group, not a generic "Images" bucket.
+- A link to a climbing-gear review belongs in a gear or fitness group, not "Links" or "References".
+- Only fall back to media-based labels like "Photos" or "Saved Links" when items are genuinely unrelated in subject matter AND share no stronger theme.
+
 LABEL STYLE GUIDE — use natural labels that feel like a smart memory space, not filing cabinet buckets:
 ✓ Good labels: "Future Plans", "Stuff to Remember", "Ideas", "Inspiration", "Things to Revisit", "References", "Quick Notes", "Project Ideas", "Places to Go", "Things I Learned", "Books to Read", "Goals", "Research"
-✗ Avoid: "Notes", "General", "Misc", "Other", "Items", "Entries", raw dates like "March 2024"
+✗ Avoid: "Notes", "General", "Misc", "Other", "Items", "Entries", raw dates like "March 2024", and media-type labels ("Images", "Links", "Photos", "Videos") unless no stronger theme exists
 
 RULES:
 - Every item must appear in exactly one group — no items should be lost
 - Use the item IDs exactly as provided — do not modify them
-- If there are very few items (< 4), use just 1-2 groups
 - If items are all very similar, use fewer groups rather than forcing artificial distinctions
 - Do NOT default to a single "Notes" or "General" bucket — find meaningful distinctions
 - Do NOT merge, edit, or summarize any items — only group and reorder them
-- Return ALL item IDs from the input`;
+- Return ALL item IDs from the input${
+  hasExistingGroups
+    ? `
+
+PRESERVE USER-CUSTOMISED HEADERS:
+The user has already defined these headers in this archive: ${existingGroups.map((l) => `"${l}"`).join(", ")}.
+- Reuse these labels VERBATIM (exact casing, exact wording) whenever an item plausibly fits.
+- Keep them in the same relative order.
+- Only introduce a brand-new header if at least 2 items clearly don't fit ANY existing header. Never rename or split an existing header.
+- It is OK for an existing header to end up empty — still return it so the user doesn't lose their structure.`
+    : ""
+}`;
 
       tools = [
         {
