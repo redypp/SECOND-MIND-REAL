@@ -2,6 +2,32 @@ import { ReactNode, useRef, useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { InitialSyncLoader } from '@/components/InitialSyncLoader';
+import { SUPABASE_AUTH_STORAGE_KEY } from '@/integrations/supabase/app-client';
+
+/**
+ * True when a Supabase session is cached in localStorage that is either
+ * still valid or can be refreshed. Used to avoid redirecting to /auth
+ * during the boot window when `user` is still null but a session will
+ * hydrate shortly. Mirrors the AuthPage check so the two stay in sync.
+ */
+function hasRecoverableCachedSession(): boolean {
+  try {
+    const raw = localStorage.getItem(SUPABASE_AUTH_STORAGE_KEY);
+    if (!raw) return false;
+    const parsed = JSON.parse(raw);
+    const hasUser = typeof parsed?.user?.id === 'string';
+    if (!hasUser) return false;
+    const accessTokenValid =
+      typeof parsed?.expires_at === 'number' &&
+      parsed.expires_at * 1000 > Date.now();
+    const hasRefreshToken =
+      typeof parsed?.refresh_token === 'string' &&
+      parsed.refresh_token.length > 0;
+    return accessTokenValid || hasRefreshToken;
+  } catch {
+    return false;
+  }
+}
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -169,10 +195,13 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     );
   }
 
-  // Not authenticated — but if we just lost the session transiently (iOS resume)
-  // or are still within the cold-start grace window, show loader instead of redirecting.
+  // Not authenticated — but if we just lost the session transiently (iOS resume),
+  // are still within the cold-start grace window, or have a cached session in
+  // localStorage that Supabase can still refresh, show loader instead of
+  // redirecting. This prevents a flash of AuthPage while the session hydrates
+  // on cold boot for already-signed-in users.
   if (!user) {
-    if (graceActive || !coldStartExpired) {
+    if (graceActive || !coldStartExpired || hasRecoverableCachedSession()) {
       return (
         <InitialSyncLoader
           phase="connecting"

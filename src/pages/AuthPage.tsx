@@ -22,11 +22,17 @@ function hasValidCachedSession(): boolean {
     const raw = localStorage.getItem(SUPABASE_AUTH_STORAGE_KEY);
     if (!raw) return false;
     const parsed = JSON.parse(raw);
-    return (
-      typeof parsed?.user?.id === 'string' &&
+    const hasUser = typeof parsed?.user?.id === 'string';
+    if (!hasUser) return false;
+    const accessTokenValid =
       typeof parsed?.expires_at === 'number' &&
-      parsed.expires_at * 1000 > Date.now()
-    );
+      parsed.expires_at * 1000 > Date.now();
+    // A present refresh_token means Supabase can mint a new access token on
+    // boot — the user is still recoverable, so don't render the login form.
+    const hasRefreshToken =
+      typeof parsed?.refresh_token === 'string' &&
+      parsed.refresh_token.length > 0;
+    return accessTokenValid || hasRefreshToken;
   } catch {
     return false;
   }
