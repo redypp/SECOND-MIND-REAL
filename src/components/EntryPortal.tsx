@@ -95,9 +95,10 @@ export function EntryPortal() {
         transition={{ duration: 0.35 }}
         className="fixed inset-0 z-[20000] bg-background flex items-center justify-center overflow-hidden"
       >
-        {/* Vertical stack — three big discs, slight negative gaps so they read
-            as one connected column rather than three isolated dots. */}
-        <div className="relative flex flex-col items-center justify-center py-6">
+        {/* Vertical stack — three big discs with breathing space between them.
+            Each disc breathes at its own phase so the page feels alive but
+            never busy. */}
+        <div className="relative flex flex-col items-center justify-center gap-[clamp(0.5rem,2vh,1.25rem)] py-4">
           <PortalCircle
             label="SELF"
             sublabel="Your world"
@@ -153,25 +154,31 @@ interface PortalCircleProps {
   onClick: () => void;
 }
 
-// Each disc wants to fill most of the horizontal space on phones and stay
-// generous-but-balanced on tall desktops. Capped so three still fit stacked
-// on a short viewport.
-const CIRCLE_SIZE = 'min(78vw, 28vh, 22rem)';
-
-// Overlap between adjacent discs (negative top margin on middle + bottom).
-const OVERLAP = '-1.25rem';
-
-const SLOT_WRAPPER_STYLE: Record<StackSlot, React.CSSProperties> = {
-  top: { marginTop: 0 },
-  middle: { marginTop: OVERLAP },
-  bottom: { marginTop: OVERLAP },
-};
+// Each disc fills most of the horizontal space on phones and stays generous
+// on desktops. Capped at ~30vh so three still fit stacked on short viewports
+// with breathing room between them.
+const CIRCLE_SIZE = 'min(86vw, 30vh, 26rem)';
 
 // Different exit drift per slot — feels more alive than a uniform fade.
 const SLOT_EXIT_DRIFT: Record<StackSlot, { x: number; y: number }> = {
   top:    { x: 0,  y: -140 },
   middle: { x: 120, y: 0   },
   bottom: { x: 0,  y: 140  },
+};
+
+// Per-slot idle animation — each circle breathes at a different tempo/phase
+// so the stack feels alive without ever syncing into anything mechanical.
+// Gentle Y-float + a micro scale breath + a micro rotation lean.
+const SLOT_IDLE: Record<StackSlot, {
+  yRange: [number, number, number];
+  scaleRange: [number, number, number];
+  rotateRange: [number, number, number];
+  duration: number;
+  delay: number;
+}> = {
+  top:    { yRange: [0, -6, 0],  scaleRange: [1, 1.012, 1], rotateRange: [0, 0.6, 0],  duration: 5.2, delay: 0    },
+  middle: { yRange: [0, 4, 0],   scaleRange: [1, 1.018, 1], rotateRange: [0, -0.5, 0], duration: 6.1, delay: 0.9  },
+  bottom: { yRange: [0, -5, 0],  scaleRange: [1, 1.014, 1], rotateRange: [0, 0.4, 0],  duration: 5.7, delay: 1.7  },
 };
 
 function PortalCircle({ label, sublabel, slot, tint, isExiting, isOtherExiting, onClick }: PortalCircleProps) {
@@ -181,6 +188,22 @@ function PortalCircle({ label, sublabel, slot, tint, isExiting, isOtherExiting, 
     0.22;
 
   const exitDrift = SLOT_EXIT_DRIFT[slot];
+  const idle = SLOT_IDLE[slot];
+
+  // Build the idle animation object — only active when the portal is at
+  // rest (not exiting). Framer runs these key-frame loops indefinitely.
+  const idleAnimation = {
+    scale: idle.scaleRange,
+    y: idle.yRange,
+    rotate: idle.rotateRange,
+    opacity: 1,
+    transition: {
+      scale:   { duration: idle.duration,       repeat: Infinity, ease: 'easeInOut', delay: idle.delay },
+      y:       { duration: idle.duration * 1.1, repeat: Infinity, ease: 'easeInOut', delay: idle.delay },
+      rotate:  { duration: idle.duration * 1.3, repeat: Infinity, ease: 'easeInOut', delay: idle.delay },
+      opacity: { duration: 0.6, ease: [0.16, 1, 0.3, 1], delay: entryDelay },
+    },
+  };
 
   return (
     <motion.button
@@ -192,6 +215,8 @@ function PortalCircle({ label, sublabel, slot, tint, isExiting, isOtherExiting, 
         isExiting ? {
           scale: 14,
           opacity: 1,
+          y: 0,
+          rotate: 0,
           transition: { duration: 0.75, ease: [0.65, 0, 0.35, 1] },
         }
         : isOtherExiting ? {
@@ -199,12 +224,13 @@ function PortalCircle({ label, sublabel, slot, tint, isExiting, isOtherExiting, 
           opacity: 0,
           x: exitDrift.x,
           y: exitDrift.y,
+          rotate: 0,
           transition: { duration: 0.5, ease: [0.4, 0, 0.2, 1] },
         }
-        : { scale: 1, opacity: 1, transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1], delay: entryDelay } }
+        : idleAnimation
       }
-      whileHover={!isExiting && !isOtherExiting ? { scale: 1.03 } : undefined}
-      whileTap={!isExiting && !isOtherExiting ? { scale: 0.97 } : undefined}
+      whileHover={!isExiting && !isOtherExiting ? { scale: 1.05 } : undefined}
+      whileTap={!isExiting && !isOtherExiting ? { scale: 0.96 } : undefined}
       className="relative rounded-full flex items-center justify-center touch-manipulation focus:outline-none shrink-0"
       style={{
         width: CIRCLE_SIZE,
@@ -212,8 +238,6 @@ function PortalCircle({ label, sublabel, slot, tint, isExiting, isOtherExiting, 
         background: tint,
         boxShadow:
           '0 30px 60px -20px hsl(220 15% 4% / 0.55), 0 10px 24px -10px hsl(220 15% 4% / 0.35)',
-        zIndex: slot === 'middle' ? 2 : slot === 'top' ? 3 : 1,
-        ...SLOT_WRAPPER_STYLE[slot],
       }}
       aria-label={`Enter ${label}`}
     >
@@ -241,17 +265,20 @@ function PortalCircle({ label, sublabel, slot, tint, isExiting, isOtherExiting, 
         </span>
       </div>
 
+      {/* Soft halo that blooms just after each disc's own inhale, so the
+          stack reads as three living things breathing at slightly different
+          tempos — not a chorus of metronomes. */}
       {!isExiting && !isOtherExiting && (
         <motion.span
           aria-hidden
-          className="absolute inset-0 rounded-full pointer-events-none"
-          style={{ background: tint }}
-          animate={{ scale: [1, 1.03, 1], opacity: [0.0, 0.18, 0.0] }}
+          className="absolute inset-[-8%] rounded-full pointer-events-none"
+          style={{ background: tint, filter: 'blur(14px)' }}
+          animate={{ scale: [1, 1.05, 1], opacity: [0.0, 0.22, 0.0] }}
           transition={{
-            duration: 3.4,
+            duration: idle.duration * 1.2,
             repeat: Infinity,
             ease: 'easeInOut',
-            delay: slot === 'top' ? 0 : slot === 'middle' ? 0.9 : 1.8,
+            delay: idle.delay + 0.4,
           }}
         />
       )}
