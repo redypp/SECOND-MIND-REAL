@@ -226,42 +226,37 @@ export async function restoreDeletedItem(
   }
 }
 
-// Permanently delete items that have been soft-deleted for more than 30 days
+/**
+ * DISABLED — do not re-enable without a UX-level "empty trash" confirmation.
+ *
+ * Previously this hard-deleted any space/item whose `deleted_at` was older
+ * than 30 days. It had no callers in the current codebase but was sitting
+ * here as a "loaded gun": any future refactor could wire it up (e.g. from a
+ * cron/edge function) and silently, irrecoverably wipe user data. After a
+ * real data-loss incident in April 2026, we neutralised it into a no-op
+ * that logs loudly instead of deleting.
+ *
+ * Soft-deletes are a feature: the self-healing restore in SpacesContext
+ * relies on rows still existing with `deleted_at` set. Hard-deleting on a
+ * schedule defeats that safety net.
+ *
+ * If a genuine storage-cost reason ever requires purging old soft-deletes,
+ * build a user-visible Trash view with an explicit "empty trash" action —
+ * do not automate this behind the user's back.
+ */
 export async function cleanupOldDeletedItems(userId: string): Promise<number> {
+  console.warn(
+    '[DataIntegrity] cleanupOldDeletedItems is DISABLED. ' +
+    'Hard-deleting soft-deleted rows was neutralised to prevent silent data loss. ' +
+    'Call a user-facing Trash/purge flow instead.'
+  );
   try {
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    const cutoffDate = thirtyDaysAgo.toISOString();
-
-    const [spacesResult, itemsResult] = await Promise.all([
-      supabase
-        .from('spaces')
-        .delete()
-        .eq('user_id', userId)
-        .not('deleted_at', 'is', null)
-        .lt('deleted_at', cutoffDate),
-      supabase
-        .from('items')
-        .delete()
-        .eq('user_id', userId)
-        .not('deleted_at', 'is', null)
-        .lt('deleted_at', cutoffDate),
-    ]);
-
-    const count = (spacesResult.count || 0) + (itemsResult.count || 0);
-    
-    if (count > 0) {
-      await logIntegrityEvent(userId, 'recovery', {
-        action: 'cleanup_old_deleted',
-        count,
-      });
-    }
-
-    return count;
-  } catch (err) {
-    console.error('[DataIntegrity] Failed to cleanup old deleted items:', err);
-    return 0;
-  }
+    await logIntegrityEvent(userId, 'recovery', {
+      action: 'cleanup_old_deleted_noop',
+      note: 'hard-delete disabled — self-healing restore depends on soft-delete rows persisting',
+    });
+  } catch { /* logging is best-effort */ }
+  return 0;
 }
 
 // Get data integrity stats for debugging
