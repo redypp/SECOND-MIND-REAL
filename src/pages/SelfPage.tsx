@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   MapPin, Cake, Loader2, Send, RefreshCw, Sparkles,
-  CheckCircle2, MapPinned, Pencil, BookOpen, UserRound, Compass, Users, Leaf,
+  CheckCircle2, MapPinned, Pencil, BookOpen, UserRound, Compass, Users, Leaf, Bell,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSpaces } from '@/contexts/SpacesContext';
@@ -111,13 +111,24 @@ export default function SelfPage() {
           >
             Self
           </span>
-          <button
-            onClick={() => navigate('/settings')}
-            className="text-[0.65rem] uppercase tracking-[0.3em] text-foreground/55 hover:text-foreground/90 transition-colors px-2 py-1"
-            style={{ fontFamily: 'var(--font-sans)' }}
-          >
-            Settings
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => navigate('/notifications')}
+              className="inline-flex items-center gap-1.5 text-[0.65rem] uppercase tracking-[0.3em] text-foreground/55 hover:text-foreground/90 transition-colors px-2 py-1"
+              style={{ fontFamily: 'var(--font-sans)' }}
+              aria-label="Notifications"
+            >
+              <Bell className="w-3.5 h-3.5" />
+              Inbox
+            </button>
+            <button
+              onClick={() => navigate('/settings')}
+              className="text-[0.65rem] uppercase tracking-[0.3em] text-foreground/55 hover:text-foreground/90 transition-colors px-2 py-1"
+              style={{ fontFamily: 'var(--font-sans)' }}
+            >
+              Settings
+            </button>
+          </div>
         </div>
       </header>
 

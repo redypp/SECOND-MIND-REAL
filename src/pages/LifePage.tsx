@@ -56,25 +56,18 @@ export default function LifePage({ embedded = false, onNavigateToSection }: Life
 
   const subheadings = useLifeSubheadings(fallbacks);
 
-  // Sections: external=true means navigate() directly (not embedded sub-page)
+  // Four core sections — rendered as a 2×2 grid that fills the viewport.
   const sections = [
-    { id: 'daily-plan',    path: '/daily-plan',    label: 'Daily Plan',    meta: subheadings.daily_plan,   isExternal: false, isAsk: false },
-    { id: 'todos',         path: '/todos',         label: 'To-Do',         meta: subheadings.todo,         isExternal: false, isAsk: false },
-    { id: 'habits',        path: '/habits',        label: 'Habits',        meta: subheadings.habits,       isExternal: false, isAsk: false },
-    { id: 'journal',       path: '/journal',       label: 'Journal',       meta: subheadings.journal,      isExternal: false, isAsk: false },
-    { id: 'notifications', path: '/notifications', label: 'Notifications', meta: 'Your inbox',             isExternal: true,  isAsk: false },
+    { id: 'daily-plan', path: '/daily-plan', label: 'Daily Plan', meta: subheadings.daily_plan },
+    { id: 'todos',      path: '/todos',      label: 'To-Do',      meta: subheadings.todo },
+    { id: 'habits',     path: '/habits',     label: 'Habits',     meta: subheadings.habits },
+    { id: 'journal',    path: '/journal',    label: 'Journal',    meta: subheadings.journal },
   ];
 
-  const handleTap = (path: string, isExternal: boolean) => {
-    if (!isExternal && onNavigateToSection) {
-      onNavigateToSection(path);
-    } else {
-      navigate(path);
-    }
+  const handleTap = (path: string) => {
+    if (onNavigateToSection) onNavigateToSection(path);
+    else navigate(path);
   };
-
-  // Depth index for the non-ask cards (Ask card gets special styling, so don't count it)
-  const getDepth = (index: number) => Math.max(0, index - 1);
 
   return (
     <div
@@ -89,35 +82,32 @@ export default function LifePage({ embedded = false, onNavigateToSection }: Life
         </div>
       </div>
 
-      {/* Section cards — floating glass cards, fill remaining height equally */}
-      <main className="flex-1 min-h-0 flex flex-col gap-2 px-3 py-2" style={{ paddingBottom: 'calc(var(--app-safe-bottom, 0px) + 12px)' }}>
+      {/* 2×2 section grid — four crisp rectangles filling the remaining viewport */}
+      <main
+        className="flex-1 min-h-0 grid grid-cols-2 grid-rows-2 gap-2 px-2 pt-1 pb-2"
+        style={{ paddingBottom: 'calc(var(--app-safe-bottom, 0px) + 10px)' }}
+      >
         {sections.map((section, i) => (
           <motion.button
             key={section.id}
-            className="flex-1 w-full relative min-h-[56px]"
-            initial={{ opacity: 0, y: 30 }}
+            className="w-full h-full relative overflow-hidden rounded-xl life-section-card text-left"
+            initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: i * 0.06, ease: [0.16, 1, 0.3, 1] }}
-            whileTap={{ scale: 0.97 }}
-            onClick={() => handleTap(section.path, section.isExternal)}
+            transition={{ duration: 0.45, delay: i * 0.05, ease: [0.16, 1, 0.3, 1] }}
+            whileTap={{ scale: 0.975 }}
+            onClick={() => handleTap(section.path)}
             aria-label={`Open ${section.label}`}
           >
-            <div
-              className={`w-full h-full relative overflow-hidden rounded-2xl life-section-card${section.isAsk ? ' life-section-ask' : ''}`}
-              data-depth={section.isAsk ? undefined : getDepth(i)}
-            >
-              {/* Left-center aligned layout */}
-              <div className="absolute inset-0 flex flex-col justify-center px-5">
-                <p
-                  className="font-display tracking-[-0.05em] leading-[0.88] uppercase life-section-label"
-                  style={{ fontSize: 'clamp(2.2rem, 9vw, 3.5rem)', fontWeight: 700 }}
-                >
-                  {section.label}
-                </p>
-                <p className="text-[9px] uppercase tracking-[0.16em] font-medium life-section-meta opacity-70 mt-1">
-                  {section.meta}
-                </p>
-              </div>
+            <div className="absolute inset-0 flex flex-col justify-end p-4">
+              <p
+                className="font-display tracking-[-0.04em] leading-[0.9] uppercase life-section-label"
+                style={{ fontSize: 'clamp(1.4rem, 6vw, 2.4rem)', fontWeight: 800 }}
+              >
+                {section.label}
+              </p>
+              <p className="text-[9px] uppercase tracking-[0.18em] font-medium life-section-meta opacity-70 mt-1.5">
+                {section.meta}
+              </p>
             </div>
           </motion.button>
         ))}
