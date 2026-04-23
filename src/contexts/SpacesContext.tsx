@@ -312,42 +312,55 @@ export function SpacesProvider({ children }: { children: ReactNode }) {
       const timingId = startTiming('initial_data_sync');
       logLifecycle('Data sync started', { userId: user.id });
 
-      // One-time restore of recently soft-deleted archives/items for this user.
-      // Runs once per user install to recover accidentally removed data.
-      // Only touches rows deleted in the last 30 days so old intentional deletes are preserved.
-      // IMPORTANT: Awaited before the main fetch so the restored rows are visible in the
-      // immediately-following query (previously this ran fire-and-forget, causing a race
-      // condition on mobile first load where the fetch would return empty results while the
-      // restore was still in flight).
-      const restoreKey = `sm_archive_restore_done_${user.id}`;
-      if (!localStorage.getItem(restoreKey)) {
-        localStorage.setItem(restoreKey, '1');
-        const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-        await Promise.all([
-          supabase
-            .from('spaces')
-            .update({ deleted_at: null })
-            .eq('user_id', user.id)
-            .not('deleted_at', 'is', null)
-            .gte('deleted_at', thirtyDaysAgo)
-            .then(({ error }) => {
-              if (error) logLifecycle('Space restore failed (non-critical)', { error: error.message });
-              else logLifecycle('One-time space restore completed');
-            }),
-          supabase
-            .from('items')
-            .update({ deleted_at: null })
-            .eq('user_id', user.id)
-            .not('deleted_at', 'is', null)
-            .gte('deleted_at', thirtyDaysAgo)
-            .then(({ error }) => {
-              if (error) logLifecycle('Item restore failed (non-critical)', { error: error.message });
-            }),
-        ]).catch(() => {
-          // Restore failure is non-critical — proceed with fetch regardless
-          logLifecycle('One-time restore failed (non-critical), continuing with fetch');
-        });
-      }
+      // Self-healing restore of recently soft-deleted archives/items.
+      //
+      // Previously this ran ONCE per user-install (guarded by a localStorage
+      // flag). That meant: if an archive got soft-deleted — by a misclick,
+      // a merge, a regression — and the user reopened the app even a day
+      // later, the restore had already fired and the archive was permanently
+      // invisible to the client even though the row still existed on the
+      // server with `deleted_at` set. Multiple users reported archives
+      // "disappearing" through this exact path.
+      //
+      // We now run the restore on every cold start with a SHORT window
+      // (48 hours). That's long enough to catch accidental deletes the user
+      // has noticed but not long enough to resurrect intentional deletes —
+      // the user would have to reopen the app within 2 days for an
+      // intentional delete to come back, which is acceptable friction for
+      // the safety it buys. The window is deliberately shorter than the
+      // previous 30 days precisely to avoid reviving long-intended deletes.
+      //
+      // IMPORTANT: awaited before the main fetch so restored rows land in
+      // the very next query (fire-and-forget caused a race on mobile first
+      // load where the fetch returned empty).
+      const RESTORE_WINDOW_HOURS = 48;
+      const windowCutoff = new Date(Date.now() - RESTORE_WINDOW_HOURS * 60 * 60 * 1000).toISOString();
+      await Promise.all([
+        supabase
+          .from('spaces')
+          .update({ deleted_at: null })
+          .eq('user_id', user.id)
+          .not('deleted_at', 'is', null)
+          .gte('deleted_at', windowCutoff)
+          .select('id')
+          .then(({ data, error }) => {
+            if (error) logLifecycle('Space restore failed (non-critical)', { error: error.message });
+            else if (data && data.length > 0) logLifecycle('Self-healing restore: recovered archives', { count: data.length });
+          }),
+        supabase
+          .from('items')
+          .update({ deleted_at: null })
+          .eq('user_id', user.id)
+          .not('deleted_at', 'is', null)
+          .gte('deleted_at', windowCutoff)
+          .select('id')
+          .then(({ data, error }) => {
+            if (error) logLifecycle('Item restore failed (non-critical)', { error: error.message });
+            else if (data && data.length > 0) logLifecycle('Self-healing restore: recovered items', { count: data.length });
+          }),
+      ]).catch(() => {
+        logLifecycle('Self-healing restore failed (non-critical), continuing with fetch');
+      });
 
        const hasCachedData = hasCachedDataRef.current;
        if (!hasCachedData) {
