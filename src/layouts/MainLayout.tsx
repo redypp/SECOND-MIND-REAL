@@ -423,12 +423,18 @@ export default function MainLayout() {
         className="relative h-full w-full overflow-hidden bg-background"
         style={{ overscrollBehaviorX: 'none' }}
       >
-        {/* Page 1: LIFE — display toggle (not transform) so the hidden page
-            doesn't create a containing block that traps position:fixed
-            children (Radix dialogs, tooltips, modals). */}
+        {/* Page 1: LIFE — visibility toggle (not transform, not display:none).
+            `transform` would make the element a containing block that traps
+            position:fixed children (Radix dialogs). `display:none` would
+            zero out layout, so the archive's inner horizontal scroller boots
+            with 0-width cards and broken touch handling. `visibility:hidden`
+            keeps layout live but hides paint — the best of both. */}
         <div
           className="absolute inset-0 overflow-hidden bg-background"
-          style={{ display: showArchive ? 'none' : 'block' }}
+          style={{
+            visibility: showArchive ? 'hidden' : 'visible',
+            pointerEvents: showArchive ? 'none' : 'auto',
+          }}
         >
           {/* LIFE dashboard — always rendered underneath; parallax tracks swipeDx during back-swipe */}
           <div
@@ -476,11 +482,12 @@ export default function MainLayout() {
           </div>
         </div>
 
-        {/* Page 2: ARCHIVE — display toggle (see LIFE comment). */}
+        {/* Page 2: ARCHIVE — visibility toggle (see LIFE comment). */}
         <div
           className="absolute inset-0 overflow-hidden bg-background"
           style={{
-            display: showArchive ? 'block' : 'none',
+            visibility: showArchive ? 'visible' : 'hidden',
+            pointerEvents: showArchive ? 'auto' : 'none',
             overscrollBehavior: 'contain',
           }}
         >
