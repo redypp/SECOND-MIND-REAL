@@ -35,7 +35,8 @@ const ALLOWED_TYPES = [
   "life_subheadings",
   "intelligent_capture",
   "organize_archive",
-  "ask_action_suggestions"
+  "ask_action_suggestions",
+  "personal_recommendations"
 ] as const;
 
 type RequestType = typeof ALLOWED_TYPES[number];
@@ -487,6 +488,7 @@ serve(async (req) => {
       organize_all: 2000,
       organize_archive: 2000,
       auto_organize: 2000,
+      personal_recommendations: 1200,
     };
     const selectedMaxTokens = MAX_TOKENS[type] ?? 2048;
 
@@ -497,6 +499,7 @@ serve(async (req) => {
       ask_question: 0.5,
       journal_prompts: 0.6,
       decision_helper: 0.5,
+      personal_recommendations: 0.7,
       daily_digest: 0.3,
       generate_insight: 0.3,
     };
@@ -1156,6 +1159,15 @@ Do NOT suggest a new space unless none of the existing ones remotely match.`;
 - Extract implied tasks, not just what was written
 - 3-6 action steps max
 - Ordered by priority/urgency`;
+      } else if (rewriteMode === "augment") {
+        systemPrompt = `Augment and optimize the user's note to make it as useful and clear as possible.
+- Preserve the user's voice, intent, and core meaning — never change what they meant
+- Fix grammar, spelling, and awkward phrasing
+- Expand vague points with concrete detail the user likely meant
+- Add helpful structure (bullets, sections) only if it makes the note clearer
+- Fill in obvious missing context (e.g. if they listed tasks, add due-date-style clarity; if they described an idea, sharpen the framing)
+- Don't invent facts the user didn't imply
+- Return ONLY the improved note — no preamble, no explanation`;
       } else {
         systemPrompt = `Compress the note into a tight 1-3 sentence summary.
 - Capture the core idea in plain language
@@ -1179,7 +1191,7 @@ Do NOT suggest a new space unless none of the existing ones remotely match.`;
                 },
                 mode: {
                   type: "string",
-                  enum: ["bullets", "actions", "summary"]
+                  enum: ["bullets", "actions", "summary", "augment"]
                 }
               },
               required: ["result", "mode"],
@@ -1966,6 +1978,89 @@ Never fabricate item IDs or titles that don't exist in context.`;
         }
       ];
       toolChoice = { type: "function", function: { name: "ask_action_suggestions" } };
+
+    } else if (type === "personal_recommendations") {
+      // ============================================================
+      // PERSONAL RECOMMENDATIONS — Surfaced on the Self hub page
+      //
+      // Uses the user's profile (name, birthday/age, location), their
+      // archive names, and a small window of recent items to suggest
+      // concrete, relevant things they might want to do, read, notice, or
+      // capture. Deliberately varied — the Self page is their recommendations
+      // home, so return a mix (local happenings, nudges, reflections).
+      // ============================================================
+      const now = new Date(context.currentTime || new Date().toISOString());
+      const todayISO = now.toISOString().slice(0, 10);
+
+      systemPrompt = `You curate a small set of personal recommendations for a Second Mind user on their "Self" hub. Your output becomes the user's home-page feed — so every item must feel handpicked, specific, and worth their attention.
+
+TODAY: ${todayISO}
+
+RECOMMENDATION CATEGORIES (mix freely; don't stick to one):
+- "local": something to notice, do, or check out in their area (restaurants, walks, events, seasonal things) — inspired by their location if provided
+- "capture": a gentle nudge to capture or update a specific archive based on recent activity ("you haven't touched X lately", "add a note about Y")
+- "reflect": a short journal prompt or reflection question tied to their archives or what they've been thinking about
+- "explore": a specific idea, book, link, or topic to explore — grounded in their interests as revealed by their archives
+- "connect": a person in their archives they might want to reach out to, or a relationship to nurture
+- "habit": a small, repeatable practice tied to a goal or theme they've shown interest in
+
+RULES:
+- Return exactly 4–6 recommendations, varied across categories.
+- Each recommendation has a short punchy title (≤ 8 words), a one-sentence rationale explaining why it fits THIS person, and an optional action_hint (what the user could tap to do).
+- Use the user's first name in rationales when natural — never more than once per rec.
+- Never fabricate specific businesses, events, or links you aren't certain about. If you suggest a local idea, phrase it as a genre ("a slow walk in a park near you", "look for a bakery you haven't tried") rather than naming a real place.
+- Keep tone warm, human, quietly confident. No exclamation marks, no hype.
+- Do NOT repeat recommendations the user could have just seen — vary the categories and topics.`;
+
+      tools = [
+        {
+          type: "function",
+          function: {
+            name: "personal_recommendations",
+            description: "Return a small, varied, personalised set of recommendations for the Self hub.",
+            parameters: {
+              type: "object",
+              properties: {
+                recommendations: {
+                  type: "array",
+                  minItems: 4,
+                  maxItems: 6,
+                  items: {
+                    type: "object",
+                    properties: {
+                      category: {
+                        type: "string",
+                        enum: ["local", "capture", "reflect", "explore", "connect", "habit"],
+                      },
+                      title: {
+                        type: "string",
+                        description: "Short punchy title, ≤ 8 words.",
+                      },
+                      rationale: {
+                        type: "string",
+                        description: "One sentence explaining why this fits THIS user.",
+                      },
+                      action_hint: {
+                        type: "string",
+                        description: "Optional: what the user could tap to do next. Empty string if none.",
+                      },
+                      related_archive: {
+                        type: "string",
+                        description: "Optional: the archive name this connects to, verbatim from the user's archives. Empty string if none.",
+                      },
+                    },
+                    required: ["category", "title", "rationale", "action_hint", "related_archive"],
+                    additionalProperties: false,
+                  },
+                },
+              },
+              required: ["recommendations"],
+              additionalProperties: false,
+            },
+          },
+        },
+      ];
+      toolChoice = { type: "function", function: { name: "personal_recommendations" } };
     }
 
     // Build messages array — include conversation history for ask_question (multi-turn)
