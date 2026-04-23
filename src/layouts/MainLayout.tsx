@@ -423,14 +423,12 @@ export default function MainLayout() {
         className="relative h-full w-full overflow-hidden bg-background"
         style={{ overscrollBehaviorX: 'none' }}
       >
-        {/* Page 1: LIFE */}
+        {/* Page 1: LIFE — display toggle (not transform) so the hidden page
+            doesn't create a containing block that traps position:fixed
+            children (Radix dialogs, tooltips, modals). */}
         <div
           className="absolute inset-0 overflow-hidden bg-background"
-          style={{
-            transform: showArchive ? 'translateX(-100%)' : 'translateX(0)',
-            transition: 'transform 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
-            pointerEvents: showArchive ? 'none' : 'auto',
-          }}
+          style={{ display: showArchive ? 'none' : 'block' }}
         >
           {/* LIFE dashboard — always rendered underneath; parallax tracks swipeDx during back-swipe */}
           <div
@@ -478,13 +476,11 @@ export default function MainLayout() {
           </div>
         </div>
 
-        {/* Page 2: ARCHIVE */}
+        {/* Page 2: ARCHIVE — display toggle (see LIFE comment). */}
         <div
           className="absolute inset-0 overflow-hidden bg-background"
           style={{
-            transform: showArchive ? 'translateX(0)' : 'translateX(100%)',
-            transition: 'transform 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
-            pointerEvents: showArchive ? 'auto' : 'none',
+            display: showArchive ? 'block' : 'none',
             overscrollBehavior: 'contain',
           }}
         >

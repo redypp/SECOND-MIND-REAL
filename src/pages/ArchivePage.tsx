@@ -50,6 +50,25 @@ export default function ArchivePage({ embedded = false, onNavigateToSpace }: Arc
     return arr;
   }, [spaces, sharedSpaces]);
 
+  // On mount (and whenever the carousel becomes visible), snap to the first
+  // spread. Without this, a horizontal scroller that's been hidden via
+  // `display:none` (or that carries a stale scrollLeft from a prior render)
+  // can initialize at a garbage offset — the user sees "no archives" even
+  // though cards are rendered just off-screen.
+  useEffect(() => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    // Two rAFs: wait for the element to actually be laid out (display:none →
+    // block flip doesn't finalize sizes until the next paint).
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        if (!el) return;
+        el.scrollLeft = 0;
+        setActiveIndex(0);
+      });
+    });
+  }, []);
+
   // Derive the currently-centered spread from scrollLeft. Each card is a
   // fixed fraction of the container width (see CARD_FRACTION) so we can
   // compute index = round(scrollLeft / cardStep).
@@ -109,7 +128,10 @@ export default function ArchivePage({ embedded = false, onNavigateToSpace }: Arc
     <div
       className={`${embedded ? 'relative w-full h-full' : 'fixed inset-0 safe-area-top-ios'} flex flex-col max-w-full overflow-hidden`}
       style={{
-        background: activeImage ? dominant : 'hsl(220 12% 10%)',
+        // Fallback uses the app background token so an imageless archive
+        // (or the "new archive" card) sits on the same eggshell as the
+        // rest of the UI instead of flashing near-black.
+        background: activeImage ? dominant : 'hsl(var(--background))',
         transition: 'background 600ms cubic-bezier(0.16, 1, 0.3, 1)',
         overscrollBehavior: 'contain',
       }}
