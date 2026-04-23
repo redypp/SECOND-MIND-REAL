@@ -6,6 +6,7 @@ import { useSpaces } from '@/contexts/SpacesContext';
 import { AddSpaceDialog } from '@/components/AddSpaceDialog';
 import { BottomNavigation } from '@/components/BottomNavigation';
 import { PortalReturn } from '@/components/PortalReturn';
+import { MarqueeHeader } from '@/components/MarqueeHeader';
 import { useDominantColor } from '@/hooks/useDominantColor';
 import type { Space } from '@/types';
 
@@ -214,20 +215,10 @@ function EdgeSpacer() {
 
 function Masthead() {
   return (
-    <header className="relative z-20 flex items-center justify-between gap-4 px-5 pt-4 pb-3">
-      <div className="flex items-center gap-3 min-w-0">
-        <PortalReturn />
-        <span
-          className="uppercase leading-none text-[hsl(36_33%_98%)]"
-          style={{
-            fontFamily: 'var(--font-display)',
-            fontWeight: 900,
-            fontSize: 'clamp(1.4rem, 4.5vw, 1.9rem)',
-            letterSpacing: '-0.035em',
-          }}
-        >
-          Archive
-        </span>
+    <header className="relative z-20 flex items-center pl-3 pr-3 flex-shrink-0 min-h-[52px] gap-2">
+      <PortalReturn />
+      <div className="flex-1 min-w-0 overflow-hidden">
+        <MarqueeHeader text="ARCHIVE" />
       </div>
     </header>
   );
