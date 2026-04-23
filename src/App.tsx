@@ -23,7 +23,6 @@ import ItemDetail from "./pages/ItemDetail";
 import Search from "./pages/Search";
 import SettingsPage from "./pages/SettingsPage";
 import SelfPage from "./pages/SelfPage";
-import HomePage from "./pages/HomePage";
 import ChamberPage from "./pages/ChamberPage";
 import HabitsPage from "./pages/HabitsPage";
 import AuthPage from "./pages/AuthPage";
@@ -94,7 +93,7 @@ function AppContent() {
       } />
 
       <Route element={<ProtectedRoute><MainLayoutWrapper /></ProtectedRoute>}>
-        <Route path="/" element={<HomePage />} />
+        <Route path="/" element={<EntryPortal />} />
         <Route path="/life" element={null} />
         <Route path="/archive" element={null} />
         <Route path="/daily-plan" element={null} />
@@ -127,11 +126,6 @@ function AppContent() {
           {/* OnboardingTutorial is self-managing — renders based on TutorialContext phase */}
           {!isPublicRoute && <OnboardingTutorial />}
           {routes}
-          {/* Immersive entry portal — shows once per session on authenticated
-              routes, offering a choice between Live and Archive. Rendered on
-              top of routes so the target page is already mounted underneath
-              when the expand animation completes. */}
-          {!isPublicRoute && user && <EntryPortal />}
         </TooltipProvider>
       </AISettingsProvider>
     </TutorialProvider>
