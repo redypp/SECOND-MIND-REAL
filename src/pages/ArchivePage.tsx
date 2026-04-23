@@ -27,11 +27,24 @@ type Spread =
   | { kind: 'space'; space: Space; section: 'pinned' | 'recent' | 'shared'; index: number }
   | { kind: 'new' };
 
+const SWIPE_HINT_FLAG = 'smind_archive_swipe_hint_seen_v1';
+
 export default function ArchivePage({ embedded = false, onNavigateToSpace }: ArchivePageProps) {
   const navigate = useNavigate();
   const { spaces, sharedSpaces } = useSpaces();
   const scrollerRef = useRef<HTMLDivElement | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [showSwipeHint, setShowSwipeHint] = useState<boolean>(() => {
+    try { return sessionStorage.getItem(SWIPE_HINT_FLAG) !== 'true'; } catch { return true; }
+  });
+
+  // Dismiss the hint as soon as the user moves past the first spread.
+  useEffect(() => {
+    if (activeIndex > 0 && showSwipeHint) {
+      setShowSwipeHint(false);
+      try { sessionStorage.setItem(SWIPE_HINT_FLAG, 'true'); } catch { /* ignore */ }
+    }
+  }, [activeIndex, showSwipeHint]);
 
   const spreads = useMemo<Spread[]>(() => {
     const pinned = spaces
@@ -129,8 +142,14 @@ export default function ArchivePage({ embedded = false, onNavigateToSpace }: Arc
           spreads.map((spread, i) => (
             <div
               key={spread.kind === 'space' ? spread.space.id : '__new__'}
-              className="relative shrink-0 w-full h-full"
-              style={{ scrollSnapAlign: 'center', scrollSnapStop: 'always' }}
+              className="relative shrink-0 h-full"
+              style={{
+                width: '100%',
+                minWidth: '100%',
+                flexBasis: '100%',
+                scrollSnapAlign: 'center',
+                scrollSnapStop: 'always',
+              }}
             >
               {spread.kind === 'space' ? (
                 <SpaceSpread
@@ -162,6 +181,27 @@ export default function ArchivePage({ embedded = false, onNavigateToSpace }: Arc
         />
       )}
 
+      {/* First-visit swipe hint — fades out once the user moves past spread 1.
+          There to reassure users that their archives aren't gone, just paginated. */}
+      {hasAnySpaces && showSwipeHint && spreads.length > 1 && activeIndex === 0 && (
+        <motion.div
+          key="swipe-hint"
+          initial={{ opacity: 0, x: 0 }}
+          animate={{ opacity: 0.9, x: [0, 10, 0] }}
+          exit={{ opacity: 0 }}
+          transition={{ opacity: { duration: 0.6, delay: 0.4 }, x: { duration: 1.6, repeat: Infinity, ease: 'easeInOut', delay: 0.4 } }}
+          className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 z-20 flex items-center gap-2 px-3 py-2 rounded-full bg-[hsl(36_33%_98%_/_0.88)] backdrop-blur border border-foreground/10 shadow-lg"
+        >
+          <span
+            className="text-[0.65rem] uppercase tracking-[0.3em] text-foreground/75"
+            style={{ fontFamily: 'var(--font-sans)' }}
+          >
+            Swipe
+          </span>
+          <ChevronRight className="w-3.5 h-3.5 text-foreground/70" />
+        </motion.div>
+      )}
+
       {!embedded && <BottomNavigation />}
     </div>
   );
@@ -180,52 +220,34 @@ function Masthead({
 }) {
   const current = spreads[activeIndex];
   const positionLabel = current?.kind === 'new'
-    ? 'NEW'
-    : `${String(Math.min(activeIndex + 1, totalCount)).padStart(2, '0')} / ${String(totalCount).padStart(2, '0')}`;
+    ? 'New'
+    : totalCount > 0
+      ? `${Math.min(activeIndex + 1, totalCount)} of ${totalCount}`
+      : '';
 
   return (
     <header className="relative z-20 flex items-end justify-between px-5 pt-4 pb-3 border-b border-foreground/10">
-      <div className="flex flex-col">
-        <span
-          className="text-[0.6rem] uppercase tracking-[0.35em] text-foreground/50"
-          style={{ fontFamily: 'var(--font-sans)' }}
-        >
-          Second Mind · Issue
-        </span>
-        <span
-          className="leading-none tilt-xs"
-          style={{
-            fontFamily: 'var(--font-display)',
-            fontVariationSettings: '"SOFT" 70, "WONK" 1, "opsz" 144',
-            fontWeight: 900,
-            fontSize: 'clamp(1.6rem, 5.5vw, 2.4rem)',
-            letterSpacing: '-0.03em',
-          }}
-        >
-          Archive
-        </span>
-      </div>
+      <span
+        className="leading-none tilt-xs"
+        style={{
+          fontFamily: 'var(--font-display)',
+          fontVariationSettings: '"SOFT" 70, "WONK" 1, "opsz" 144',
+          fontWeight: 900,
+          fontSize: 'clamp(1.6rem, 5.5vw, 2.4rem)',
+          letterSpacing: '-0.03em',
+        }}
+      >
+        Archive
+      </span>
 
-      <div className="text-right shrink-0">
+      {positionLabel && (
         <span
-          className="block text-[0.6rem] uppercase tracking-[0.3em] text-foreground/50"
+          className="text-[0.7rem] uppercase tracking-[0.25em] text-foreground/60 tabular-nums shrink-0"
           style={{ fontFamily: 'var(--font-sans)' }}
-        >
-          Spread
-        </span>
-        <span
-          className="block font-medium tabular-nums"
-          style={{
-            fontFamily: 'var(--font-display)',
-            fontVariationSettings: '"SOFT" 40, "opsz" 48',
-            fontWeight: 700,
-            fontSize: '1rem',
-            letterSpacing: '0.02em',
-          }}
         >
           {positionLabel}
         </span>
-      </div>
+      )}
     </header>
   );
 }
@@ -307,25 +329,25 @@ function SpaceSpread({
 
       {/* Content layer */}
       <div className="relative z-10 w-full h-full flex flex-col justify-between px-6 pt-6 pb-24 text-[hsl(36_33%_98%)]">
-        {/* Top meta row — issue #, section, pin indicator */}
+        {/* Top meta row — section, pin indicator, last-used date */}
         <div className="flex items-start justify-between gap-4">
           <div className="flex flex-col gap-1.5">
-            <span
-              className="text-[0.625rem] uppercase tracking-[0.4em] opacity-80"
-              style={{ fontFamily: 'var(--font-sans)' }}
-            >
-              № {String(issueNumber).padStart(2, '0')} · {sectionLabel}
-            </span>
-            {space.isPinned && (
-              <span className="inline-flex items-center gap-1.5 text-[0.6rem] uppercase tracking-[0.3em] opacity-80">
+            {space.isPinned ? (
+              <span className="inline-flex items-center gap-1.5 text-[0.65rem] uppercase tracking-[0.35em] opacity-85">
                 <Pin className="w-3 h-3" />
                 Pinned
               </span>
-            )}
-            {section === 'shared' && (
-              <span className="inline-flex items-center gap-1.5 text-[0.6rem] uppercase tracking-[0.3em] opacity-80">
+            ) : section === 'shared' ? (
+              <span className="inline-flex items-center gap-1.5 text-[0.65rem] uppercase tracking-[0.35em] opacity-85">
                 <Users className="w-3 h-3" />
                 Shared with you
+              </span>
+            ) : (
+              <span
+                className="text-[0.65rem] uppercase tracking-[0.35em] opacity-80"
+                style={{ fontFamily: 'var(--font-sans)' }}
+              >
+                {sectionLabel}
               </span>
             )}
           </div>
@@ -377,13 +399,13 @@ function SpaceSpread({
             className="text-[0.65rem] uppercase tracking-[0.35em] opacity-60"
             style={{ fontFamily: 'var(--font-sans)' }}
           >
-            Tap to enter
+            Swipe for more
           </span>
           <span
             className="inline-flex items-center gap-2 text-[0.7rem] uppercase tracking-[0.3em] font-semibold opacity-90 group-active:translate-x-1 transition-transform"
             style={{ fontFamily: 'var(--font-sans)' }}
           >
-            Read
+            Open
             <ChevronRight className="w-4 h-4" />
           </span>
         </div>
@@ -418,16 +440,10 @@ function NewArchiveSpread({
 
       <div className="relative flex items-start justify-between">
         <span
-          className="text-[0.625rem] uppercase tracking-[0.4em] text-foreground/60"
+          className="text-[0.65rem] uppercase tracking-[0.35em] text-foreground/60"
           style={{ fontFamily: 'var(--font-sans)' }}
         >
-          № {String(issueNumber).padStart(2, '0')} · New
-        </span>
-        <span
-          className="text-[0.625rem] uppercase tracking-[0.3em] text-foreground/50"
-          style={{ fontFamily: 'var(--font-sans)' }}
-        >
-          End of issue
+          New archive
         </span>
       </div>
 
@@ -465,7 +481,7 @@ function NewArchiveSpread({
           className="text-[0.65rem] uppercase tracking-[0.35em] text-foreground/50"
           style={{ fontFamily: 'var(--font-sans)' }}
         >
-          Swipe back to read
+          Swipe back to your archives
         </span>
       </div>
     </div>

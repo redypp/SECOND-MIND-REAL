@@ -78,21 +78,6 @@ export function EntryPortal() {
           backgroundSize: '140px 140px, 180px 180px',
         }}
       >
-        {/* Floating wordmark above the circles — intentionally off-kilter */}
-        <motion.div
-          initial={{ opacity: 0, y: -8 }}
-          animate={{ opacity: exiting ? 0 : 1, y: 0 }}
-          transition={{ delay: 0.1, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-          className="absolute top-[10%] left-0 right-0 flex justify-center pointer-events-none"
-        >
-          <p
-            className="text-[clamp(0.75rem,2.5vw,0.95rem)] uppercase tracking-[0.4em] text-foreground/50 tilt-xs"
-            style={{ fontFamily: 'var(--font-sans)' }}
-          >
-            Second&nbsp;·&nbsp;Mind
-          </p>
-        </motion.div>
-
         {/* The two circles live in a centered row. On small screens they stack
             into a vertical pair so nothing clips. */}
         <div className="relative w-full h-full flex items-center justify-center">
