@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import LifePage from '@/pages/LifePage';
 import ArchivePage from '@/pages/ArchivePage';
@@ -389,6 +389,13 @@ export default function MainLayout() {
     };
   }, []);
 
+  // Visibility is derived directly from the URL so navigation is reliable
+  // even if currentIndex state falls out of sync with location.pathname.
+  const showArchive = useMemo(() => {
+    const p = location.pathname;
+    return p === '/archive' || p === '/collections' || p.startsWith('/space/');
+  }, [location.pathname]);
+
   const handlePageSelect = useCallback((index: number) => {
     setCurrentIndex(index);
     lastIndexRef.current = index;
@@ -420,9 +427,9 @@ export default function MainLayout() {
         <div
           className="absolute inset-0 overflow-hidden bg-background"
           style={{
-            transform: currentIndex === 0 ? 'translateX(0)' : 'translateX(-100%)',
+            transform: showArchive ? 'translateX(-100%)' : 'translateX(0)',
             transition: 'transform 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
-            pointerEvents: currentIndex === 0 ? 'auto' : 'none',
+            pointerEvents: showArchive ? 'none' : 'auto',
           }}
         >
           {/* LIFE dashboard — always rendered underneath; parallax tracks swipeDx during back-swipe */}
@@ -475,9 +482,9 @@ export default function MainLayout() {
         <div
           className="absolute inset-0 overflow-hidden bg-background"
           style={{
-            transform: currentIndex === 1 ? 'translateX(0)' : 'translateX(100%)',
+            transform: showArchive ? 'translateX(0)' : 'translateX(100%)',
             transition: 'transform 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
-            pointerEvents: currentIndex === 1 ? 'auto' : 'none',
+            pointerEvents: showArchive ? 'auto' : 'none',
             overscrollBehavior: 'contain',
           }}
         >
