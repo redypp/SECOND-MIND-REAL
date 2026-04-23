@@ -1,5 +1,7 @@
-/* Oswald — condensed, bold, editorial magazine font. Used for ALL text. */
-@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@200;300;400;500;600;700&display=swap');
+/* Fraunces — warm, characterful display serif with SOFT + WONK axes for
+   "smart imperfection" (slightly rounded serifs, occasional wonky alternates).
+   Inter — clean, geometric sans for body. Warm pairing, editorial feel. */
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@9..144,400..900,0..100,0..1&family=Inter:wght@400;500;600;700;800;900&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -7,60 +9,60 @@
 
 @layer base {
   :root {
-    /* Day (light) theme — pure white */
+    /* Warm editorial theme — single unified palette.
+       Off-white cream background, warm near-black ink, tomato accent. */
     color-scheme: light;
-    --background: 0 0% 100%;
-    --foreground: 0 0% 7%;
+    --background: 36 33% 98%;
+    --foreground: 20 14% 8%;
 
-    --card: 0 0% 99%;
-    --card-foreground: 0 0% 7%;
+    --card: 36 25% 96%;
+    --card-foreground: 20 14% 8%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 7%;
+    --popover: 36 30% 99%;
+    --popover-foreground: 20 14% 8%;
 
-    --primary: 0 85% 50%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 8 78% 48%;
+    --primary-foreground: 36 33% 98%;
 
-    --red-hot: 0 85% 50%;
-    --red-coral: 16 85% 55%;
-    --red-crimson: 348 83% 47%;
-    --red-maroon: 0 60% 30%;
-    --red-rose: 350 89% 60%;
-    --red-berry: 335 78% 42%;
+    --red-hot: 8 78% 48%;
+    --red-coral: 16 82% 55%;
+    --red-crimson: 348 78% 47%;
+    --red-maroon: 10 55% 32%;
+    --red-rose: 350 85% 60%;
+    --red-berry: 335 70% 42%;
 
-    --secondary: 0 0% 95%;
-    --secondary-foreground: 0 0% 18%;
+    --secondary: 32 18% 93%;
+    --secondary-foreground: 20 14% 15%;
 
-    --muted: 0 0% 94%;
-    --muted-foreground: 0 0% 42%;
+    --muted: 32 15% 92%;
+    --muted-foreground: 25 8% 38%;
 
-    --accent: 0 0% 94%;
-    --accent-foreground: 0 0% 7%;
+    --accent: 32 20% 93%;
+    --accent-foreground: 20 14% 8%;
 
     --destructive: 0 72% 51%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive-foreground: 36 33% 98%;
 
     --warning: 38 92% 50%;
-    --warning-foreground: 0 0% 100%;
+    --warning-foreground: 20 14% 8%;
 
-    --border: 0 0% 88%;
-    --input: 0 0% 88%;
-    --ring: 0 85% 50%;
+    --border: 28 15% 86%;
+    --input: 28 15% 86%;
+    --ring: 8 78% 48%;
 
     --radius: 0.375rem;
-    --font-display: 'Space Grotesk', 'Helvetica Neue', sans-serif;
 
-    --important-bg: 0 0% 12%;
-    --important-fg: 0 0% 100%;
+    --important-bg: 20 14% 10%;
+    --important-fg: 36 33% 98%;
     --important-shadow: none;
 
-    --space-card: 0 0% 100%;
-    --space-card-hover: 0 0% 96%;
-    --item-card: 0 0% 98%;
-    --capture-button: 0 85% 50%;
-    --capture-button-hover: 0 85% 45%;
-    --search-bg: 0 0% 93%;
-    --overlay: 0 0% 0% / 0.3;
+    --space-card: 36 33% 99%;
+    --space-card-hover: 36 25% 95%;
+    --item-card: 36 28% 97%;
+    --capture-button: 8 78% 48%;
+    --capture-button-hover: 8 78% 43%;
+    --search-bg: 32 20% 92%;
+    --overlay: 20 14% 6% / 0.35;
 
     --shadow-2xs: 0 1px 2px 0 hsl(0 0% 0% / 0.04);
     --shadow-xs: 0 1px 3px 0 hsl(0 0% 0% / 0.06), 0 1px 2px 0 hsl(0 0% 0% / 0.03);
@@ -75,28 +77,30 @@
     --shadow-elevated: 0 8px 24px -4px hsl(0 0% 0% / 0.12), 0 3px 8px -2px hsl(0 0% 0% / 0.06);
     --shadow-input: 0 1px 3px 0 hsl(0 0% 0% / 0.04), inset 0 1px 2px 0 hsl(0 0% 0% / 0.02);
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 0 0% 10%;
-    --sidebar-primary: 0 85% 50%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 93%;
-    --sidebar-accent-foreground: 0 0% 10%;
-    --sidebar-border: 0 0% 88%;
-    --sidebar-ring: 0 85% 50%;
-    --sidebar: 0 0% 98%;
+    --sidebar-background: 36 28% 97%;
+    --sidebar-foreground: 20 14% 10%;
+    --sidebar-primary: 8 78% 48%;
+    --sidebar-primary-foreground: 36 33% 98%;
+    --sidebar-accent: 32 20% 93%;
+    --sidebar-accent-foreground: 20 14% 10%;
+    --sidebar-border: 28 15% 86%;
+    --sidebar-ring: 8 78% 48%;
+    --sidebar: 36 28% 97%;
 
-    --chart-1: 0 85% 50%;
-    --chart-2: 348 83% 47%;
-    --chart-3: 16 85% 55%;
-    --chart-4: 0 60% 30%;
-    --chart-5: 350 89% 60%;
+    --chart-1: 8 78% 48%;
+    --chart-2: 348 78% 47%;
+    --chart-3: 16 82% 55%;
+    --chart-4: 10 55% 32%;
+    --chart-5: 350 85% 60%;
 
-    --font-sans: 'Oswald', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    --font-display: 'Oswald', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    /* Inter for body — clean, readable, modest warmth.
+       Fraunces for display — bold serif with soft/wonky axes for playful editorial feel. */
+    --font-sans: 'Inter', system-ui, -apple-system, 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    --font-display: 'Fraunces', 'Times New Roman', Georgia, serif;
 
     --spacing: 0.25rem;
     --tracking-normal: -0.011em;
-    --tracking-tight: -0.022em;
+    --tracking-tight: -0.028em;
 
     --app-safe-top-min: env(safe-area-inset-top, 0px);
     /* Prefer Despia's injected --safe-area-top; fall back to native env() in browser */
@@ -106,166 +110,10 @@
     --app-safe-bottom: max(var(--safe-area-bottom, env(safe-area-inset-bottom, 0px)), env(safe-area-inset-bottom, 0px));
   }
 
-  /* Blu theme — bold deep blue (original light theme) */
-  .blu {
-    color-scheme: dark;
-    --background: 240 100% 25%;
-    --foreground: 0 0% 100%;
-
-    --card: 240 100% 28%;
-    --card-foreground: 0 0% 100%;
-
-    --popover: 240 100% 22%;
-    --popover-foreground: 0 0% 100%;
-
-    --primary: 0 85% 50%;
-    --primary-foreground: 0 0% 100%;
-
-    --red-hot: 0 85% 50%;
-    --red-coral: 16 85% 55%;
-    --red-crimson: 348 83% 47%;
-    --red-maroon: 0 60% 30%;
-    --red-rose: 350 89% 60%;
-    --red-berry: 335 78% 42%;
-
-    --secondary: 240 80% 30%;
-    --secondary-foreground: 0 0% 95%;
-
-    --muted: 240 70% 32%;
-    --muted-foreground: 240 30% 75%;
-
-    --accent: 240 80% 35%;
-    --accent-foreground: 0 0% 100%;
-
-    --destructive: 0 72% 51%;
-    --destructive-foreground: 0 0% 100%;
-
-    --warning: 38 92% 50%;
-    --warning-foreground: 0 0% 100%;
-
-    --border: 240 60% 35%;
-    --input: 240 60% 35%;
-    --ring: 0 85% 50%;
-
-    --important-bg: 240 100% 15%;
-    --important-fg: 0 0% 100%;
-    --important-shadow: none;
-
-    --space-card: 240 100% 28%;
-    --space-card-hover: 240 100% 32%;
-    --item-card: 240 100% 30%;
-    --capture-button: 0 85% 50%;
-    --capture-button-hover: 0 85% 45%;
-    --search-bg: 240 80% 30%;
-    --overlay: 240 100% 10% / 0.6;
-
-    --shadow-2xs: 0 1px 2px 0 hsl(240 100% 5% / 0.1);
-    --shadow-xs: 0 1px 3px 0 hsl(240 100% 5% / 0.15);
-    --shadow-sm: 0 2px 4px 0 hsl(240 100% 5% / 0.15);
-    --shadow-md: 0 4px 8px -2px hsl(240 100% 5% / 0.2);
-    --shadow-lg: 0 12px 24px -4px hsl(240 100% 5% / 0.25);
-    --shadow-xl: 0 20px 40px -8px hsl(240 100% 5% / 0.3);
-    --shadow-2xl: 0 32px 64px -12px hsl(240 100% 5% / 0.35);
-
-    --shadow-soft: 0 2px 8px -2px hsl(240 100% 5% / 0.15);
-    --shadow-card: 0 2px 8px -2px hsl(240 100% 5% / 0.2);
-    --shadow-elevated: 0 8px 24px -4px hsl(240 100% 5% / 0.3);
-    --shadow-input: 0 1px 2px 0 hsl(240 100% 5% / 0.1);
-
-    --sidebar-background: 240 100% 22%;
-    --sidebar-foreground: 0 0% 100%;
-    --sidebar-primary: 0 85% 50%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 80% 35%;
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 240 60% 35%;
-    --sidebar-ring: 0 85% 50%;
-    --sidebar: 240 100% 22%;
-
-    --chart-1: 0 85% 50%;
-    --chart-2: 348 83% 47%;
-    --chart-3: 16 85% 55%;
-    --chart-4: 0 60% 30%;
-    --chart-5: 350 89% 60%;
-  }
-
-  .dark {
-    /* Minimal dark theme - true blacks and dark grays */
-    color-scheme: dark;
-    --background: 0 0% 4%;
-    --foreground: 0 0% 95%;
-
-    --card: 0 0% 7%;
-    --card-foreground: 0 0% 95%;
-
-    --popover: 0 0% 7%;
-    --popover-foreground: 0 0% 95%;
-
-    /* Hot red accent - same as light mode */
-    --primary: 0 85% 55%;
-    --primary-foreground: 0 0% 100%;
-
-    /* Red variants - different shades (adjusted for dark mode) */
-    --red-hot: 0 85% 55%;
-    --red-coral: 16 85% 58%;
-    --red-crimson: 348 83% 52%;
-    --red-maroon: 0 50% 40%;
-    --red-rose: 350 89% 65%;
-    --red-berry: 335 78% 50%;
-
-    --secondary: 0 0% 12%;
-    --secondary-foreground: 0 0% 85%;
-
-    --muted: 0 0% 12%;
-    --muted-foreground: 0 0% 68%;
-
-    --accent: 0 0% 15%;
-    --accent-foreground: 0 0% 90%;
-
-    --destructive: 0 72% 55%;
-    --destructive-foreground: 0 0% 100%;
-    
-    /* Warning colors */
-    --warning: 38 92% 55%;
-    --warning-foreground: 0 0% 100%;
-
-    --border: 0 0% 18%;
-    --input: 0 0% 18%;
-    --ring: 0 85% 55%;
-
-    --important-bg: 0 0% 95%;
-    --important-fg: 0 0% 10%;
-    --important-shadow: none;
-
-    --space-card: 0 0% 7%;
-    --space-card-hover: 0 0% 10%;
-    --item-card: 0 0% 10%;
-    --capture-button: 0 85% 55%;
-    --capture-button-hover: 0 85% 50%;
-    --search-bg: 0 0% 10%;
-    --overlay: 0 0% 0% / 0.6;
-
-    --shadow-soft: 0 2px 8px -2px hsl(0 0% 0% / 0.4);
-    --shadow-card: 0 4px 16px -4px hsl(0 0% 0% / 0.5);
-    --shadow-elevated: 0 8px 32px -8px hsl(0 0% 0% / 0.6);
-    --shadow-input: 0 1px 2px 0 hsl(0 0% 0% / 0.2);
-
-    --sidebar-background: 0 0% 5%;
-    --sidebar-foreground: 0 0% 95%;
-    --sidebar-primary: 0 85% 55%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 15%;
-    --sidebar-accent-foreground: 0 0% 90%;
-    --sidebar-border: 0 0% 18%;
-    --sidebar-ring: 0 85% 55%;
-    --sidebar: 0 0% 7%;
-
-    /* Chart colors - red variants */
-    --chart-1: 0 85% 55%;
-    --chart-2: 348 83% 52%;
-    --chart-3: 16 85% 58%;
-    --chart-4: 0 50% 40%;
-    --chart-5: 350 89% 65%;
+  /* Legacy theme classes kept as no-op aliases so any lingering `.dark` or `.blu`
+     class applications render the unified warm palette instead of breaking. */
+  .dark, .blu {
+    color-scheme: light;
   }
 }
 
@@ -290,24 +138,58 @@
 
   body {
     @apply bg-background text-foreground;
-    font-feature-settings: 'kern' 1, 'liga' 1;
-    font-weight: 400;
-    font-size: 0.875rem;
-    letter-spacing: 0.01em;
+    font-feature-settings: 'kern' 1, 'liga' 1, 'ss01' 1;
+    font-weight: 450;
+    font-size: 0.9375rem;
+    letter-spacing: 0.005em;
     touch-action: pan-y pinch-zoom;
     overflow-x: hidden;
     overscroll-behavior-x: none;
   }
 
-  /* Premium heading styles */
+  /* Editorial headings — bold display serif with warm "wonk" alternates.
+     SOFT axis rounds the serifs (warmer), WONK enables the quirky cursive g/y
+     glyphs that give Fraunces its playful character. */
   h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
     letter-spacing: var(--tracking-tight);
-    font-weight: 700;
+    font-weight: 900;
+    font-variation-settings: "SOFT" 50, "WONK" 1, "opsz" 96;
+    line-height: 0.98;
   }
 
-  /* Make all text slightly bolder */
+  h1 { font-variation-settings: "SOFT" 60, "WONK" 1, "opsz" 144; }
+
+  /* Body text stays Inter — keep it calm so the headlines can shout. */
   p, span, label, a, button, input, textarea, select {
     font-weight: inherit;
+  }
+}
+
+@layer utilities {
+  /* Off-grid type — tiny rotations + mismatched weights, editorial feel.
+     Use sparingly on headlines, pull-quotes, hero labels. Don't apply inside
+     flex rows with tight alignment — the rotation will look like a bug. */
+  .tilt-l  { transform: rotate(-0.7deg); transform-origin: left bottom; }
+  .tilt-r  { transform: rotate(0.6deg);  transform-origin: right bottom; }
+  .tilt-xs { transform: rotate(-0.35deg); transform-origin: center; }
+
+  /* Force the wonky Fraunces alternates on any span (useful for single
+     characters inside otherwise-clean body copy). */
+  .wonk { font-variation-settings: "WONK" 1, "SOFT" 100; }
+
+  /* Mixed-weight display line — pair with <span class="mixed-weight-alt">
+     for deliberately inconsistent weight within one headline. */
+  .mixed-weight-alt { font-weight: 400; font-style: italic; }
+
+  /* Hand-drawn-ish underline using a wavy SVG — useful on single words in
+     headings. The wave is subtle, not cartoonish. */
+  .ink-underline {
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 8' preserveAspectRatio='none'><path d='M0,6 Q25,1 50,5 T100,4' fill='none' stroke='%23c6391b' stroke-width='2.2' stroke-linecap='round'/></svg>");
+    background-repeat: no-repeat;
+    background-position: 0 100%;
+    background-size: 100% 0.45em;
+    padding-bottom: 0.12em;
   }
 }
 
@@ -563,50 +445,12 @@
 .life-section-meta  { color: hsl(0 0% 10% / 0.65); }
 .life-section-chevron { color: hsl(0 0% 10% / 0.3); }
 
-/* Blu — translucent blue glass */
-.blu .life-section-card { border-color: hsl(240 100% 80% / 0.15); }
-.blu .life-section-card[data-depth="0"] { background: hsl(240 80% 50% / 0.35); }
-.blu .life-section-card[data-depth="1"] { background: hsl(240 80% 45% / 0.35); }
-.blu .life-section-card[data-depth="2"] { background: hsl(240 80% 40% / 0.35); }
-.blu .life-section-card[data-depth="3"] { background: hsl(240 80% 35% / 0.35); }
-.blu .life-section-card[data-depth="4"] { background: hsl(240 80% 30% / 0.35); }
-.blu .life-section-card[data-depth="5"] { background: hsl(240 80% 25% / 0.35); }
-.blu .life-section-label { color: white; }
-.blu .life-section-meta  { color: hsl(0 0% 100% / 0.6); }
-.blu .life-section-chevron { color: hsl(0 0% 100% / 0.25); }
-
-/* Night (dark) — translucent dark glass */
-.dark .life-section-card { border-color: hsl(0 0% 100% / 0.08); }
-.dark .life-section-card[data-depth="0"] { background: hsl(0 0% 100% / 0.1); }
-.dark .life-section-card[data-depth="1"] { background: hsl(0 0% 100% / 0.08); }
-.dark .life-section-card[data-depth="2"] { background: hsl(0 0% 100% / 0.06); }
-.dark .life-section-card[data-depth="3"] { background: hsl(0 0% 100% / 0.05); }
-.dark .life-section-card[data-depth="4"] { background: hsl(0 0% 100% / 0.04); }
-.dark .life-section-card[data-depth="5"] { background: hsl(0 0% 100% / 0.03); }
-.dark .life-section-card {
-  box-shadow:
-    0 4px 24px -4px hsl(0 0% 0% / 0.4),
-    0 1px 3px hsl(0 0% 0% / 0.2),
-    inset 0 1px 0 hsl(0 0% 100% / 0.06);
-}
-.dark .life-section-label { color: white; }
-.dark .life-section-meta  { color: hsl(0 0% 100% / 0.65); }
-.dark .life-section-chevron { color: hsl(0 0% 100% / 0.3); }
-
 /* Archive glass cards — floating rounded cards (GPU-promoted for smooth scroll) */
 .archive-glass-card {
   transform: translateZ(0);
   -webkit-transform: translateZ(0);
-  box-shadow: 0 2px 12px -3px hsl(0 0% 0% / 0.1);
-  border: 1px solid hsl(0 0% 100% / 0.12);
-}
-.dark .archive-glass-card {
-  box-shadow: 0 2px 12px -3px hsl(0 0% 0% / 0.4);
-  border-color: hsl(0 0% 100% / 0.08);
-}
-.blu .archive-glass-card {
-  box-shadow: 0 2px 12px -3px hsl(240 100% 10% / 0.25);
-  border-color: hsl(240 100% 80% / 0.12);
+  box-shadow: 0 2px 12px -3px hsl(20 14% 8% / 0.08);
+  border: 1px solid hsl(28 15% 86% / 0.6);
 }
 
 /* Hide page indicators and floating buttons when Chamber modal is open */

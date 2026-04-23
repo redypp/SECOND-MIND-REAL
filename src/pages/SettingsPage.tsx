@@ -1,10 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  ArrowLeft, Loader2, User, Users, LogOut, Lightbulb, Moon, Sun, Sunrise, Pencil,
+  ArrowLeft, Loader2, User, Users, LogOut, Lightbulb, Sunrise,
   Check, X, RotateCcw, Mail, Mic, MapPin, Navigation, ChevronRight,
 } from 'lucide-react';
-import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Switch } from '@/components/ui/switch';
 import { FeatureTour } from '@/components/FeatureTour';
@@ -14,7 +13,6 @@ import { useAISettings } from '@/contexts/AISettingsContext';
 
 export default function SettingsPage() {
   const navigate = useNavigate();
-  const { theme, setTheme } = useTheme();
   const { user, profile, signOut, updateProfile } = useAuth();
   const { resetOnboarding } = useTutorial();
   const { settings: aiSettings, updateSettings: updateAISettings } = useAISettings();
@@ -110,9 +108,6 @@ export default function SettingsPage() {
       />
     );
   }
-
-  const themeLabel = theme === 'day' ? 'Day' : theme === 'night' ? 'Night' : 'Blu';
-  const ThemeIcon = theme === 'day' ? Sun : theme === 'night' ? Moon : Sunrise;
 
   return (
     <div className="min-h-screen bg-background safe-area-top-ios">
@@ -229,11 +224,8 @@ export default function SettingsPage() {
           </button>
         )}
 
-        {/* Appearance & Voice Section */}
+        {/* Voice Section */}
         <div className="rounded-2xl bg-card border border-border/40 overflow-hidden divide-y divide-border/40">
-          {/* Theme row — expands inline */}
-          <ThemeRowExpanded theme={theme} setTheme={setTheme} />
-
           {/* Microphone permission */}
           <button
             onClick={async () => {
@@ -357,67 +349,3 @@ export default function SettingsPage() {
   );
 }
 
-/* ─── Appearance sub-component ───────────────────────────────────────── */
-type Theme = 'day' | 'night' | 'blu';
-
-function ThemeRowExpanded({
-  theme,
-  setTheme,
-}: {
-  theme: Theme;
-  setTheme: (t: Theme) => void;
-}) {
-  const [open, setOpen] = useState(false);
-
-  const ThemeIcon = theme === 'day' ? Sun : theme === 'night' ? Moon : Sunrise;
-  const themeLabel = theme === 'day' ? 'Day' : theme === 'night' ? 'Night' : 'Blu';
-
-  const options: { id: Theme; label: string; icon: typeof Sun; bg: string; fg: string }[] = [
-    { id: 'day', label: 'Day', icon: Sun, bg: 'hsl(0 0% 98%)', fg: 'hsl(0 0% 10%)' },
-    { id: 'night', label: 'Night', icon: Moon, bg: 'hsl(0 0% 4%)', fg: 'hsl(0 0% 95%)' },
-    { id: 'blu', label: 'Blu', icon: Sunrise, bg: 'hsl(240 100% 25%)', fg: 'hsl(0 0% 100%)' },
-  ];
-
-  return (
-    <div>
-      <button
-        onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center gap-3.5 px-4 py-3.5 hover:bg-accent/30 transition-colors text-left"
-      >
-        <div className="w-8 h-8 rounded-lg bg-accent/60 flex items-center justify-center shrink-0">
-          <ThemeIcon className="w-4 h-4 text-foreground" />
-        </div>
-        <div className="flex-1">
-          <p className="text-sm font-medium">Appearance</p>
-          <p className="text-xs text-muted-foreground">{themeLabel}</p>
-        </div>
-        <ChevronRight
-          className={`w-4 h-4 text-muted-foreground shrink-0 transition-transform duration-200 ${open ? 'rotate-90' : ''}`}
-        />
-      </button>
-      {open && (
-        <div className="px-4 pb-4 pt-1 grid grid-cols-3 gap-2 border-t border-border/40">
-          {options.map((opt) => {
-            const Icon = opt.icon;
-            const isActive = theme === opt.id;
-            return (
-              <button
-                key={opt.id}
-                onClick={() => { setTheme(opt.id); setOpen(false); }}
-                className={`flex flex-col items-center gap-2 py-3 rounded-xl border-2 transition-all ${isActive ? 'border-primary ring-2 ring-primary/20' : 'border-border/50 hover:border-border'}`}
-              >
-                <div
-                  className="w-9 h-9 rounded-lg flex items-center justify-center"
-                  style={{ background: opt.bg }}
-                >
-                  <Icon className="w-4 h-4" style={{ color: opt.fg }} />
-                </div>
-                <span className="text-xs font-semibold">{opt.label}</span>
-              </button>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
-}
