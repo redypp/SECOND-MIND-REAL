@@ -17,9 +17,16 @@ import { PersonStanding } from 'lucide-react';
  */
 
 const SESSION_FLAG = 'smind_portal_seen_v1';
+const SHOW_PORTAL_EVENT = 'smind:show-portal';
 
 type PortalTarget = 'life' | 'self' | 'archive';
 type PortalPosition = 'left' | 'center' | 'right';
+
+/** Dispatch this to reopen the portal from anywhere in the app. */
+export function openPortal() {
+  try { sessionStorage.removeItem(SESSION_FLAG); } catch { /* ignore */ }
+  window.dispatchEvent(new Event(SHOW_PORTAL_EVENT));
+}
 
 export function EntryPortal() {
   const navigate = useNavigate();
@@ -35,7 +42,8 @@ export function EntryPortal() {
   const navigatedRef = useRef(false);
 
   // If the user lands directly on a destination via URL (share link, refresh),
-  // honor it — don't hijack with the portal.
+  // honor it — don't hijack with the portal. Exception: an explicit open via
+  // the custom event should always surface the portal.
   useEffect(() => {
     if (
       location.pathname !== '/' &&
@@ -45,6 +53,19 @@ export function EntryPortal() {
       setVisible(false);
     }
   }, [location.pathname]);
+
+  // External callers (nav buttons on each destination page) can reopen the
+  // portal by dispatching `smind:show-portal`. Reset exiting state so the
+  // animation replays cleanly the next time they pick a destination.
+  useEffect(() => {
+    const handler = () => {
+      navigatedRef.current = false;
+      setExiting(null);
+      setVisible(true);
+    };
+    window.addEventListener(SHOW_PORTAL_EVENT, handler);
+    return () => window.removeEventListener(SHOW_PORTAL_EVENT, handler);
+  }, []);
 
   const mark = () => {
     try { sessionStorage.setItem(SESSION_FLAG, 'true'); } catch { /* ignore */ }

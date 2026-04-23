@@ -2,7 +2,7 @@ import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  ArrowLeft, MapPin, Cake, Loader2, Send, RefreshCw, Sparkles,
+  MapPin, Cake, Loader2, Send, RefreshCw, Sparkles,
   CheckCircle2, MapPinned, Pencil, BookOpen, UserRound, Compass, Users, Leaf,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -10,6 +10,7 @@ import { useSpaces } from '@/contexts/SpacesContext';
 import { useIntelligentCapture } from '@/hooks/useIntelligentCapture';
 import { useSelfRecommendations, Recommendation, RecommendationCategory } from '@/hooks/useSelfRecommendations';
 import { showErrorPopup } from '@/contexts/ErrorPopupContext';
+import { PortalReturn } from '@/components/PortalReturn';
 
 /**
  * SelfPage — the user's personal hub.
@@ -98,13 +99,7 @@ export default function SelfPage() {
       {/* Masthead */}
       <header className="sticky safe-sticky-top z-20 bg-background/90 backdrop-blur-xl border-b border-foreground/10">
         <div className="flex items-center justify-between px-5 py-4">
-          <button
-            onClick={() => navigate(-1)}
-            className="p-2 -ml-2 rounded-full hover:bg-foreground/5 transition-colors"
-            aria-label="Back"
-          >
-            <ArrowLeft className="w-5 h-5 text-foreground" />
-          </button>
+          <PortalReturn />
           <span
             className="tilt-xs leading-none"
             style={{
@@ -122,7 +117,7 @@ export default function SelfPage() {
             className="text-[0.65rem] uppercase tracking-[0.3em] text-foreground/55 hover:text-foreground/90 transition-colors px-2 py-1"
             style={{ fontFamily: 'var(--font-sans)' }}
           >
-            Edit
+            Settings
           </button>
         </div>
       </header>

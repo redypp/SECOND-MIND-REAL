@@ -5,6 +5,7 @@ import { Plus, Users, ChevronRight, Pin } from 'lucide-react';
 import { useSpaces } from '@/contexts/SpacesContext';
 import { AddSpaceDialog } from '@/components/AddSpaceDialog';
 import { BottomNavigation } from '@/components/BottomNavigation';
+import { PortalReturn } from '@/components/PortalReturn';
 import type { Space } from '@/types';
 
 /**
@@ -226,19 +227,22 @@ function Masthead({
       : '';
 
   return (
-    <header className="relative z-20 flex items-end justify-between px-5 pt-4 pb-3 border-b border-foreground/10">
-      <span
-        className="leading-none tilt-xs"
-        style={{
-          fontFamily: 'var(--font-display)',
-          fontVariationSettings: '"SOFT" 70, "WONK" 1, "opsz" 144',
-          fontWeight: 900,
-          fontSize: 'clamp(1.6rem, 5.5vw, 2.4rem)',
-          letterSpacing: '-0.03em',
-        }}
-      >
-        Archive
-      </span>
+    <header className="relative z-20 flex items-end justify-between gap-4 px-5 pt-4 pb-3 border-b border-foreground/10">
+      <div className="flex items-end gap-3 min-w-0">
+        <PortalReturn />
+        <span
+          className="leading-none tilt-xs"
+          style={{
+            fontFamily: 'var(--font-display)',
+            fontVariationSettings: '"SOFT" 70, "WONK" 1, "opsz" 144',
+            fontWeight: 900,
+            fontSize: 'clamp(1.6rem, 5.5vw, 2.4rem)',
+            letterSpacing: '-0.03em',
+          }}
+        >
+          Archive
+        </span>
+      </div>
 
       {positionLabel && (
         <span

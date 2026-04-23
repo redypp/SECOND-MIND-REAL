@@ -5,6 +5,7 @@ import { useSpaces } from '@/contexts/SpacesContext';
 import { useCurrentDate } from '@/hooks/useCurrentDate';
 import { useLifeSubheadings } from '@/hooks/useLifeSubheadings';
 import { MarqueeHeader } from '@/components/MarqueeHeader';
+import { PortalReturn } from '@/components/PortalReturn';
 
 interface LifePageProps {
   embedded?: boolean;
@@ -62,7 +63,6 @@ export default function LifePage({ embedded = false, onNavigateToSection }: Life
     { id: 'habits',        path: '/habits',        label: 'Habits',        meta: subheadings.habits,       isExternal: false, isAsk: false },
     { id: 'journal',       path: '/journal',       label: 'Journal',       meta: subheadings.journal,      isExternal: false, isAsk: false },
     { id: 'notifications', path: '/notifications', label: 'Notifications', meta: 'Your inbox',             isExternal: true,  isAsk: false },
-    { id: 'settings',      path: '/settings',      label: 'Settings',      meta: 'Preferences & account',  isExternal: true,  isAsk: false },
   ];
 
   const handleTap = (path: string, isExternal: boolean) => {
@@ -82,7 +82,8 @@ export default function LifePage({ embedded = false, onNavigateToSection }: Life
       style={{ overscrollBehavior: 'none' }}
     >
       {/* Scrolling marquee header */}
-      <div className="relative flex items-center pl-0 pr-0 flex-shrink-0 min-h-[52px]">
+      <div className="relative flex items-center pl-3 pr-3 flex-shrink-0 min-h-[52px] gap-2">
+        <PortalReturn />
         <div className="flex-1 min-w-0 overflow-hidden">
           <MarqueeHeader text="LIFE" />
         </div>
