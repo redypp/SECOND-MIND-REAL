@@ -144,6 +144,7 @@ export default function ArchivePage({ embedded = false, onNavigateToSpace }: Arc
               <CardSlot
                 key={spread.kind === 'space' ? spread.space.id : '__new__'}
                 isActive={i === activeIndex}
+                offset={i - activeIndex}
                 onClick={() => {
                   // Tapping a peeking (non-active) card snaps to it rather
                   // than navigating — it's almost always a "bring it to me"
@@ -186,9 +187,14 @@ export default function ArchivePage({ embedded = false, onNavigateToSpace }: Arc
 /* ───────────────────────── Layout constants ───────────────────────── */
 
 // What fraction of the viewport width each card occupies.
-// 0.78 leaves ~11% peek on each side so prev/next are clearly visible but
-// the active card still dominates.
-const CARD_FRACTION = 0.78;
+// 0.7 gives generous peek so neighbors can slide inward and overlap the
+// active card's edges, creating a layered/stacked coverflow feel.
+const CARD_FRACTION = 0.7;
+
+// How far (as a % of slot width) neighbors slide inward per offset step,
+// so the nearest siblings tuck behind the active card instead of sitting
+// flush beside it. Higher = more overlap.
+const OVERLAP_PCT = 12;
 
 // Swipes inside the archive carousel must not bubble up to MainLayout's
 // outer LIFE↔ARCHIVE snap-swiper. Without this, a horizontal drag on a
@@ -228,23 +234,34 @@ function Masthead() {
 
 function CardSlot({
   isActive,
+  offset,
   onClick,
   children,
 }: {
   isActive: boolean;
+  offset: number;
   onClick?: () => void;
   children: React.ReactNode;
 }) {
+  const abs = Math.abs(offset);
+  // Neighbors slide toward center so they tuck behind the active card.
+  // Further-out cards slide more but clamp so nothing drifts off-canvas.
+  const slide = offset === 0 ? 0 : -Math.sign(offset) * Math.min(abs, 2) * OVERLAP_PCT;
+  // Scale drops off with distance for a stacked-depth feel.
+  const scale = isActive ? 1 : Math.max(0.72, 1 - abs * 0.1);
+  const opacity = isActive ? 1 : Math.max(0.25, 1 - abs * 0.28);
+
   return (
     <div
-      className="shrink-0 h-full flex items-center justify-center transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]"
+      className="shrink-0 h-full flex items-center justify-center transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]"
       style={{
         width: `${CARD_FRACTION * 100}%`,
         scrollSnapAlign: 'center',
         scrollSnapStop: 'always',
-        // Non-active cards shrink + fade for depth. Active card sits forward.
-        transform: isActive ? 'scale(1)' : 'scale(0.9)',
-        opacity: isActive ? 1 : 0.5,
+        transform: `translateX(${slide}%) scale(${scale})`,
+        opacity,
+        // Active card sits on top of its neighbors' overlapping edges.
+        zIndex: isActive ? 3 : Math.max(1, 3 - abs),
       }}
       onClick={onClick}
     >
