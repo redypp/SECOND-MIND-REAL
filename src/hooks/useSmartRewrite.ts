@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/app-client';
 import { useSpaces } from '@/contexts/SpacesContext';
 
-export type RewriteMode = 'bullets' | 'actions' | 'summary';
+export type RewriteMode = 'bullets' | 'actions' | 'summary' | 'augment';
 
 interface SmartRewriteResult {
   result: string;

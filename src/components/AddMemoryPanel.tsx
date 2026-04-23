@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FileText, Image, Link2, Table, X, Plus, Minus, ArrowLeft, ChevronRight, ExternalLink, Loader2 } from 'lucide-react';
+import { FileText, Image, Link2, Table, X, Plus, Minus, ArrowLeft, ChevronRight, ExternalLink, Loader2, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { TextBlock, MediaBlock, TableBlock, SubCategory } from '@/types';
 import { isValidUrl } from '@/lib/urlValidation';
@@ -8,6 +8,7 @@ import { showErrorPopup } from '@/contexts/ErrorPopupContext';
 import { compressImage } from '@/lib/imageCompression';
 import { uploadImageToStorage } from '@/lib/imageUpload';
 import { useAuth } from '@/contexts/AuthContext';
+import { useSmartRewrite } from '@/hooks/useSmartRewrite';
 
 type ActiveScreen = 'select' | 'notes' | 'images' | 'urls' | 'table';
 
@@ -26,11 +27,30 @@ interface AddMemoryPanelProps {
 
 export function AddMemoryPanel({ spaceId, isOpen, onClose, onAddItem }: AddMemoryPanelProps) {
   const { user } = useAuth();
+  const { rewrite, isRewriting } = useSmartRewrite();
   const [activeScreen, setActiveScreen] = useState<ActiveScreen>('select');
 
   // Note state
   const [noteInput, setNoteInput] = useState('');
   const noteInputRef = useRef<HTMLTextAreaElement>(null);
+
+  const handleAugmentNote = useCallback(async () => {
+    if (!noteInput.trim() || isRewriting) return;
+    const result = await rewrite(noteInput.trim(), 'augment');
+    if (result?.result) {
+      setNoteInput(result.result);
+      // Resize textarea to fit new content
+      requestAnimationFrame(() => {
+        const el = noteInputRef.current;
+        if (el) {
+          el.style.height = 'auto';
+          el.style.height = el.scrollHeight + 'px';
+        }
+      });
+    } else {
+      showErrorPopup("Couldn't augment the note. Try again.");
+    }
+  }, [noteInput, isRewriting, rewrite]);
 
   // Image state
   const [images, setImages] = useState<{ preview: string; caption: string }[]>([]);
@@ -422,6 +442,28 @@ export function AddMemoryPanel({ spaceId, isOpen, onClose, onAddItem }: AddMemor
           rows={2}
           className="w-full px-4 py-3 rounded-xl bg-card border-2 border-border text-foreground placeholder:text-muted-foreground/50 text-[15px] focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none overflow-hidden"
         />
+        <div className="mt-3 flex justify-center">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleAugmentNote}
+            disabled={!noteInput.trim() || isRewriting}
+            className="gap-2"
+          >
+            {isRewriting ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Augmenting…
+              </>
+            ) : (
+              <>
+                <Sparkles className="w-4 h-4 text-primary" />
+                Augment with AI
+              </>
+            )}
+          </Button>
+        </div>
         <p className="text-xs text-muted-foreground/50 mt-3 text-center">
           Tap Save when done
         </p>
