@@ -6,7 +6,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
  * EntryPortal — immersive landing that greets the user on session entry.
  *
  * Shows a blank warm-cream canvas with two large circles:
- *   LIVE   (left)  → navigates to "/"
+ *   LIFE   (left)  → navigates to "/"
  *   ARCHIVE (right) → navigates to "/archive"
  *
  * Clicking a circle plays an expand animation (the chosen circle scales to
@@ -27,7 +27,7 @@ export function EntryPortal() {
       return true;
     }
   });
-  const [exiting, setExiting] = useState<null | 'live' | 'archive'>(null);
+  const [exiting, setExiting] = useState<null | 'life' | 'archive'>(null);
   const navigatedRef = useRef(false);
 
   // If the user lands directly on /archive via URL (share link, refresh),
@@ -42,7 +42,7 @@ export function EntryPortal() {
     try { sessionStorage.setItem(SESSION_FLAG, 'true'); } catch { /* ignore */ }
   };
 
-  const handleEnter = (target: 'live' | 'archive') => {
+  const handleEnter = (target: 'life' | 'archive') => {
     if (exiting) return;
     setExiting(target);
     mark();
@@ -53,7 +53,7 @@ export function EntryPortal() {
     setTimeout(() => {
       if (navigatedRef.current) return;
       navigatedRef.current = true;
-      navigate(target === 'live' ? '/' : '/archive', { replace: true });
+      navigate(target === 'life' ? '/' : '/archive', { replace: true });
     }, 380);
 
     // After the animation has had time to complete, fully unmount the portal.
@@ -98,13 +98,13 @@ export function EntryPortal() {
         <div className="relative w-full h-full flex items-center justify-center">
           <div className="relative flex items-center justify-center gap-[clamp(1.5rem,8vw,6rem)] flex-col sm:flex-row">
             <PortalCircle
-              label="Live"
+              label="Life"
               sublabel="your day"
               position="left"
               tint="hsl(8 78% 48%)"
-              isExiting={exiting === 'live'}
+              isExiting={exiting === 'life'}
               isOtherExiting={exiting === 'archive'}
-              onClick={() => handleEnter('live')}
+              onClick={() => handleEnter('life')}
             />
             <PortalCircle
               label="Archive"
@@ -112,7 +112,7 @@ export function EntryPortal() {
               position="right"
               tint="hsl(20 14% 10%)"
               isExiting={exiting === 'archive'}
-              isOtherExiting={exiting === 'live'}
+              isOtherExiting={exiting === 'life'}
               onClick={() => handleEnter('archive')}
             />
           </div>
