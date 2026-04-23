@@ -117,7 +117,11 @@ export default function ArchivePage({ embedded = false, onNavigateToSpace }: Arc
       {/* Minimal masthead */}
       <Masthead />
 
-      {/* Coverflow carousel */}
+      {/* Coverflow carousel.
+          touch-action: pan-x claims horizontal gestures so the outer
+          LIFE↔ARCHIVE snap swiper in MainLayout doesn't steal them.
+          Spacer divs instead of %-padding for reliable cross-browser
+          scroll math (Safari mishandles padding on horizontal scrollers). */}
       <div
         ref={scrollerRef}
         className="flex-1 min-h-0 flex overflow-x-auto overflow-y-hidden scrollbar-hide items-center"
@@ -125,29 +129,42 @@ export default function ArchivePage({ embedded = false, onNavigateToSpace }: Arc
           scrollSnapType: 'x mandatory',
           WebkitOverflowScrolling: 'touch',
           overscrollBehaviorX: 'contain',
-          // Leading/trailing padding so first & last cards can snap to center
-          // with visible whitespace on the outside (no awkward flush-to-edge).
-          paddingLeft: `calc(50% - ${CARD_FRACTION * 50}%)`,
-          paddingRight: `calc(50% - ${CARD_FRACTION * 50}%)`,
+          touchAction: 'pan-x',
         }}
+        onTouchStart={stopHorizontalBubble}
+        onTouchMove={stopHorizontalBubble}
       >
         {!hasAnySpaces ? (
           <EmptyCard onNavigateToSpace={onNavigateToSpace} />
         ) : (
-          spreads.map((spread, i) => (
-            <CardSlot key={spread.kind === 'space' ? spread.space.id : '__new__'} isActive={i === activeIndex}>
-              {spread.kind === 'space' ? (
-                <SpaceCard
-                  space={spread.space}
-                  section={spread.section}
-                  isActive={i === activeIndex}
-                  onEnter={() => enterSpace(spread.space.id)}
-                />
-              ) : (
-                <NewArchiveCard onNavigateToSpace={onNavigateToSpace} />
-              )}
-            </CardSlot>
-          ))
+          <>
+            <EdgeSpacer />
+            {spreads.map((spread, i) => (
+              <CardSlot
+                key={spread.kind === 'space' ? spread.space.id : '__new__'}
+                isActive={i === activeIndex}
+                onClick={() => {
+                  // Tapping a peeking (non-active) card snaps to it rather
+                  // than navigating — it's almost always a "bring it to me"
+                  // intent, not an open intent. Active cards handle their
+                  // own tap via the button inside.
+                  if (i !== activeIndex) goToSpread(i);
+                }}
+              >
+                {spread.kind === 'space' ? (
+                  <SpaceCard
+                    space={spread.space}
+                    section={spread.section}
+                    isActive={i === activeIndex}
+                    onEnter={() => enterSpace(spread.space.id)}
+                  />
+                ) : (
+                  <NewArchiveCard onNavigateToSpace={onNavigateToSpace} />
+                )}
+              </CardSlot>
+            ))}
+            <EdgeSpacer />
+          </>
         )}
       </div>
 
@@ -171,6 +188,27 @@ export default function ArchivePage({ embedded = false, onNavigateToSpace }: Arc
 // 0.78 leaves ~11% peek on each side so prev/next are clearly visible but
 // the active card still dominates.
 const CARD_FRACTION = 0.78;
+
+// Swipes inside the archive carousel must not bubble up to MainLayout's
+// outer LIFE↔ARCHIVE snap-swiper. Without this, a horizontal drag on a
+// card could flip the main page instead of scrolling between archives.
+function stopHorizontalBubble(e: React.TouchEvent) {
+  e.stopPropagation();
+}
+
+/** Leading/trailing spacer so first and last cards can snap to center
+ *  with visible whitespace on the outside. Explicit flex-basis is more
+ *  reliable than %-padding on horizontal scrollers (Safari bug). */
+function EdgeSpacer() {
+  const pct = (1 - CARD_FRACTION) * 50; // 50% of the leftover space
+  return (
+    <div
+      className="shrink-0 h-full pointer-events-none"
+      style={{ flexBasis: `${pct}%`, width: `${pct}%` }}
+      aria-hidden
+    />
+  );
+}
 
 /* ───────────────────────── Masthead ───────────────────────── */
 
@@ -197,7 +235,15 @@ function Masthead() {
 
 /* ───────────────────────── Card slot (snap target + peek scaling) ───────────────────────── */
 
-function CardSlot({ isActive, children }: { isActive: boolean; children: React.ReactNode }) {
+function CardSlot({
+  isActive,
+  onClick,
+  children,
+}: {
+  isActive: boolean;
+  onClick?: () => void;
+  children: React.ReactNode;
+}) {
   return (
     <div
       className="shrink-0 h-full flex items-center justify-center transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]"
@@ -205,11 +251,11 @@ function CardSlot({ isActive, children }: { isActive: boolean; children: React.R
         width: `${CARD_FRACTION * 100}%`,
         scrollSnapAlign: 'center',
         scrollSnapStop: 'always',
-        // Non-active cards shrink slightly + fade — gives depth without
-        // crossing into gimmicky. Active card sits fully forward.
-        transform: isActive ? 'scale(1)' : 'scale(0.92)',
-        opacity: isActive ? 1 : 0.55,
+        // Non-active cards shrink + fade for depth. Active card sits forward.
+        transform: isActive ? 'scale(1)' : 'scale(0.9)',
+        opacity: isActive ? 1 : 0.5,
       }}
+      onClick={onClick}
     >
       {children}
     </div>
@@ -232,12 +278,23 @@ function SpaceCard({
   return (
     <button
       type="button"
-      onClick={onEnter}
+      onClick={(e) => {
+        // Only the ACTIVE (centered) card opens the archive on tap.
+        // Peeking cards let their CardSlot parent handle the tap → scroll
+        // to center. This prevents accidental opens when tapping a card
+        // partially visible on the edge.
+        if (!isActive) {
+          e.stopPropagation();
+          return;
+        }
+        onEnter();
+      }}
       className="group relative w-full block text-left"
       style={{
-        // Card height leaves breathing room at top/bottom so it feels propped
-        // up rather than full-bleed.
         height: 'min(80%, 38rem)',
+        // Disable clicks on non-active cards so the wrapper handles the tap.
+        pointerEvents: isActive ? 'auto' : 'none',
+        touchAction: 'manipulation',
       }}
       aria-label={`Open ${space.name}`}
     >
