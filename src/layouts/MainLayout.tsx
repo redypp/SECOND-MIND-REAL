@@ -412,14 +412,23 @@ export default function MainLayout() {
 
   return (
     <div className="fixed inset-0 overflow-hidden bg-background safe-area-top-ios" style={{ overscrollBehavior: 'none' }}>
-      {/* Swipeable pages container — locked when a sub-page is open to prevent Archive bleed */}
+      {/* LIFE ↔ ARCHIVE are no longer user-swipeable — the home logo is the
+          single way to move between them. Pages are absolutely stacked and
+          toggled via transform driven by currentIndex. */}
       <div
         ref={containerRef}
-        className={`flex h-full overflow-y-hidden snap-x snap-mandatory scrollbar-hide bg-background ${(lifeSubPage || archiveSubPage) ? 'overflow-x-hidden' : 'overflow-x-scroll'}`}
-        style={{ WebkitOverflowScrolling: 'touch', overscrollBehaviorX: 'none' }}
+        className="relative h-full w-full overflow-hidden bg-background"
+        style={{ overscrollBehaviorX: 'none' }}
       >
         {/* Page 1: LIFE */}
-        <div className="min-w-full h-full snap-start snap-always flex-shrink-0 overflow-hidden relative bg-background">
+        <div
+          className="absolute inset-0 overflow-hidden bg-background"
+          style={{
+            transform: currentIndex === 0 ? 'translateX(0)' : 'translateX(-100%)',
+            transition: 'transform 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
+            pointerEvents: currentIndex === 0 ? 'auto' : 'none',
+          }}
+        >
           {/* LIFE dashboard — always rendered underneath; parallax tracks swipeDx during back-swipe */}
           <div
             className="absolute inset-0"
@@ -467,8 +476,14 @@ export default function MainLayout() {
         </div>
 
         {/* Page 2: ARCHIVE */}
-        <div className="min-w-full h-full snap-start snap-always flex-shrink-0 overflow-hidden w-full relative bg-background"
-          style={{ overscrollBehavior: 'contain' }}
+        <div
+          className="absolute inset-0 overflow-hidden bg-background"
+          style={{
+            transform: currentIndex === 1 ? 'translateX(0)' : 'translateX(100%)',
+            transition: 'transform 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
+            pointerEvents: currentIndex === 1 ? 'auto' : 'none',
+            overscrollBehavior: 'contain',
+          }}
         >
           {/* Archive list — parallax shifts left during sub-page back-swipe */}
           <div
