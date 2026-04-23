@@ -438,20 +438,18 @@ export default function SpaceDetail({ embedded = false, spaceId: propSpaceId, on
             </motion.button>
           )}
 
-          {/* Canvas toggle — only shown when AI groups exist */}
-          {hasGroups && (
-            <motion.button
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setViewMode(v => v === 'canvas' ? 'grouped' : 'canvas')}
-              className="w-10 h-10 rounded-full bg-secondary/60 flex items-center justify-center hover:bg-secondary transition-all touch-manipulation"
-              aria-label={viewMode === 'canvas' ? 'Switch to list view' : 'Switch to canvas'}
-            >
-              {viewMode === 'canvas'
-                ? <LayoutList className="w-5 h-5 text-foreground/70" />
-                : <LayoutGrid className="w-5 h-5 text-foreground/70" />
-              }
-            </motion.button>
-          )}
+          {/* List / grid (canvas) toggle — always shown */}
+          <motion.button
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setViewMode(v => v === 'canvas' ? (hasGroups ? 'grouped' : 'list') : 'canvas')}
+            className="w-10 h-10 rounded-full bg-secondary/60 flex items-center justify-center hover:bg-secondary transition-all touch-manipulation"
+            aria-label={viewMode === 'canvas' ? 'Switch to list view' : 'Switch to grid view'}
+          >
+            {viewMode === 'canvas'
+              ? <LayoutList className="w-5 h-5 text-foreground/70" />
+              : <LayoutGrid className="w-5 h-5 text-foreground/70" />
+            }
+          </motion.button>
 
           {!isSharedMember && (
             <motion.button
@@ -652,19 +650,6 @@ export default function SpaceDetail({ embedded = false, spaceId: propSpaceId, on
                 >
                   <p className="text-[clamp(2rem,8vw,2.8rem)] font-display font-bold uppercase tracking-[-0.04em] leading-none text-white">Share</p>
                 </motion.button>
-
-                {items.length > 0 && (
-                  <motion.button
-                    whileTap={{ scale: 0.97 }}
-                    className="text-left py-1.5"
-                    onClick={() => { handleOrganizeArchive(false); setShowSettingsPanel(false); }}
-                    disabled={isOrganizing}
-                  >
-                    <p className="text-[clamp(2rem,8vw,2.8rem)] font-display font-bold uppercase tracking-[-0.04em] leading-none text-white">
-                      {isOrganizing ? 'Working…' : 'Organize'}
-                    </p>
-                  </motion.button>
-                )}
 
                 {viewMode === 'canvas' && sortedItems.length > 0 && (
                   <motion.button
