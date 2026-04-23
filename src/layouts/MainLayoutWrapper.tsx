@@ -17,7 +17,8 @@ export default function MainLayoutWrapper() {
     location.pathname === '/chamber' ||
     location.pathname === '/notifications' ||
     location.pathname === '/ask' ||
-    location.pathname === '/people';
+    location.pathname === '/people' ||
+    location.pathname === '/self';
 
   return (
     <>

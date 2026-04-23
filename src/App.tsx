@@ -22,6 +22,7 @@ import SpaceDetail from "./pages/SpaceDetail";
 import ItemDetail from "./pages/ItemDetail";
 import Search from "./pages/Search";
 import SettingsPage from "./pages/SettingsPage";
+import SelfPage from "./pages/SelfPage";
 import ChamberPage from "./pages/ChamberPage";
 import HabitsPage from "./pages/HabitsPage";
 import AuthPage from "./pages/AuthPage";
@@ -104,6 +105,7 @@ function AppContent() {
         <Route path="/item/:id" element={<ItemDetail />} />
         <Route path="/search" element={<Search />} />
         <Route path="/settings" element={<SettingsPage />} />
+        <Route path="/self" element={<SelfPage />} />
         <Route path="/chamber" element={<ChamberPage />} />
         <Route path="/notifications" element={<NotificationsPage />} />
         <Route path="/people" element={<PeoplePage />} />
