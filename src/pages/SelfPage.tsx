@@ -101,13 +101,12 @@ export default function SelfPage() {
         <div className="flex items-center justify-between px-5 py-4">
           <PortalReturn />
           <span
-            className="tilt-xs leading-none"
+            className="uppercase leading-none"
             style={{
               fontFamily: 'var(--font-display)',
-              fontVariationSettings: '"SOFT" 70, "WONK" 1, "opsz" 144',
               fontWeight: 900,
               fontSize: 'clamp(1.4rem, 4.5vw, 1.9rem)',
-              letterSpacing: '-0.03em',
+              letterSpacing: '-0.035em',
             }}
           >
             Self
@@ -196,13 +195,12 @@ function IdentityCard({
       <div className="flex items-end justify-between gap-4">
         <div className="flex flex-col min-w-0">
           <span
-            className="uppercase leading-[0.88] tilt-l"
+            className="uppercase leading-[0.88]"
             style={{
               fontFamily: 'var(--font-display)',
-              fontVariationSettings: '"SOFT" 70, "WONK" 1, "opsz" 144',
               fontWeight: 900,
               fontSize: 'clamp(2.4rem, 11vw, 4rem)',
-              letterSpacing: '-0.04em',
+              letterSpacing: '-0.045em',
               color: 'hsl(20 14% 8%)',
               wordBreak: 'break-word',
             }}
@@ -262,10 +260,9 @@ function StatBlock({ label, value }: { label: string; value: number }) {
         className="tabular-nums"
         style={{
           fontFamily: 'var(--font-display)',
-          fontVariationSettings: '"SOFT" 60, "opsz" 96',
           fontWeight: 900,
           fontSize: 'clamp(1.8rem, 6vw, 2.4rem)',
-          letterSpacing: '-0.03em',
+          letterSpacing: '-0.035em',
           lineHeight: 1,
           color: 'hsl(20 14% 8%)',
         }}
@@ -396,13 +393,12 @@ function RecommendationsSection({
             </span>
           </div>
           <h2
-            className="mt-1 tilt-xs leading-[0.95]"
+            className="mt-1 leading-[0.95]"
             style={{
               fontFamily: 'var(--font-display)',
-              fontVariationSettings: '"SOFT" 65, "WONK" 1, "opsz" 96',
               fontWeight: 900,
               fontSize: 'clamp(1.5rem, 5vw, 2rem)',
-              letterSpacing: '-0.03em',
+              letterSpacing: '-0.035em',
             }}
           >
             Worth a look today
@@ -506,10 +502,9 @@ function RecommendationCard({ rec, onOpen, indexOffset }: { rec: Recommendation;
         className="leading-[1.05]"
         style={{
           fontFamily: 'var(--font-display)',
-          fontVariationSettings: '"SOFT" 55, "WONK" 1, "opsz" 72',
           fontWeight: 800,
           fontSize: 'clamp(1.05rem, 3.5vw, 1.25rem)',
-          letterSpacing: '-0.02em',
+          letterSpacing: '-0.025em',
           color: 'hsl(20 14% 8%)',
         }}
       >

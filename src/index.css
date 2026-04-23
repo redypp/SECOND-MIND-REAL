@@ -1,7 +1,7 @@
-/* Fraunces — warm, characterful display serif with SOFT + WONK axes for
-   "smart imperfection" (slightly rounded serifs, occasional wonky alternates).
-   Inter — clean, geometric sans for body. Warm pairing, editorial feel. */
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@9..144,400..900,0..100,0..1&family=Inter:wght@400;500;600;700;800;900&display=swap');
+/* Inter at heavy weights — acts as the Helvetica-style display face for a
+   sleek, modern-magazine feel. Inter is a very close cousin of Helvetica
+   and is used both for display (900/800) and body (400/500) weights. */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -93,10 +93,12 @@
     --chart-4: 10 55% 32%;
     --chart-5: 350 85% 60%;
 
-    /* Inter for body — clean, readable, modest warmth.
-       Fraunces for display — bold serif with soft/wonky axes for playful editorial feel. */
-    --font-sans: 'Inter', system-ui, -apple-system, 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    --font-display: 'Fraunces', 'Times New Roman', Georgia, serif;
+    /* Single sleek magazine-style sans for the whole app. Helvetica Neue
+       when the OS provides it (macOS/iOS), Inter as the cross-platform match,
+       system sans after that. Body and display share the stack — difference
+       is weight, size, and letter-spacing. */
+    --font-sans: 'Helvetica Neue', 'Helvetica', 'Inter', system-ui, -apple-system, Arial, sans-serif;
+    --font-display: 'Helvetica Neue', 'Helvetica', 'Inter', system-ui, -apple-system, Arial, sans-serif;
 
     --spacing: 0.25rem;
     --tracking-normal: -0.011em;
@@ -147,20 +149,20 @@
     overscroll-behavior-x: none;
   }
 
-  /* Editorial headings — bold display serif with warm "wonk" alternates.
-     SOFT axis rounds the serifs (warmer), WONK enables the quirky cursive g/y
-     glyphs that give Fraunces its playful character. */
+  /* Display headings — Helvetica-style, uppercase, heavy, tight tracking.
+     Global uppercase means every <h1>..<h6> in the app picks up the magazine
+     cover-line feel without per-component changes. */
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-display);
-    letter-spacing: var(--tracking-tight);
     font-weight: 900;
-    font-variation-settings: "SOFT" 50, "WONK" 1, "opsz" 96;
-    line-height: 0.98;
+    text-transform: uppercase;
+    letter-spacing: -0.02em;
+    line-height: 0.96;
   }
 
-  h1 { font-variation-settings: "SOFT" 60, "WONK" 1, "opsz" 144; }
+  h1 { letter-spacing: -0.035em; }
+  h2 { letter-spacing: -0.03em; }
 
-  /* Body text stays Inter — keep it calm so the headlines can shout. */
   p, span, label, a, button, input, textarea, select {
     font-weight: inherit;
   }

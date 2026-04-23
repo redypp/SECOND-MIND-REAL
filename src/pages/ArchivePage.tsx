@@ -231,13 +231,12 @@ function Masthead({
       <div className="flex items-end gap-3 min-w-0">
         <PortalReturn />
         <span
-          className="leading-none tilt-xs"
+          className="uppercase leading-none"
           style={{
             fontFamily: 'var(--font-display)',
-            fontVariationSettings: '"SOFT" 70, "WONK" 1, "opsz" 144',
             fontWeight: 900,
             fontSize: 'clamp(1.6rem, 5.5vw, 2.4rem)',
-            letterSpacing: '-0.03em',
+            letterSpacing: '-0.035em',
           }}
         >
           Archive
@@ -376,7 +375,6 @@ function SpaceSpread({
             className="block uppercase leading-[0.86]"
             style={{
               fontFamily: 'var(--font-display)',
-              fontVariationSettings: '"SOFT" 60, "WONK" 1, "opsz" 144',
               fontWeight: 900,
               fontSize: 'clamp(3rem, 15vw, 7.5rem)',
               letterSpacing: '-0.045em',
@@ -456,7 +454,6 @@ function NewArchiveSpread({
           className="uppercase leading-[0.9] tilt-l"
           style={{
             fontFamily: 'var(--font-display)',
-            fontVariationSettings: '"SOFT" 80, "WONK" 1, "opsz" 144',
             fontWeight: 900,
             fontSize: 'clamp(2.4rem, 11vw, 5rem)',
             letterSpacing: '-0.04em',
@@ -519,7 +516,6 @@ function EmptyStateSpread({ onNavigateToSpace }: { onNavigateToSpace?: (spaceId:
           className="block uppercase leading-[0.9] tilt-xs"
           style={{
             fontFamily: 'var(--font-display)',
-            fontVariationSettings: '"SOFT" 70, "WONK" 1, "opsz" 144',
             fontWeight: 900,
             fontSize: 'clamp(2rem, 8vw, 3.25rem)',
             letterSpacing: '-0.035em',
