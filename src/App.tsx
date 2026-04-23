@@ -12,6 +12,7 @@ import { AppStartup } from "@/components/AppStartup";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 
 import { ErrorPopup } from "@/components/ErrorPopup";
+import { EntryPortal } from "@/components/EntryPortal";
 // InteractiveTutorial import removed
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 // Unified onboarding flow — self-managing, reads phase from TutorialContext
@@ -122,6 +123,11 @@ function AppContent() {
           {/* OnboardingTutorial is self-managing — renders based on TutorialContext phase */}
           {!isPublicRoute && <OnboardingTutorial />}
           {routes}
+          {/* Immersive entry portal — shows once per session on authenticated
+              routes, offering a choice between Live and Archive. Rendered on
+              top of routes so the target page is already mounted underneath
+              when the expand animation completes. */}
+          {!isPublicRoute && user && <EntryPortal />}
         </TooltipProvider>
       </AISettingsProvider>
     </TutorialProvider>
