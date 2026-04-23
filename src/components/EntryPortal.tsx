@@ -98,7 +98,7 @@ export function EntryPortal() {
         {/* Vertical stack — three big discs with breathing space between them.
             Each disc breathes at its own phase so the page feels alive but
             never busy. */}
-        <div className="relative flex flex-col items-center justify-center gap-[clamp(0.5rem,2vh,1.25rem)] py-4">
+        <div className="relative flex flex-col items-center justify-center gap-[clamp(1.25rem,4vh,2.25rem)] py-4">
           <PortalCircle
             label="SELF"
             sublabel="Your world"
@@ -166,19 +166,24 @@ const SLOT_EXIT_DRIFT: Record<StackSlot, { x: number; y: number }> = {
   bottom: { x: 0,  y: 140  },
 };
 
-// Per-slot idle animation — each circle breathes at a different tempo/phase
-// so the stack feels alive without ever syncing into anything mechanical.
-// Gentle Y-float + a micro scale breath + a micro rotation lean.
+// Per-slot idle animation — each disc has a CLEARLY distinct rhythm AND
+// motion axis, so they never converge into each other and the three breaths
+// read as three different characters:
+//   SELF   (top)    — slow deep breath, pulls UP      (away from middle)
+//   LIFE   (middle) — fast shallow breath, sways      (horizontal, no vertical)
+//   ARCHIVE(bottom) — slow rolling breath, pushes DOWN (away from middle)
+// Different directions = no convergence = no overlap.
 const SLOT_IDLE: Record<StackSlot, {
   yRange: [number, number, number];
+  xRange: [number, number, number];
   scaleRange: [number, number, number];
   rotateRange: [number, number, number];
   duration: number;
   delay: number;
 }> = {
-  top:    { yRange: [0, -6, 0],  scaleRange: [1, 1.012, 1], rotateRange: [0, 0.6, 0],  duration: 5.2, delay: 0    },
-  middle: { yRange: [0, 4, 0],   scaleRange: [1, 1.018, 1], rotateRange: [0, -0.5, 0], duration: 6.1, delay: 0.9  },
-  bottom: { yRange: [0, -5, 0],  scaleRange: [1, 1.014, 1], rotateRange: [0, 0.4, 0],  duration: 5.7, delay: 1.7  },
+  top:    { yRange: [0, -10, 0], xRange: [0, 0, 0],   scaleRange: [1, 1.025, 1], rotateRange: [0, 0.9, 0],  duration: 7.0, delay: 0   },
+  middle: { yRange: [0, 0, 0],   xRange: [0, 6, 0],   scaleRange: [1, 1.01, 1],  rotateRange: [0, -0.4, 0], duration: 4.2, delay: 0.6 },
+  bottom: { yRange: [0, 10, 0],  xRange: [0, 0, 0],   scaleRange: [1, 1.02, 1],  rotateRange: [0, 0.6, 0],  duration: 5.6, delay: 1.3 },
 };
 
 function PortalCircle({ label, sublabel, slot, tint, isExiting, isOtherExiting, onClick }: PortalCircleProps) {
@@ -190,16 +195,19 @@ function PortalCircle({ label, sublabel, slot, tint, isExiting, isOtherExiting, 
   const exitDrift = SLOT_EXIT_DRIFT[slot];
   const idle = SLOT_IDLE[slot];
 
-  // Build the idle animation object — only active when the portal is at
-  // rest (not exiting). Framer runs these key-frame loops indefinitely.
+  // Build the idle animation — each axis runs at its own tempo so the loops
+  // never align into a mechanical sync. Framer runs these indefinitely while
+  // the portal is at rest.
   const idleAnimation = {
     scale: idle.scaleRange,
     y: idle.yRange,
+    x: idle.xRange,
     rotate: idle.rotateRange,
     opacity: 1,
     transition: {
       scale:   { duration: idle.duration,       repeat: Infinity, ease: 'easeInOut', delay: idle.delay },
       y:       { duration: idle.duration * 1.1, repeat: Infinity, ease: 'easeInOut', delay: idle.delay },
+      x:       { duration: idle.duration * 0.95,repeat: Infinity, ease: 'easeInOut', delay: idle.delay },
       rotate:  { duration: idle.duration * 1.3, repeat: Infinity, ease: 'easeInOut', delay: idle.delay },
       opacity: { duration: 0.6, ease: [0.16, 1, 0.3, 1], delay: entryDelay },
     },
@@ -265,15 +273,17 @@ function PortalCircle({ label, sublabel, slot, tint, isExiting, isOtherExiting, 
         </span>
       </div>
 
-      {/* Soft halo that blooms just after each disc's own inhale, so the
-          stack reads as three living things breathing at slightly different
-          tempos — not a chorus of metronomes. */}
+      {/* Inner glow that blooms with each disc's inhale — constrained to the
+          disc itself (no bleed past the edge) so it can't visually overlap
+          the neighboring bubbles. */}
       {!isExiting && !isOtherExiting && (
         <motion.span
           aria-hidden
-          className="absolute inset-[-8%] rounded-full pointer-events-none"
-          style={{ background: tint, filter: 'blur(14px)' }}
-          animate={{ scale: [1, 1.05, 1], opacity: [0.0, 0.22, 0.0] }}
+          className="absolute inset-0 rounded-full pointer-events-none"
+          style={{
+            background: `radial-gradient(circle at center, hsl(36 33% 98% / 0.08) 0%, transparent 65%)`,
+          }}
+          animate={{ opacity: [0.0, 1, 0.0] }}
           transition={{
             duration: idle.duration * 1.2,
             repeat: Infinity,
