@@ -7,12 +7,11 @@ import ClockPage from '@/pages/ClockPage';
 import TodoPage from '@/pages/TodoPage';
 import HabitsPage from '@/pages/HabitsPage';
 import JournalPage from '@/pages/JournalPage';
-import { PageIndicators } from '@/components/PageIndicators';
 import { subscribeLifecycle } from '@/lib/appLifecycle';
 import { useScheduledReminders } from '@/hooks/useScheduledReminders';
 
-// Top-level routes: LIFE and ARCHIVE
-const TOP_ROUTES = ['/', '/archive'];
+// Top-level routes: LIFE and ARCHIVE (the hub lives at '/', outside MainLayout)
+const TOP_ROUTES = ['/life', '/archive'];
 
 // Sub-pages within LIFE — still exist as full embedded pages
 const LIFE_ROUTES = ['/daily-plan', '/todos', '/habits', '/journal'];
@@ -84,7 +83,7 @@ export default function MainLayout() {
       setLifeSubPage(null);
       setIsAnimatingOut(false);
       setSwipeDx(0);
-      window.history.replaceState(null, '', '/');
+      window.history.replaceState(null, '', '/life');
     }, 350);
   }, []);
 
@@ -214,8 +213,8 @@ export default function MainLayout() {
       return;
     }
 
-    // Navigating to root `/` — always clear sub-page
-    if (path === '/') {
+    // Navigating back to LIFE root — always clear sub-page
+    if (path === '/life') {
       setLifeSubPage(null);
     }
 
@@ -268,7 +267,7 @@ export default function MainLayout() {
         // When swiping to LIFE, clear sub-page
         if (newIndex === 0) {
           setLifeSubPage(null);
-          window.history.replaceState(null, '', '/');
+          window.history.replaceState(null, '', '/life');
         } else {
           window.history.replaceState(null, '', TOP_ROUTES[newIndex]);
         }
@@ -377,11 +376,8 @@ export default function MainLayout() {
 
     const unsubscribe = subscribeLifecycle((event) => {
       if (event.type === 'foreground' && event.wasBackground && event.backgroundDuration > 10_000) {
-        setCurrentIndex(0);
-        setLifeSubPage(null);
-        lastIndexRef.current = 0;
-        window.history.replaceState(null, '', '/');
-        if (containerRef.current) containerRef.current.scrollLeft = 0;
+        // Long-absence resume returns the user to the home hub.
+        navigate('/', { replace: true });
       }
     });
 
@@ -398,7 +394,7 @@ export default function MainLayout() {
     lastIndexRef.current = index;
     if (index === 0) {
       setLifeSubPage(null);
-      window.history.replaceState(null, '', '/');
+      window.history.replaceState(null, '', '/life');
     } else {
       navigate(TOP_ROUTES[index], { replace: true });
     }
@@ -530,14 +526,6 @@ export default function MainLayout() {
         </div>
       </div>
 
-      {/* Page indicators — hidden when inside a sub-page */}
-      {!lifeSubPage && !archiveSubPage && (
-        <PageIndicators
-          currentIndex={currentIndex}
-          totalPages={2}
-          onPageSelect={handlePageSelect}
-        />
-      )}
     </div>
   );
 }

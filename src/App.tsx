@@ -23,6 +23,7 @@ import ItemDetail from "./pages/ItemDetail";
 import Search from "./pages/Search";
 import SettingsPage from "./pages/SettingsPage";
 import SelfPage from "./pages/SelfPage";
+import HomePage from "./pages/HomePage";
 import ChamberPage from "./pages/ChamberPage";
 import HabitsPage from "./pages/HabitsPage";
 import AuthPage from "./pages/AuthPage";
@@ -93,7 +94,8 @@ function AppContent() {
       } />
 
       <Route element={<ProtectedRoute><MainLayoutWrapper /></ProtectedRoute>}>
-        <Route path="/" element={null} />
+        <Route path="/" element={<HomePage />} />
+        <Route path="/life" element={null} />
         <Route path="/archive" element={null} />
         <Route path="/daily-plan" element={null} />
         <Route path="/todos" element={null} />

@@ -10,7 +10,8 @@ export default function MainLayoutWrapper() {
   const location = useLocation();
 
   // Detail pages that render on top of MainLayout
-  const isOverlay = location.pathname.startsWith('/space/') ||
+  const isOverlay = location.pathname === '/' ||
+    location.pathname.startsWith('/space/') ||
     location.pathname.startsWith('/item/') ||
     location.pathname === '/search' ||
     location.pathname === '/settings' ||

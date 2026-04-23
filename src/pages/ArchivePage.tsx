@@ -4,7 +4,6 @@ import { motion } from 'framer-motion';
 import { Plus, Users, Pin } from 'lucide-react';
 import { useSpaces } from '@/contexts/SpacesContext';
 import { AddSpaceDialog } from '@/components/AddSpaceDialog';
-import { BottomNavigation } from '@/components/BottomNavigation';
 import { PortalReturn } from '@/components/PortalReturn';
 import { MarqueeHeader } from '@/components/MarqueeHeader';
 import { useDominantColor } from '@/hooks/useDominantColor';
@@ -179,7 +178,6 @@ export default function ArchivePage({ embedded = false, onNavigateToSpace }: Arc
         />
       )}
 
-      {!embedded && <BottomNavigation />}
     </div>
   );
 }
