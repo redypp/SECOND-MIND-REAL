@@ -1,26 +1,24 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { PersonStanding } from 'lucide-react';
 
 /**
  * EntryPortal — immersive landing that greets the user on session entry.
  *
- * Three circles in a clover (equilateral triangle) configuration, all in
- * cool-black tints so they read as a family rather than three separate
- * colors. Clicking one expands it to fill the viewport and hands off to
- * the target route.
+ * Three large cool-black circles stacked vertically, top to bottom:
+ *   SELF     → "/self"
+ *   LIFE     → "/"
+ *   ARCHIVE  → "/archive"
  *
- *   LIFE     (top)          → "/"
- *   SELF     (bottom-left)  → "/self"
- *   ARCHIVE  (bottom-right) → "/archive"
+ * Clicking a circle expands it to fill the viewport and hands off to the
+ * target route. The portal only shows once per browser session.
  */
 
 const SESSION_FLAG = 'smind_portal_seen_v1';
 const SHOW_PORTAL_EVENT = 'smind:show-portal';
 
 type PortalTarget = 'life' | 'self' | 'archive';
-type CloverSlot = 'top' | 'bottom-left' | 'bottom-right';
+type StackSlot = 'top' | 'middle' | 'bottom';
 
 /** Dispatch this to reopen the portal from anywhere in the app. */
 export function openPortal() {
@@ -97,39 +95,31 @@ export function EntryPortal() {
         transition={{ duration: 0.35 }}
         className="fixed inset-0 z-[20000] bg-background flex items-center justify-center overflow-hidden"
       >
-        {/* Clover container — sized so three discs fit in an equilateral
-            triangle and just kiss at their edges. Using aspect-square so
-            the layout stays balanced across viewport shapes. */}
-        <div
-          className="relative"
-          style={{
-            width: 'min(92vw, 82vh, 36rem)',
-            height: 'min(92vw, 82vh, 36rem)',
-          }}
-        >
+        {/* Vertical stack — three big discs, slight negative gaps so they read
+            as one connected column rather than three isolated dots. */}
+        <div className="relative flex flex-col items-center justify-center py-6">
+          <PortalCircle
+            label="SELF"
+            sublabel="Your world"
+            slot="top"
+            tint="hsl(220 14% 8%)"
+            isExiting={exiting === 'self'}
+            isOtherExiting={exiting !== null && exiting !== 'self'}
+            onClick={() => handleEnter('self')}
+          />
           <PortalCircle
             label="LIFE"
             sublabel="Your day"
-            slot="top"
+            slot="middle"
             tint="hsl(220 12% 14%)"
             isExiting={exiting === 'life'}
             isOtherExiting={exiting !== null && exiting !== 'life'}
             onClick={() => handleEnter('life')}
           />
           <PortalCircle
-            label="SELF"
-            sublabel="Your world"
-            slot="bottom-left"
-            tint="hsl(220 14% 8%)"
-            icon={<PersonStanding className="w-[42%] h-[42%] text-[hsl(36_33%_98%_/_0.9)]" strokeWidth={1.5} />}
-            isExiting={exiting === 'self'}
-            isOtherExiting={exiting !== null && exiting !== 'self'}
-            onClick={() => handleEnter('self')}
-          />
-          <PortalCircle
             label="ARCHIVE"
             sublabel="Your mind"
-            slot="bottom-right"
+            slot="bottom"
             tint="hsl(220 10% 20%)"
             isExiting={exiting === 'archive'}
             isOtherExiting={exiting !== null && exiting !== 'archive'}
@@ -156,38 +146,38 @@ export function EntryPortal() {
 interface PortalCircleProps {
   label: string;
   sublabel: string;
-  slot: CloverSlot;
+  slot: StackSlot;
   tint: string;
-  icon?: React.ReactNode;
   isExiting: boolean;
   isOtherExiting: boolean;
   onClick: () => void;
 }
 
-// Clover geometry. Container is 100% × 100%. Each circle is 52% of the
-// container. Centers sit at 120° intervals around the container center, at
-// an offset radius chosen so the discs just overlap — giving a tight, organic
-// clover silhouette instead of three isolated dots.
-//   top         → center at (50%, 26%)
-//   bottom-left → center at (26%, 66%)
-//   bottom-right→ center at (74%, 66%)
-const CIRCLE_SIZE = '52%';
-const SLOT_STYLES: Record<CloverSlot, React.CSSProperties> = {
-  'top':          { top: '0%',    left: '50%', transform: 'translate(-50%, 0)' },
-  'bottom-left':  { bottom: '0%', left: '0%',  transform: 'translate(0, 0)'    },
-  'bottom-right': { bottom: '0%', right: '0%', transform: 'translate(0, 0)'    },
+// Each disc wants to fill most of the horizontal space on phones and stay
+// generous-but-balanced on tall desktops. Capped so three still fit stacked
+// on a short viewport.
+const CIRCLE_SIZE = 'min(78vw, 28vh, 22rem)';
+
+// Overlap between adjacent discs (negative top margin on middle + bottom).
+const OVERLAP = '-1.25rem';
+
+const SLOT_WRAPPER_STYLE: Record<StackSlot, React.CSSProperties> = {
+  top: { marginTop: 0 },
+  middle: { marginTop: OVERLAP },
+  bottom: { marginTop: OVERLAP },
 };
 
-const SLOT_EXIT_DRIFT: Record<CloverSlot, { x: number; y: number }> = {
-  'top':          { x: 0,    y: -140 },
-  'bottom-left':  { x: -140, y: 120  },
-  'bottom-right': { x: 140,  y: 120  },
+// Different exit drift per slot — feels more alive than a uniform fade.
+const SLOT_EXIT_DRIFT: Record<StackSlot, { x: number; y: number }> = {
+  top:    { x: 0,  y: -140 },
+  middle: { x: 120, y: 0   },
+  bottom: { x: 0,  y: 140  },
 };
 
-function PortalCircle({ label, sublabel, slot, tint, icon, isExiting, isOtherExiting, onClick }: PortalCircleProps) {
+function PortalCircle({ label, sublabel, slot, tint, isExiting, isOtherExiting, onClick }: PortalCircleProps) {
   const entryDelay =
     slot === 'top' ? 0.05 :
-    slot === 'bottom-left' ? 0.14 :
+    slot === 'middle' ? 0.14 :
     0.22;
 
   const exitDrift = SLOT_EXIT_DRIFT[slot];
@@ -213,45 +203,37 @@ function PortalCircle({ label, sublabel, slot, tint, icon, isExiting, isOtherExi
         }
         : { scale: 1, opacity: 1, transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1], delay: entryDelay } }
       }
-      whileHover={!isExiting && !isOtherExiting ? { scale: 1.035 } : undefined}
+      whileHover={!isExiting && !isOtherExiting ? { scale: 1.03 } : undefined}
       whileTap={!isExiting && !isOtherExiting ? { scale: 0.97 } : undefined}
-      className="absolute rounded-full flex items-center justify-center touch-manipulation focus:outline-none"
+      className="relative rounded-full flex items-center justify-center touch-manipulation focus:outline-none shrink-0"
       style={{
         width: CIRCLE_SIZE,
         height: CIRCLE_SIZE,
         background: tint,
         boxShadow:
           '0 30px 60px -20px hsl(220 15% 4% / 0.55), 0 10px 24px -10px hsl(220 15% 4% / 0.35)',
-        ...SLOT_STYLES[slot],
+        zIndex: slot === 'middle' ? 2 : slot === 'top' ? 3 : 1,
+        ...SLOT_WRAPPER_STYLE[slot],
       }}
       aria-label={`Enter ${label}`}
     >
-      {icon && (
-        <span
-          aria-hidden
-          className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-20"
-        >
-          {icon}
-        </span>
-      )}
-
-      <div className="relative flex flex-col items-center gap-1.5 select-none">
+      <div className="relative flex flex-col items-center gap-2 select-none">
         <span
           className="leading-none text-[hsl(36_33%_98%)]"
           style={{
             fontFamily: 'var(--font-display)',
             fontWeight: 900,
-            fontSize: 'clamp(1.5rem, 4.2vw, 2.75rem)',
-            letterSpacing: '-0.04em',
+            fontSize: 'clamp(2.5rem, 9vw, 4.5rem)',
+            letterSpacing: '-0.045em',
           }}
         >
           {label}
         </span>
         <span
-          className="uppercase tracking-[0.3em] text-[hsl(36_33%_98%_/_0.55)]"
+          className="uppercase tracking-[0.32em] text-[hsl(36_33%_98%_/_0.6)]"
           style={{
             fontFamily: 'var(--font-sans)',
-            fontSize: 'clamp(0.55rem, 1.1vw, 0.7rem)',
+            fontSize: 'clamp(0.7rem, 1.8vw, 0.95rem)',
             fontWeight: 500,
           }}
         >
@@ -269,7 +251,7 @@ function PortalCircle({ label, sublabel, slot, tint, icon, isExiting, isOtherExi
             duration: 3.4,
             repeat: Infinity,
             ease: 'easeInOut',
-            delay: slot === 'top' ? 0 : slot === 'bottom-left' ? 0.9 : 1.8,
+            delay: slot === 'top' ? 0 : slot === 'middle' ? 0.9 : 1.8,
           }}
         />
       )}
