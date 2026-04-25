@@ -75,9 +75,12 @@ export default function SelfPage() {
 
   return (
     <div className="fixed inset-0 flex flex-col bg-background text-foreground safe-area-top-ios overflow-y-auto">
-      {/* Header — pinned tight to the top of the safe area, no tall padding. */}
-      <header className="sticky safe-sticky-top z-20 bg-background/95 backdrop-blur-xl">
-        <div className="flex items-center justify-between px-4 py-1">
+      {/* Header — pinned tight to the top of the safe area, no tall padding.
+          Container already provides safe-area-top inset, so the sticky header
+          uses top-0 (otherwise both insets stack and the header floats ~94px
+          down on iPhone). */}
+      <header className="sticky top-0 z-20 bg-background/95 backdrop-blur-xl">
+        <div className="flex items-center justify-between px-4 py-2">
           <PortalReturn />
           <div className="flex items-center gap-1">
             <button
