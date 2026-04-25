@@ -104,11 +104,23 @@ export default function SpaceDetail({ embedded = false, spaceId: propSpaceId, on
     if (id) markSpaceUsed(id);
   }, [id, markSpaceUsed]);
 
-  // Restore persisted AI groups if the space was previously organized
-  // (only loads them — doesn't force the view mode; user must switch manually)
+  // Restore persisted AI groups AND default the view to 'grouped' whenever
+  // an archive has saved organization. Users want their organized headers
+  // to be the landing experience — not a flat feed they have to flip from.
+  // The viewMode toggle in the masthead lets them drop back to 'list' or
+  // 'canvas' for the session if they want.
+  const groupedViewInitialized = useRef(false);
+  useEffect(() => {
+    // Reset the one-shot guard whenever the user navigates to a different archive.
+    groupedViewInitialized.current = false;
+  }, [id]);
   useEffect(() => {
     if (space?.groupAssignments?.groups?.length) {
       setOrganizedGroups(space.groupAssignments.groups);
+      if (!groupedViewInitialized.current) {
+        groupedViewInitialized.current = true;
+        setViewMode('grouped');
+      }
     }
   }, [space?.groupAssignments]);
 
@@ -143,6 +155,13 @@ export default function SpaceDetail({ embedded = false, spaceId: propSpaceId, on
     }
     return Array.from(seen.values()).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
   }, [items]);
+
+  // Auto-organize on first visit when an archive has enough items to benefit
+  // from grouping but doesn't have any saved groups yet. Runs silently so
+  // failures don't pop a toast, and only fires once per archive per session.
+  // Threshold of 4 items means tiny archives don't waste an AI call, but the
+  // moment things start to pile up the headers materialize on their own.
+  const autoOrganizeAttempted = useRef<string | null>(null);
 
   // Manual Re-organize via AI (user-initiated from settings only)
   const handleOrganizeArchive = useCallback(async (silent = false) => {
@@ -200,6 +219,21 @@ export default function SpaceDetail({ embedded = false, spaceId: propSpaceId, on
       setIsOrganizing(false);
     }
   }, [isOrganizing, items, space, spaces, id, saveGroupAssignments, organizedGroups]);
+
+  // Auto-organize when the archive has enough items but no saved groups.
+  // Fires once per archive per session, silently — first visit triggers
+  // smart header creation, subsequent visits restore the saved groups via
+  // the effect above.
+  useEffect(() => {
+    if (!id || !space) return;
+    if (autoOrganizeAttempted.current === id) return;
+    if (space.groupAssignments?.groups?.length) return; // already organized
+    if (items.length < 4) return; // not enough to benefit
+    if (isOrganizing) return;
+    if (isSharedMember) return; // don't auto-organize someone else's archive
+    autoOrganizeAttempted.current = id;
+    void handleOrganizeArchive(true);
+  }, [id, space, items.length, isOrganizing, isSharedMember, handleOrganizeArchive]);
 
   // Fire background AI classification for images and links, updating aiTags after save.
   const classifyMediaItem = useCallback(async (itemId: string, item: Parameters<typeof addItemAsync>[0], spaceName: string) => {
