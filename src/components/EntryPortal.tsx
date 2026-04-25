@@ -47,9 +47,9 @@ export function EntryPortal() {
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.25 }}
-        className="fixed inset-0 z-[20000] bg-background flex items-center justify-center overflow-hidden px-5"
+        className="fixed inset-0 z-[20000] bg-background flex items-center justify-center overflow-hidden px-5 py-4 safe-area-top-ios"
       >
-        <div className="relative flex flex-col items-stretch justify-center gap-4 w-full max-w-md">
+        <div className="relative flex flex-col items-stretch justify-center gap-3 w-full max-w-md h-full">
           <PortalSection
             label="SELF"
             sublabel="Your world"
@@ -97,9 +97,10 @@ interface PortalSectionProps {
   onClick: () => void;
 }
 
-// Tall enough to feel substantial, short enough for three to fit vertically
-// on phones without crowding.
-const SECTION_HEIGHT = 'min(26vh, 11rem)';
+// Each section flexes to fill its share of the vertical space — three equal
+// rectangles that together cover almost the whole viewport. Capped so they
+// don't get absurdly tall on a desktop window.
+const SECTION_MAX_HEIGHT = '18rem';
 
 // Stagger so the three rectangles slide in one after another.
 const SLOT_DELAY: Record<StackSlot, number> = {
@@ -156,9 +157,9 @@ function PortalSection({ label, sublabel, slot, tint, isExiting, isOtherExiting,
       }
       whileHover={!isExiting && !isOtherExiting ? { scale: 1.015 } : undefined}
       whileTap={!isExiting && !isOtherExiting ? { scale: 0.985 } : undefined}
-      className="relative w-full rounded-3xl flex items-center px-7 touch-manipulation focus:outline-none shrink-0 overflow-hidden"
+      className="relative w-full rounded-3xl flex items-center px-7 touch-manipulation focus:outline-none flex-1 min-h-0 overflow-hidden"
       style={{
-        height: SECTION_HEIGHT,
+        maxHeight: SECTION_MAX_HEIGHT,
         background: tint,
         boxShadow:
           '0 30px 60px -20px hsl(220 15% 4% / 0.55), 0 10px 24px -10px hsl(220 15% 4% / 0.35)',
