@@ -4,7 +4,6 @@ import { motion } from 'framer-motion';
 import { Plus } from 'lucide-react';
 import { useSpaces } from '@/contexts/SpacesContext';
 import { AddSpaceDialog } from '@/components/AddSpaceDialog';
-import { PortalReturn } from '@/components/PortalReturn';
 import type { Space } from '@/types';
 
 /**
@@ -71,13 +70,10 @@ export default function ArchivePage({ embedded = false, onNavigateToSpace }: Arc
       className={`${embedded ? 'relative w-full h-full' : 'fixed inset-0 safe-area-top-ios'} flex flex-col bg-background overflow-hidden`}
       style={{ overscrollBehavior: 'contain' }}
     >
-      {/* Floating back-to-portal button — replaces the old masthead. */}
-      <div className="absolute top-3 left-3 z-30">
-        <PortalReturn />
-      </div>
+      {/* Back to home is handled globally by HoldToGoHome (long-press). */}
 
       <div
-        className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-4 pt-16 pb-12 scrollbar-hide"
+        className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-4 pt-6 pb-12 scrollbar-hide"
         style={{ WebkitOverflowScrolling: 'touch' }}
       >
         <div className="flex flex-col mx-auto w-full max-w-md">

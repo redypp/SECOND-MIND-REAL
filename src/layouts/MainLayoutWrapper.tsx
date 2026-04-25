@@ -1,5 +1,6 @@
 import { Outlet, useLocation } from 'react-router-dom';
 import MainLayout from './MainLayout';
+import { HoldToGoHome } from '@/components/HoldToGoHome';
 
 /**
  * Keeps MainLayout always mounted so Home state is preserved
@@ -29,6 +30,8 @@ export default function MainLayoutWrapper() {
       </div>
       {/* Detail pages render here */}
       {isOverlay && <Outlet />}
+      {/* Global long-press-to-home gesture (replaces dedicated back-to-home buttons) */}
+      <HoldToGoHome />
     </>
   );
 }

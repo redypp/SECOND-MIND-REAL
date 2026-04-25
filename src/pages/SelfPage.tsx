@@ -7,7 +7,6 @@ import { useSpaces } from '@/contexts/SpacesContext';
 import { useIntelligentCapture } from '@/hooks/useIntelligentCapture';
 import { useSelfRecommendations, Recommendation } from '@/hooks/useSelfRecommendations';
 import { showErrorPopup } from '@/contexts/ErrorPopupContext';
-import { PortalReturn } from '@/components/PortalReturn';
 
 /**
  * SelfPage — clean personal hub.
@@ -80,8 +79,7 @@ export default function SelfPage() {
           uses top-0 (otherwise both insets stack and the header floats ~94px
           down on iPhone). */}
       <header className="sticky top-0 z-20 bg-background/95 backdrop-blur-xl">
-        <div className="flex items-center justify-between px-4 py-2">
-          <PortalReturn />
+        <div className="flex items-center justify-end px-4 py-2">
           <div className="flex items-center gap-1">
             <button
               onClick={() => navigate('/notifications')}
