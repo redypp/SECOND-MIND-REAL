@@ -1,7 +1,7 @@
 import { useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Plus, Users, Pin, FolderOpen } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { useSpaces } from '@/contexts/SpacesContext';
 import { AddSpaceDialog } from '@/components/AddSpaceDialog';
 import { PortalReturn } from '@/components/PortalReturn';
@@ -93,7 +93,6 @@ export default function ArchivePage({ embedded = false, onNavigateToSpace }: Arc
                 key={spread.space.id}
                 index={i}
                 space={spread.space}
-                section={spread.section}
                 onClick={() => enterSpace(spread.space.id)}
               />
             )
@@ -106,28 +105,29 @@ export default function ArchivePage({ embedded = false, onNavigateToSpace }: Arc
 
 /* ───────────────────────── Folder card ───────────────────────── */
 
-function categoryLabel(section: 'pinned' | 'recent' | 'shared'): string {
-  if (section === 'pinned') return 'Pinned';
-  if (section === 'shared') return 'Shared';
-  return 'Archive';
-}
+// Shared layout constants so FolderCard and NewFolderCard render at the
+// exact same dimensions — the "new" tile reads as just another folder in
+// the stack instead of a different-shaped attachment.
+const CARD_RADIUS = '28px';
+const CARD_PADDING_X = 'px-6';
+const CARD_PADDING_TOP = 'pt-5';
+const CARD_PADDING_BOTTOM = 'pb-9';
+const CARD_OVERLAP = '-2.5rem';
+const CARD_TITLE_SIZE = '1.65rem';
 
 function FolderCard({
   index,
   space,
-  section,
   onClick,
 }: {
   index: number;
   space: Space;
-  section: 'pinned' | 'recent' | 'shared';
   onClick: () => void;
 }) {
   const palette = FOLDER_PALETTE[index % FOLDER_PALETTE.length];
   const bg = space.color ?? palette.bg;
   const { fg, meta } = palette;
   const itemCount = typeof space.itemCount === 'number' ? space.itemCount : 0;
-  const Icon = section === 'pinned' ? Pin : section === 'shared' ? Users : FolderOpen;
 
   return (
     <motion.button
@@ -137,47 +137,37 @@ function FolderCard({
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1], delay: Math.min(index * 0.04, 0.4) }}
       whileTap={{ scale: 0.985 }}
-      className="relative w-full text-left rounded-[26px] px-5 pt-4 pb-7 flex flex-col gap-3 focus:outline-none touch-manipulation"
+      className={`relative w-full text-left ${CARD_PADDING_X} ${CARD_PADDING_TOP} ${CARD_PADDING_BOTTOM} flex items-baseline justify-between gap-3 focus:outline-none touch-manipulation`}
       style={{
         background: bg,
+        borderRadius: CARD_RADIUS,
         // Aggressive overlap so the cards visibly sit ON each other like a
-        // wallet/folder stack — only the top ~70% of each card is visible
-        // until the last one in the list. zIndex puts later cards on top.
-        marginTop: index === 0 ? 0 : '-2.25rem',
+        // wallet/folder stack — only the top portion (with the title) of
+        // each card is visible until the last one. zIndex puts later cards
+        // on top of earlier ones.
+        marginTop: index === 0 ? 0 : CARD_OVERLAP,
         zIndex: index + 1,
         boxShadow:
           '0 -2px 0 hsl(220 15% 4% / 0.04), 0 18px 32px -14px hsl(220 15% 4% / 0.32), 0 8px 14px -6px hsl(220 15% 4% / 0.18)',
       }}
       aria-label={`Open ${space.name}`}
     >
-      <div className="flex items-center gap-2.5">
-        <span
-          className="inline-flex items-center justify-center w-6 h-6 rounded-full"
-          style={{ background: `${fg}1f` }}
-        >
-          <Icon className="w-3 h-3" style={{ color: fg }} />
-        </span>
-        <span
-          className="text-[0.62rem] uppercase tracking-[0.28em]"
-          style={{ color: meta, fontFamily: 'var(--font-sans)', fontWeight: 600 }}
-        >
-          {categoryLabel(section)}
-        </span>
-      </div>
-      <div className="flex items-baseline justify-between gap-3">
-        <span
-          className="truncate"
-          style={{
-            color: fg,
-            fontFamily: 'var(--font-display)',
-            fontWeight: 700,
-            fontSize: '1.5rem',
-            letterSpacing: '-0.02em',
-            lineHeight: 1.05,
-          }}
-        >
-          {space.name}
-        </span>
+      <span
+        className="min-w-0 flex-1"
+        style={{
+          color: fg,
+          fontFamily: 'var(--font-display)',
+          fontWeight: 700,
+          fontSize: CARD_TITLE_SIZE,
+          letterSpacing: '-0.02em',
+          lineHeight: 1.05,
+          // Wrap rather than truncate so the user always sees the full title.
+          wordBreak: 'break-word',
+        }}
+      >
+        {space.name}
+      </span>
+      {itemCount > 0 && (
         <span
           className="shrink-0 tabular-nums"
           style={{
@@ -187,9 +177,9 @@ function FolderCard({
             fontWeight: 500,
           }}
         >
-          {itemCount} {itemCount === 1 ? 'entry' : 'entries'}
+          {itemCount}
         </span>
-      </div>
+      )}
     </motion.button>
   );
 }
@@ -203,48 +193,48 @@ function NewFolderCard({
   index: number;
   onNavigateToSpace?: (spaceId: string) => void;
 }) {
-  return (
-    <motion.div
+  // Whole card IS the trigger — pass it to AddSpaceDialog so tapping
+  // anywhere on the tile opens the dialog. Same dimensions as FolderCard
+  // so it reads as just another folder in the stack.
+  const trigger = (
+    <motion.button
+      type="button"
       initial={{ y: 24, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1], delay: Math.min(index * 0.04, 0.4) }}
-      className="relative w-full rounded-[26px] px-5 pt-4 pb-7 flex flex-col gap-3 border-2 border-dashed border-foreground/25 bg-background"
+      whileTap={{ scale: 0.985 }}
+      className={`relative w-full text-left ${CARD_PADDING_X} ${CARD_PADDING_TOP} ${CARD_PADDING_BOTTOM} flex items-baseline justify-between gap-3 focus:outline-none touch-manipulation bg-background border-2 border-dashed border-foreground/25`}
       style={{
-        marginTop: index === 0 ? 0 : '-2.25rem',
+        borderRadius: CARD_RADIUS,
+        marginTop: index === 0 ? 0 : CARD_OVERLAP,
         zIndex: index + 1,
       }}
+      aria-label="Start a new archive"
     >
-      <div className="flex items-center gap-2.5">
-        <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-foreground/10">
-          <Plus className="w-3 h-3 text-foreground/70" />
-        </span>
-        <span
-          className="text-[0.62rem] uppercase tracking-[0.28em] text-foreground/60"
-          style={{ fontFamily: 'var(--font-sans)', fontWeight: 600 }}
-        >
-          New
-        </span>
-      </div>
-      <div className="flex items-center justify-between gap-3">
-        <span
-          className="text-foreground"
-          style={{
-            fontFamily: 'var(--font-display)',
-            fontWeight: 700,
-            fontSize: '1.5rem',
-            letterSpacing: '-0.02em',
-            lineHeight: 1.05,
-          }}
-        >
-          Start a new archive
-        </span>
-        <AddSpaceDialog
-          variant="button"
-          navigateAfterCreate={!onNavigateToSpace}
-          onAfterCreate={onNavigateToSpace}
-        />
-      </div>
-    </motion.div>
+      <span
+        className="min-w-0 flex-1 text-foreground"
+        style={{
+          fontFamily: 'var(--font-display)',
+          fontWeight: 700,
+          fontSize: CARD_TITLE_SIZE,
+          letterSpacing: '-0.02em',
+          lineHeight: 1.05,
+        }}
+      >
+        Start new archive
+      </span>
+      <span className="shrink-0 inline-flex items-center justify-center w-7 h-7 rounded-full bg-foreground/10">
+        <Plus className="w-4 h-4 text-foreground/70" />
+      </span>
+    </motion.button>
+  );
+
+  return (
+    <AddSpaceDialog
+      trigger={trigger}
+      navigateAfterCreate={!onNavigateToSpace}
+      onAfterCreate={onNavigateToSpace}
+    />
   );
 }
 
