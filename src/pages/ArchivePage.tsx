@@ -73,10 +73,10 @@ export default function ArchivePage({ embedded = false, onNavigateToSpace }: Arc
       {/* Back to home is handled globally by HoldToGoHome (long-press). */}
 
       <div
-        className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-4 pt-6 pb-12 scrollbar-hide"
+        className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-3 pt-6 pb-12 scrollbar-hide"
         style={{ WebkitOverflowScrolling: 'touch' }}
       >
-        <div className="flex flex-col mx-auto w-full max-w-md">
+        <div className="flex flex-col w-full">
           {spreads.map((spread, i) =>
             spread.kind === 'new' ? (
               <NewFolderCard
@@ -104,12 +104,20 @@ export default function ArchivePage({ embedded = false, onNavigateToSpace }: Arc
 // Shared layout constants so FolderCard and NewFolderCard render at the
 // exact same dimensions — the "new" tile reads as just another folder in
 // the stack instead of a different-shaped attachment.
-const CARD_RADIUS = '28px';
-const CARD_PADDING_X = 'px-6';
-const CARD_PADDING_TOP = 'pt-5';
-const CARD_PADDING_BOTTOM = 'pb-9';
-const CARD_OVERLAP = '-2.5rem';
-const CARD_TITLE_SIZE = '1.65rem';
+//
+// Sizing rationale:
+//   pt-6 + title (1.85rem * 1.05 line-height) ≈ 3.45rem (title bottom from
+//     card's top edge)
+//   visible portion above the next card = (pt + title + pb) - overlap
+//                                       = (1.5 + 1.94 + 3.5) - 2.75 = 4.19rem
+//   → title bottom (3.45rem) sits ~0.74rem inside the visible 4.19rem,
+//     so the next card never clips the title.
+const CARD_RADIUS = '30px';
+const CARD_PADDING_X = 'px-7';
+const CARD_PADDING_TOP = 'pt-6';
+const CARD_PADDING_BOTTOM = 'pb-14';
+const CARD_OVERLAP = '-2.75rem';
+const CARD_TITLE_SIZE = '1.85rem';
 
 function FolderCard({
   index,

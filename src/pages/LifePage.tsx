@@ -28,12 +28,9 @@ type Section = { id: SectionId; path: string; label: string; meta: string };
 
 const noop = () => {};
 
-// Reference viewport for the mini snapshot. We render each real page at this
-// size into a hidden container, then CSS-scale the whole thing down to fit
-// the card. ~iPhone 14 dimensions so the pages' internal layouts don't
-// break.
-const MINI_REF_WIDTH = 390;
-const MINI_REF_HEIGHT = 844;
+// MiniSnapshot uses the LIVE viewport as its reference (not a fixed value),
+// so when a card zooms to fullscreen the mini's content lines up exactly
+// with the real page underneath — no last-frame "adjustment glitch".
 
 export default function LifePage({ embedded = false, onNavigateToSection }: LifePageProps) {
   const navigate = useNavigate();
@@ -230,32 +227,55 @@ function CardContent({
 /* ───────────────────────── Mini snapshot ───────────────────────── */
 
 /**
- * MiniSnapshot — renders its child at MINI_REF_WIDTH × MINI_REF_HEIGHT and
- * CSS-scales the whole subtree to fit the card. ResizeObserver keeps the
- * scale right when the grid reflows. pointer-events disabled so the mini
- * doesn't intercept the parent button's tap.
+ * MiniSnapshot — renders its child at the actual viewport size and CSS-scales
+ * the whole subtree to fit the card. Uses direct DOM writes (not React state)
+ * so the scale tracks framer-motion's width/height animation every frame
+ * without re-rendering the page subtree. At scale=1 the inner content fills
+ * the viewport exactly, matching the real sub-page that mounts underneath
+ * — no jitter at the end of the zoom.
  */
 function MiniSnapshot({ children }: { children: React.ReactNode }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const [scale, setScale] = useState(0.4);
+  const innerRef = useRef<HTMLDivElement | null>(null);
 
   useLayoutEffect(() => {
     const el = containerRef.current;
-    if (!el) return;
-    const update = () => {
+    const inner = innerRef.current;
+    if (!el || !inner) return;
+
+    let raf = 0;
+    const apply = () => {
+      raf = 0;
       const r = el.getBoundingClientRect();
       if (r.width === 0 || r.height === 0) return;
-      const sx = r.width / MINI_REF_WIDTH;
-      const sy = r.height / MINI_REF_HEIGHT;
-      // Use the LARGER scale so the snapshot covers the card edge-to-edge —
-      // some content gets clipped on one axis but the visible portion looks
-      // like a real screen, not a postage stamp on whitespace.
-      setScale(Math.max(sx, sy));
+      // Reference = current viewport. When the container animates up to
+      // fullscreen, scale lands at exactly 1.0 with content matching the
+      // real page's natural layout — seamless handoff.
+      const refW = window.innerWidth;
+      const refH = window.innerHeight;
+      inner.style.width = `${refW}px`;
+      inner.style.height = `${refH}px`;
+      const sx = r.width / refW;
+      const sy = r.height / refH;
+      // Cover-style: fills the card edge-to-edge with mild clipping that
+      // smoothly disappears as the card grows toward fullscreen.
+      const scale = Math.max(sx, sy);
+      inner.style.transform = `scale(${scale})`;
     };
-    update();
-    const ro = new ResizeObserver(update);
+    const schedule = () => {
+      if (raf) return;
+      raf = requestAnimationFrame(apply);
+    };
+
+    apply();
+    const ro = new ResizeObserver(schedule);
     ro.observe(el);
-    return () => ro.disconnect();
+    window.addEventListener('resize', schedule);
+    return () => {
+      if (raf) cancelAnimationFrame(raf);
+      ro.disconnect();
+      window.removeEventListener('resize', schedule);
+    };
   }, []);
 
   return (
@@ -265,12 +285,11 @@ function MiniSnapshot({ children }: { children: React.ReactNode }) {
       aria-hidden
     >
       <div
+        ref={innerRef}
         className="absolute top-0 left-0"
         style={{
-          width: MINI_REF_WIDTH,
-          height: MINI_REF_HEIGHT,
-          transform: `scale(${scale})`,
           transformOrigin: 'top left',
+          willChange: 'transform',
         }}
       >
         {children}
