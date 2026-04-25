@@ -3,10 +3,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Item } from '@/types';
 import { ItemCard } from './ItemCard';
 import { EditNoteModal } from './EditNoteModal';
+import { AddSectionPicker } from './AddSectionPicker';
 import { Trash2, ArrowRightLeft, X, Pencil, Plus, ChevronUp, ChevronDown, Check } from 'lucide-react';
 import { safeOpenUrl } from '@/lib/urlValidation';
-
-const NOTES_FALLBACK_LABEL = 'Notes';
+import { groupBySmartCategory } from '@/lib/smartTitle';
 
 export interface ArchiveGroupData {
   label: string;
@@ -31,6 +31,7 @@ export function GroupedArchiveView({ items, groups, onDeleteItem, onGroupsChange
   const [headerEditMode, setHeaderEditMode] = useState(false);
   const [renamingLabel, setRenamingLabel] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
+  const [showAddSectionPicker, setShowAddSectionPicker] = useState(false);
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const navRef = useRef<HTMLDivElement>(null);
@@ -57,11 +58,23 @@ export function GroupedArchiveView({ items, groups, onDeleteItem, onGroupsChange
     }
   }
 
-  // Any items not covered by groups go into a catch-all bucket.
-  // Always show empty user-defined groups in edit mode so they can be renamed/deleted.
+  // Any items not covered by user-defined groups get split into smart categories
+  // (Ideas, Plans & Goals, References, etc.) instead of dumped into a single
+  // "Notes" or "Images" bucket. Avoids collisions with user-defined labels.
   const ungrouped = items.filter(i => !assignedIds.has(i.id));
   if (ungrouped.length > 0) {
-    groupedItems.push({ label: NOTES_FALLBACK_LABEL, items: ungrouped });
+    const userLabelsLower = new Set(groups.map(g => g.label.toLowerCase()));
+    const smartBuckets = groupBySmartCategory(ungrouped);
+    for (const bucket of smartBuckets) {
+      if (userLabelsLower.has(bucket.label.toLowerCase())) {
+        // Merge into existing user group with the same label
+        const existing = groupedItems.find(g => g.label.toLowerCase() === bucket.label.toLowerCase());
+        if (existing) existing.items.push(...bucket.items);
+        else groupedItems.push(bucket);
+      } else {
+        groupedItems.push(bucket);
+      }
+    }
   }
   if (headerEditMode) {
     for (const group of groups) {
@@ -211,93 +224,106 @@ export function GroupedArchiveView({ items, groups, onDeleteItem, onGroupsChange
     onGroupsChange(updatedGroups);
   }, [groups, onGroupsChange]);
 
-  const addGroup = useCallback(() => {
+  const handlePickerConfirm = useCallback((label: string) => {
     if (!onGroupsChange) return;
-    // Generate a unique default label: "New section", "New section 2", etc.
-    let base = 'New section';
-    let label = base;
-    let n = 2;
-    const existing = new Set(groups.map(g => g.label.toLowerCase()));
-    while (existing.has(label.toLowerCase())) {
-      label = `${base} ${n++}`;
-    }
-    onGroupsChange([...groups, { label, item_ids: [] }]);
-    setRenamingLabel(label);
-    setRenameValue(label);
+    const trimmed = label.trim();
+    if (!trimmed) return;
+    if (groups.some(g => g.label.toLowerCase() === trimmed.toLowerCase())) return;
+    onGroupsChange([...groups, { label: trimmed, item_ids: [] }]);
+    setShowAddSectionPicker(false);
   }, [groups, onGroupsChange]);
 
   const canEditGroups = !!onGroupsChange;
 
+  // Stop horizontal pill-scroll touches from triggering SpaceDetail's edge-swipe-back.
+  const stopPropagation = useCallback((e: React.TouchEvent) => {
+    e.stopPropagation();
+  }, []);
+
   return (
     <div ref={scrollContainerRef} className="h-full overflow-y-auto overscroll-contain">
-      {/* Edit-mode toggle */}
-      {canEditGroups && (
-        <div className="px-4 pt-3 flex items-center justify-end">
-          <button
-            onClick={() => {
-              setHeaderEditMode(v => !v);
-              setRenamingLabel(null);
-              setLongPressItemId(null);
-            }}
-            className={`
-              inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-medium
-              transition-colors touch-manipulation
-              ${headerEditMode
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-secondary/60 text-muted-foreground hover:text-foreground hover:bg-secondary'}
-            `}
-            aria-pressed={headerEditMode}
-          >
-            {headerEditMode ? (
-              <>
-                <Check className="w-3.5 h-3.5" />
-                Done
-              </>
-            ) : (
-              <>
-                <Pencil className="w-3.5 h-3.5" />
-                Edit sections
-              </>
-            )}
-          </button>
-        </div>
-      )}
-
-      {/* Sticky horizontal section navigation — shown only when there are 2+ groups */}
-      {showNav && (
+      {/* Sticky top bar: pill nav + edit toggle, pinned to top from initial render */}
+      {(showNav || canEditGroups) && (
         <div
           ref={navRef}
           className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border/20"
         >
-          <div className="flex items-center gap-1.5 px-4 py-2.5 overflow-x-auto scrollbar-hide">
-            {groupedItems.map((group) => {
-              const isActive = activeSection === group.label;
-              return (
+          <div className="flex items-stretch">
+            {showNav && (
+              <div
+                onTouchStart={stopPropagation}
+                onTouchMove={stopPropagation}
+                className="flex-1 min-w-0 flex items-center gap-1.5 px-4 py-2.5 overflow-x-auto scrollbar-hide"
+                style={{
+                  WebkitOverflowScrolling: 'touch',
+                  overscrollBehaviorX: 'contain',
+                  touchAction: 'pan-x',
+                  scrollBehavior: 'smooth',
+                }}
+              >
+                {groupedItems.map((group) => {
+                  const isActive = activeSection === group.label;
+                  return (
+                    <button
+                      key={group.label}
+                      ref={el => {
+                        if (el) navItemRefs.current.set(group.label, el);
+                        else navItemRefs.current.delete(group.label);
+                      }}
+                      onClick={() => scrollToSection(group.label)}
+                      className={`
+                        inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full
+                        text-[12px] font-medium whitespace-nowrap shrink-0
+                        transition-all duration-200 touch-manipulation
+                        ${
+                          isActive
+                            ? 'bg-foreground text-background'
+                            : 'bg-secondary/50 text-muted-foreground hover:bg-secondary hover:text-foreground'
+                        }
+                      `}
+                    >
+                      <span className="capitalize">{group.label}</span>
+                      <span className={`text-[11px] tabular-nums ${isActive ? 'opacity-70' : 'opacity-60'}`}>
+                        {group.items.length}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {canEditGroups && (
+              <div className={`flex items-center pr-3 ${showNav ? 'pl-2 border-l border-border/30' : 'pl-3 py-2.5 ml-auto'}`}>
                 <button
-                  key={group.label}
-                  ref={el => {
-                    if (el) navItemRefs.current.set(group.label, el);
-                    else navItemRefs.current.delete(group.label);
+                  onClick={() => {
+                    setHeaderEditMode(v => !v);
+                    setRenamingLabel(null);
+                    setLongPressItemId(null);
                   }}
-                  onClick={() => scrollToSection(group.label)}
                   className={`
-                    inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full
-                    text-[12px] font-medium whitespace-nowrap shrink-0
-                    transition-all duration-200 touch-manipulation
-                    ${
-                      isActive
-                        ? 'bg-foreground text-background'
-                        : 'bg-secondary/50 text-muted-foreground hover:bg-secondary hover:text-foreground'
-                    }
+                    inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-medium
+                    transition-colors touch-manipulation shrink-0
+                    ${headerEditMode
+                      ? 'bg-primary text-primary-foreground'
+                      : 'bg-secondary/60 text-muted-foreground hover:text-foreground hover:bg-secondary'}
                   `}
+                  aria-pressed={headerEditMode}
+                  aria-label={headerEditMode ? 'Finish editing sections' : 'Edit sections'}
                 >
-                  <span className="capitalize">{group.label}</span>
-                  <span className={`text-[11px] tabular-nums ${isActive ? 'opacity-70' : 'opacity-60'}`}>
-                    {group.items.length}
-                  </span>
+                  {headerEditMode ? (
+                    <>
+                      <Check className="w-3.5 h-3.5" />
+                      Done
+                    </>
+                  ) : (
+                    <>
+                      <Pencil className="w-3.5 h-3.5" />
+                      Edit
+                    </>
+                  )}
                 </button>
-              );
-            })}
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -319,9 +345,12 @@ export function GroupedArchiveView({ items, groups, onDeleteItem, onGroupsChange
             >
               {/* Section header */}
               {(() => {
-                const isNotesFallback = group.label === NOTES_FALLBACK_LABEL && !groups.some(g => g.label === NOTES_FALLBACK_LABEL);
+                // Auto-derived smart-category buckets aren't user-managed — hide
+                // the rename/reorder/delete controls for them. Only user-defined
+                // groups appear in the `groups` prop.
+                const isAutoGroup = !groups.some(g => g.label === group.label);
                 const isRenaming = renamingLabel === group.label;
-                const showEditControls = headerEditMode && canEditGroups && !isNotesFallback;
+                const showEditControls = headerEditMode && canEditGroups && !isAutoGroup;
 
                 return (
                   <div className="flex items-center gap-2.5 mb-3">
@@ -363,7 +392,7 @@ export function GroupedArchiveView({ items, groups, onDeleteItem, onGroupsChange
                       <div className="flex items-center gap-1 ml-1">
                         <button
                           onClick={() => moveGroup(group.label, -1)}
-                          disabled={gi === 0 || isNotesFallback}
+                          disabled={gi === 0}
                           className="w-6 h-6 rounded-md flex items-center justify-center text-muted-foreground hover:bg-secondary disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                           aria-label="Move section up"
                         >
@@ -371,7 +400,7 @@ export function GroupedArchiveView({ items, groups, onDeleteItem, onGroupsChange
                         </button>
                         <button
                           onClick={() => moveGroup(group.label, 1)}
-                          disabled={gi === groups.length - 1 || isNotesFallback}
+                          disabled={gi === groups.length - 1}
                           className="w-6 h-6 rounded-md flex items-center justify-center text-muted-foreground hover:bg-secondary disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                           aria-label="Move section down"
                         >
@@ -474,7 +503,7 @@ export function GroupedArchiveView({ items, groups, onDeleteItem, onGroupsChange
 
         {headerEditMode && canEditGroups && (
           <button
-            onClick={addGroup}
+            onClick={() => setShowAddSectionPicker(true)}
             className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-dashed border-border/70 text-muted-foreground hover:text-foreground hover:border-primary/40 hover:bg-secondary/40 transition-colors touch-manipulation"
           >
             <Plus className="w-4 h-4" />
@@ -482,6 +511,13 @@ export function GroupedArchiveView({ items, groups, onDeleteItem, onGroupsChange
           </button>
         )}
       </div>
+
+      <AddSectionPicker
+        isOpen={showAddSectionPicker}
+        existingLabels={groups.map(g => g.label)}
+        onConfirm={handlePickerConfirm}
+        onClose={() => setShowAddSectionPicker(false)}
+      />
 
       {/* Section picker sheet */}
       <AnimatePresence>

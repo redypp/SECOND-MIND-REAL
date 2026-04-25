@@ -256,7 +256,7 @@ export function detectKeywords(text: string): string[] {
   return keywords;
 }
 
-const CATEGORY_ORDER = [
+export const CATEGORY_ORDER = [
   'Ideas',
   'Plans & Goals',
   'Research & Learning',

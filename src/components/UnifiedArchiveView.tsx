@@ -120,7 +120,17 @@ export function UnifiedArchiveView({ items, onDeleteItem, fromSpaceId }: Unified
           ref={navRef}
           className="sticky top-0 z-10 bg-background border-b border-border/20"
         >
-          <div className="flex items-center gap-1.5 px-4 py-2.5 overflow-x-auto scrollbar-hide">
+          <div
+            onTouchStart={(e) => e.stopPropagation()}
+            onTouchMove={(e) => e.stopPropagation()}
+            className="flex items-center gap-1.5 px-4 py-2.5 overflow-x-auto scrollbar-hide"
+            style={{
+              WebkitOverflowScrolling: 'touch',
+              overscrollBehaviorX: 'contain',
+              touchAction: 'pan-x',
+              scrollBehavior: 'smooth',
+            }}
+          >
             {groups.map((group) => {
               const isActive = activeSection === group.label;
               return (
