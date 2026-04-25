@@ -27,15 +27,29 @@ type Spread =
   | { kind: 'new' };
 
 // Muted, earthy palette inspired by the reference. Used as a fallback when a
-// space has no color of its own; cycles by index so adjacent cards always
-// contrast.
+// space has no color of its own; cycles by index, ordered so adjacent cards
+// alternate light/dark and warm/cool for high contrast at every position in
+// the stack — the cycle of 18 means a user has to add 19+ archives before
+// any color repeats.
 const FOLDER_PALETTE: { bg: string; fg: string; meta: string }[] = [
-  { bg: 'hsl(36 28% 88%)', fg: 'hsl(20 14% 12%)', meta: 'hsl(20 14% 38%)' }, // cream
-  { bg: 'hsl(20 18% 38%)', fg: 'hsl(36 28% 96%)', meta: 'hsl(36 28% 78%)' }, // brown
-  { bg: 'hsl(45 70% 68%)', fg: 'hsl(20 14% 12%)', meta: 'hsl(20 14% 28%)' }, // mustard
-  { bg: 'hsl(8 58% 52%)',  fg: 'hsl(36 28% 96%)', meta: 'hsl(36 28% 86%)' }, // terracotta
-  { bg: 'hsl(220 6% 58%)', fg: 'hsl(20 14% 12%)', meta: 'hsl(20 14% 28%)' }, // slate
-  { bg: 'hsl(95 22% 48%)', fg: 'hsl(36 28% 96%)', meta: 'hsl(36 28% 86%)' }, // sage
+  { bg: 'hsl(36 28% 88%)',  fg: 'hsl(20 14% 12%)',  meta: 'hsl(20 14% 38%)' }, // cream
+  { bg: 'hsl(20 18% 38%)',  fg: 'hsl(36 28% 96%)',  meta: 'hsl(36 28% 78%)' }, // brown
+  { bg: 'hsl(45 70% 68%)',  fg: 'hsl(20 14% 12%)',  meta: 'hsl(20 14% 28%)' }, // mustard
+  { bg: 'hsl(8 58% 52%)',   fg: 'hsl(36 28% 96%)',  meta: 'hsl(36 28% 86%)' }, // terracotta
+  { bg: 'hsl(220 6% 58%)',  fg: 'hsl(20 14% 12%)',  meta: 'hsl(20 14% 28%)' }, // slate
+  { bg: 'hsl(95 22% 48%)',  fg: 'hsl(36 28% 96%)',  meta: 'hsl(36 28% 86%)' }, // sage
+  { bg: 'hsl(195 20% 78%)', fg: 'hsl(20 14% 12%)',  meta: 'hsl(20 14% 32%)' }, // dusty sky
+  { bg: 'hsl(15 35% 28%)',  fg: 'hsl(36 28% 96%)',  meta: 'hsl(36 28% 76%)' }, // espresso
+  { bg: 'hsl(340 22% 78%)', fg: 'hsl(20 14% 14%)',  meta: 'hsl(20 14% 34%)' }, // dusty rose
+  { bg: 'hsl(160 22% 32%)', fg: 'hsl(36 28% 96%)',  meta: 'hsl(36 28% 80%)' }, // forest
+  { bg: 'hsl(28 75% 60%)',  fg: 'hsl(20 14% 12%)',  meta: 'hsl(20 14% 28%)' }, // burnt orange
+  { bg: 'hsl(255 18% 32%)', fg: 'hsl(36 28% 96%)',  meta: 'hsl(36 28% 80%)' }, // plum
+  { bg: 'hsl(50 32% 82%)',  fg: 'hsl(20 14% 12%)',  meta: 'hsl(20 14% 32%)' }, // sand
+  { bg: 'hsl(205 30% 32%)', fg: 'hsl(36 28% 96%)',  meta: 'hsl(36 28% 80%)' }, // ink blue
+  { bg: 'hsl(75 30% 52%)',  fg: 'hsl(20 14% 12%)',  meta: 'hsl(20 14% 24%)' }, // olive
+  { bg: 'hsl(355 35% 42%)', fg: 'hsl(36 28% 96%)',  meta: 'hsl(36 28% 84%)' }, // wine
+  { bg: 'hsl(180 15% 78%)', fg: 'hsl(20 14% 12%)',  meta: 'hsl(20 14% 32%)' }, // pale teal
+  { bg: 'hsl(25 22% 22%)',  fg: 'hsl(36 28% 96%)',  meta: 'hsl(36 28% 78%)' }, // walnut
 ];
 
 export default function ArchivePage({ embedded = false, onNavigateToSpace }: ArchivePageProps) {
@@ -73,8 +87,17 @@ export default function ArchivePage({ embedded = false, onNavigateToSpace }: Arc
       {/* Back to home is handled globally by HoldToGoHome (long-press). */}
 
       <div
-        className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-3 pt-6 pb-12 scrollbar-hide"
-        style={{ WebkitOverflowScrolling: 'touch' }}
+        className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-3 pt-6 scrollbar-hide"
+        style={{
+          WebkitOverflowScrolling: 'touch',
+          // Push past the home-indicator safe area so the last folder is
+          // fully tappable even on a long scroll list. Calc so the padding
+          // grows on devices that report a non-zero safe-area-inset-bottom.
+          paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 4rem)',
+          // Belt-and-suspenders: explicit overscroll behavior so scroll
+          // momentum doesn't bounce out of the container into the page.
+          overscrollBehaviorY: 'contain',
+        }}
       >
         <div className="flex flex-col w-full">
           {spreads.map((spread, i) =>
