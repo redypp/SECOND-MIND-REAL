@@ -197,7 +197,7 @@ export function AddSpaceDialog({ variant = 'card', trigger, navigateAfterCreate 
       </DialogTrigger>
 
       <DialogContent
-        className="sm:max-w-lg rounded-2xl p-0 overflow-hidden gap-0 flex flex-col [&>button:last-child]:hidden max-h-[90svh] top-4 translate-y-0 sm:top-[50%] sm:translate-y-[-50%]"
+        className="sm:max-w-lg rounded-2xl p-0 overflow-hidden gap-0 flex flex-col [&>button:last-child]:hidden translate-y-0 sm:top-[50%] sm:translate-y-[-50%] top-[calc(env(safe-area-inset-top,0px)+24px)] max-h-[calc(100svh-env(safe-area-inset-top,0px)-48px)] sm:max-h-[90svh]"
         style={{ display: 'flex', flexDirection: 'column' }}
       >
         {/* ── STEP 1: Pick a category ─────────────────────────────────────── */}

@@ -1,7 +1,6 @@
-import { useMemo, useState, useRef, useLayoutEffect } from 'react';
-import { createPortal } from 'react-dom';
+import { useMemo, useRef, useLayoutEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useSpaces } from '@/contexts/SpacesContext';
 import { useCurrentDate } from '@/hooks/useCurrentDate';
 import { useLifeSubheadings } from '@/hooks/useLifeSubheadings';
@@ -14,8 +13,8 @@ import JournalPage from '@/pages/JournalPage';
  * LifePage — four glassy tiles, each a live miniature of the page it opens.
  *
  * No header — the four cards fill the viewport edge-to-edge. Tap a tile and
- * its mini snapshot zooms up to fill the screen, handing off to the real
- * sub-page beneath.
+ * the corresponding sub-page opens immediately (no overlay animation —
+ * MainLayout handles the page transition).
  */
 
 interface LifePageProps {
@@ -28,15 +27,10 @@ type Section = { id: SectionId; path: string; label: string; meta: string };
 
 const noop = () => {};
 
-// MiniSnapshot uses the LIVE viewport as its reference (not a fixed value),
-// so when a card zooms to fullscreen the mini's content lines up exactly
-// with the real page underneath — no last-frame "adjustment glitch".
-
 export default function LifePage({ embedded = false, onNavigateToSection }: LifePageProps) {
   const navigate = useNavigate();
   const { items } = useSpaces();
   const { todayString } = useCurrentDate();
-  const [zooming, setZooming] = useState<{ id: SectionId; rect: DOMRect; path: string } | null>(null);
 
   // Local fallbacks: computed from real data, shown instantly while AI loads (or if it fails)
   const fallbacks = useMemo(() => {
@@ -94,21 +88,12 @@ export default function LifePage({ embedded = false, onNavigateToSection }: Life
     { id: 'journal',    path: '/journal',    label: 'Journal',    meta: subheadings.journal },
   ];
 
-  // Tap → zoom the card up to fill the viewport, then navigate. The overlay
-  // holds at full-screen while MainLayout's sub-page slides in underneath,
-  // then fades — so the whole transition reads as a pure zoom, not a slide.
-  const handleTap = (e: React.MouseEvent<HTMLButtonElement>, section: Section) => {
-    if (zooming) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    setZooming({ id: section.id, rect, path: section.path });
-    window.setTimeout(() => {
-      if (onNavigateToSection) onNavigateToSection(section.path);
-      else navigate(section.path);
-    }, 320);
-    window.setTimeout(() => setZooming(null), 950);
+  // Tap → navigate immediately. MainLayout handles whatever transition
+  // happens between Life and its sub-page.
+  const handleTap = (section: Section) => {
+    if (onNavigateToSection) onNavigateToSection(section.path);
+    else navigate(section.path);
   };
-
-  const zoomingSection = zooming ? sections.find(s => s.id === zooming.id) ?? null : null;
 
   return (
     <div
@@ -122,68 +107,21 @@ export default function LifePage({ embedded = false, onNavigateToSection }: Life
         className="flex-1 min-h-0 grid grid-cols-2 grid-rows-2 gap-3 p-3"
         style={{ paddingBottom: 'calc(var(--app-safe-bottom, 0px) + 12px)' }}
       >
-        {sections.map((section, i) => {
-          const isZooming = zooming?.id === section.id;
-          return (
-            <motion.button
-              key={section.id}
-              className="w-full h-full relative overflow-hidden rounded-[20px] life-section-card text-left"
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: isZooming ? 0 : 1, y: 0 }}
-              transition={{ duration: 0.45, delay: isZooming ? 0 : i * 0.05, ease: [0.16, 1, 0.3, 1] }}
-              whileTap={{ scale: 0.975 }}
-              onClick={(e) => handleTap(e, section)}
-              aria-label={`Open ${section.label}`}
-              style={{ visibility: isZooming ? 'hidden' : 'visible' }}
-            >
-              <CardContent section={section} mini={minis[section.id]} />
-            </motion.button>
-          );
-        })}
+        {sections.map((section, i) => (
+          <motion.button
+            key={section.id}
+            className="w-full h-full relative overflow-hidden rounded-[20px] life-section-card text-left"
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.45, delay: i * 0.05, ease: [0.16, 1, 0.3, 1] }}
+            whileTap={{ scale: 0.975 }}
+            onClick={() => handleTap(section)}
+            aria-label={`Open ${section.label}`}
+          >
+            <CardContent section={section} mini={minis[section.id]} />
+          </motion.button>
+        ))}
       </main>
-
-      {/* Zoom overlay — portalled to <body> so it renders above MainLayout's
-          sub-page slide and uses the viewport as its containing block
-          (otherwise a transformed ancestor steals the position: fixed). */}
-      {typeof document !== 'undefined' && createPortal(
-        <AnimatePresence>
-          {zooming && zoomingSection && (
-            <motion.div
-              key="life-zoom-overlay"
-              className="fixed life-section-card overflow-hidden pointer-events-none"
-              style={{ zIndex: 100 }}
-              initial={{
-                top: zooming.rect.top,
-                left: zooming.rect.left,
-                width: zooming.rect.width,
-                height: zooming.rect.height,
-                opacity: 1,
-                borderRadius: 20,
-              }}
-              animate={{
-                top: 0,
-                left: 0,
-                width: window.innerWidth,
-                height: window.innerHeight,
-                opacity: 0,
-                borderRadius: 0,
-              }}
-              transition={{
-                top:          { duration: 0.32, ease: [0.16, 1, 0.3, 1] },
-                left:         { duration: 0.32, ease: [0.16, 1, 0.3, 1] },
-                width:        { duration: 0.32, ease: [0.16, 1, 0.3, 1] },
-                height:       { duration: 0.32, ease: [0.16, 1, 0.3, 1] },
-                borderRadius: { duration: 0.32, ease: [0.16, 1, 0.3, 1] },
-                // Hold at full-screen while the sub-page settles, then fade.
-                opacity:      { duration: 0.22, delay: 0.62, ease: 'easeOut' },
-              }}
-            >
-              <CardContent section={zoomingSection} mini={minis[zooming.id]} />
-            </motion.div>
-          )}
-        </AnimatePresence>,
-        document.body
-      )}
     </div>
   );
 }
