@@ -444,32 +444,6 @@ export default function Home() {
         </div>
       </header>
 
-      {/* ON/OFF style screen toggle */}
-      <div className="flex-shrink-0 flex items-center justify-center py-2">
-        <div
-          className="relative flex items-center w-48 h-10 rounded-full bg-foreground/90 cursor-pointer select-none"
-          onClick={() => scrollToScreen(activeScreen === 'clock' ? 'collections' : 'clock')}
-        >
-          {/* Sliding pill */}
-          <motion.div
-            className="absolute top-1 h-8 w-[calc(50%-4px)] rounded-full bg-background shadow-md"
-            animate={{ left: activeScreen === 'clock' ? 4 : 'calc(50%)' }}
-            transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-          />
-          {/* Labels */}
-          <span className={`relative z-10 flex-1 text-center text-sm font-semibold transition-colors duration-200 ${
-            activeScreen === 'clock' ? 'text-foreground' : 'text-muted-foreground/60'
-          }`}>
-            LIFE
-          </span>
-          <span className={`relative z-10 flex-1 text-center text-sm font-semibold transition-colors duration-200 ${
-            activeScreen === 'collections' ? 'text-foreground' : 'text-muted-foreground/60'
-          }`}>
-            ARCHIVE
-          </span>
-        </div>
-      </div>
-
       {/* Swipeable Screen Container */}
       {(
         <div 
