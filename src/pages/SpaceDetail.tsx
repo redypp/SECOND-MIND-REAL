@@ -14,9 +14,10 @@ import { useTutorial } from '@/contexts/TutorialContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Item, GroupAssignments } from '@/types';
 import { supabase } from '@/integrations/supabase/app-client';
-import { pickBestGroupForItem } from '@/lib/smartTitle';
+import { pickBestGroupForItem, groupBySmartCategory } from '@/lib/smartTitle';
 import { ShareArchiveSheet } from '@/components/ShareArchiveSheet';
 import { GroupPickerSheet } from '@/components/GroupPickerSheet';
+import { SectionsManagerSheet } from '@/components/SectionsManagerSheet';
 
 interface SpaceDetailProps {
   embedded?: boolean;
@@ -49,6 +50,7 @@ export default function SpaceDetail({ embedded = false, spaceId: propSpaceId, on
   // 'list' = smart-categorised feed (default & fallback), 'grouped' = AI-organised sections, 'canvas' = freeform
   const [viewMode, setViewMode] = useState<'list' | 'grouped' | 'canvas'>('list');
   const [showShareSheet, setShowShareSheet] = useState(false);
+  const [showSectionsManager, setShowSectionsManager] = useState(false);
   // Pending-add picker state: set after a new item is saved into an organized
   // archive, cleared when the user picks a section or cancels.
   const [pendingGroupPick, setPendingGroupPick] = useState<{ itemId: string; defaultLabel: string } | null>(null);
@@ -685,6 +687,14 @@ export default function SpaceDetail({ embedded = false, spaceId: propSpaceId, on
                   <p className="text-[clamp(2rem,8vw,2.8rem)] font-display font-bold uppercase tracking-[-0.04em] leading-none text-white">Share</p>
                 </motion.button>
 
+                <motion.button
+                  whileTap={{ scale: 0.97 }}
+                  className="text-left py-1.5"
+                  onClick={() => { setShowSectionsManager(true); setShowSettingsPanel(false); }}
+                >
+                  <p className="text-[clamp(2rem,8vw,2.8rem)] font-display font-bold uppercase tracking-[-0.04em] leading-none text-white">Sections</p>
+                </motion.button>
+
                 {viewMode === 'canvas' && sortedItems.length > 0 && (
                   <motion.button
                     whileTap={{ scale: 0.97 }}
@@ -755,6 +765,37 @@ export default function SpaceDetail({ embedded = false, spaceId: propSpaceId, on
           }}
         />
       )}
+
+      {/* Sections manager — edit, sort, add, delete archive headers */}
+      <SectionsManagerSheet
+        isOpen={showSectionsManager}
+        groups={
+          organizedGroups && organizedGroups.length > 0
+            ? organizedGroups
+            : groupBySmartCategory(sortedItems).map(g => ({
+                label: g.label,
+                item_ids: g.items.map(i => i.id),
+              }))
+        }
+        onClose={() => setShowSectionsManager(false)}
+        onChange={(next) => {
+          setOrganizedGroups(next);
+          if (id) {
+            const assignments: GroupAssignments = {
+              groups: next,
+              organized_at: new Date().toISOString(),
+              item_count_at_organize: sortedItems.length,
+            };
+            saveGroupAssignments(id, assignments);
+          }
+          // Once the user touches sections, switch the view to the organized
+          // view so their changes are visible. Skip if they're in canvas mode —
+          // they likely want to keep their freeform layout.
+          if (viewMode !== 'canvas' && next.length > 0) {
+            setViewMode('grouped');
+          }
+        }}
+      />
     </div>
   );
 }

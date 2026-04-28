@@ -14,7 +14,7 @@ import type { Space } from '@/types';
  * the page reads as a tidy stack of folders, like flipping through a wallet
  * or a Rolodex.
  *
- * No header — just a tiny floating PortalReturn so the user can get home.
+ * No header — the global BackToHome arrow at top-left handles getting home.
  */
 
 interface ArchivePageProps {
@@ -65,12 +65,12 @@ export default function ArchivePage({ embedded = false, onNavigateToSpace }: Arc
       .sort((a, b) => (b.lastUsedAt?.getTime() ?? 0) - (a.lastUsedAt?.getTime() ?? 0));
 
     const arr: Spread[] = [];
-    // "New archive" sits at the TOP of the stack so it's always one tap
-    // away, even when the user is buried in dozens of archives.
-    arr.push({ kind: 'new' });
     pinned.forEach(space => arr.push({ kind: 'space', space, section: 'pinned' }));
     recent.forEach(space => arr.push({ kind: 'space', space, section: 'recent' }));
     sharedSpaces.forEach(space => arr.push({ kind: 'space', space, section: 'shared' }));
+    // "New archive" sits at the BOTTOM of the stack so it caps the list and
+    // the user lands on real archives first when the page opens.
+    arr.push({ kind: 'new' });
     return arr;
   }, [spaces, sharedSpaces]);
 
@@ -84,7 +84,7 @@ export default function ArchivePage({ embedded = false, onNavigateToSpace }: Arc
       className={`${embedded ? 'relative w-full h-full' : 'fixed inset-0 safe-area-top-ios'} flex flex-col bg-background overflow-hidden`}
       style={{ overscrollBehavior: 'contain' }}
     >
-      {/* Back to home is handled globally by HoldToGoHome (long-press). */}
+      {/* Back to home is handled globally by BackToHome (top-left arrow). */}
 
       <div
         className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-3 pt-6 scrollbar-hide"
@@ -129,17 +129,18 @@ export default function ArchivePage({ embedded = false, onNavigateToSpace }: Arc
 // the stack instead of a different-shaped attachment.
 //
 // Sizing rationale:
-//   pt-6 + title (1.85rem * 1.05 line-height) ≈ 3.45rem (title bottom from
+//   pt-7 + title (1.85rem * 1.05 line-height) ≈ 3.69rem (title bottom from
 //     card's top edge)
 //   visible portion above the next card = (pt + title + pb) - overlap
-//                                       = (1.5 + 1.94 + 3.5) - 2.75 = 4.19rem
-//   → title bottom (3.45rem) sits ~0.74rem inside the visible 4.19rem,
-//     so the next card never clips the title.
+//                                       = (1.75 + 1.94 + 3.5) - 1.85 = 5.34rem
+//   → title bottom (3.69rem) sits ~1.65rem inside the visible 5.34rem,
+//     so the next card never clips the title and each card has noticeable
+//     "thickness" in the stack.
 const CARD_RADIUS = '30px';
 const CARD_PADDING_X = 'px-7';
-const CARD_PADDING_TOP = 'pt-6';
+const CARD_PADDING_TOP = 'pt-7';
 const CARD_PADDING_BOTTOM = 'pb-14';
-const CARD_OVERLAP = '-2.75rem';
+const CARD_OVERLAP = '-1.85rem';
 const CARD_TITLE_SIZE = '1.85rem';
 
 function FolderCard({

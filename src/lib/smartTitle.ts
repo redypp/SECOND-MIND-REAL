@@ -162,24 +162,43 @@ const TAG_CATEGORY_MAP: Record<string, string> = {
   insight: 'Reflections', realization: 'Reflections', observation: 'Reflections',
 };
 
+// Title-case a free-form AI label so it renders as a clean header.
+function titleizeLabel(raw: string): string {
+  const trimmed = raw.trim().replace(/\s+/g, ' ');
+  if (!trimmed) return '';
+  // If it already has mixed case (e.g. "Recipe Ideas"), keep it.
+  if (/[A-Z]/.test(trimmed) && /[a-z]/.test(trimmed)) return trimmed;
+  return trimmed
+    .split(' ')
+    .map(w => (w.length > 2 ? w.charAt(0).toUpperCase() + w.slice(1).toLowerCase() : w.toLowerCase()))
+    .join(' ')
+    .replace(/^./, c => c.toUpperCase());
+}
+
 /**
  * Assign a smart display category label for grouping in archives.
- * Priority: AI tags → structural type → subCategory → keyword tags → content analysis.
+ * Priority: AI-classified label → structural type → subCategory → keyword tags
+ * → content analysis → media-type fallback → "Notes".
+ *
+ * The AI label (aiTags[0]) is the strongest signal — for both media and text
+ * items — because it reflects what the item is *about* (e.g. "Recipe Ideas",
+ * "Workout Plans") rather than what container it lives in.
  */
 export function getSmartCategory(item: Item): string {
   const mediaBlock = item.blocks?.find(b => b.type === 'media');
 
-  // AI-classified category takes priority for media items
-  if (item.aiTags && item.aiTags.length > 0 && mediaBlock?.type === 'media') {
-    return item.aiTags[0];
+  // Strongest signal: AI-classified semantic category. Map through TAG_CATEGORY_MAP
+  // first so common labels collapse into shared buckets ("workout" → Health & Wellness),
+  // then fall through to the verbatim AI label, which is intentionally specific
+  // (the classify-media prompt asks for a "2-5 word label" like "Recipe Ideas").
+  if (item.aiTags && item.aiTags.length > 0) {
+    for (const tag of item.aiTags) {
+      const mapped = TAG_CATEGORY_MAP[tag.toLowerCase()];
+      if (mapped) return mapped;
+    }
+    const first = titleizeLabel(item.aiTags[0]);
+    if (first) return first;
   }
-
-  // Structural: media type takes priority
-  if (mediaBlock?.type === 'media') {
-    if (mediaBlock.mediaType === 'image' || mediaBlock.mediaType === 'video') return 'Images';
-    if (mediaBlock.mediaType === 'link') return 'References';
-  }
-  if (item.type === 'link' && item.url) return 'References';
 
   // Structural: checklist = task
   if (item.blocks?.some(b => b.type === 'checklist')) return 'Tasks';
@@ -217,8 +236,16 @@ export function getSmartCategory(item: Item): string {
   if (REFLECTION_RE.test(text)) return 'Reflections';
   if (INSPIRATION_RE.test(text)) return 'Inspiration';
   if (REVISIT_RE.test(text)) return 'Things to Revisit';
-  if (REMEMBER_RE.test(text)) return 'Notes';
 
+  // Media-type fallback ONLY when no AI label has come back yet — once
+  // classify-media populates aiTags, the item will jump to a real bucket.
+  if (mediaBlock?.type === 'media') {
+    if (mediaBlock.mediaType === 'image' || mediaBlock.mediaType === 'video') return 'Images';
+    if (mediaBlock.mediaType === 'link') return 'References';
+  }
+  if (item.type === 'link' && item.url) return 'References';
+
+  if (REMEMBER_RE.test(text)) return 'Notes';
   return 'Notes';
 }
 
