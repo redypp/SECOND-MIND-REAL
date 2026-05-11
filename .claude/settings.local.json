@@ -58,7 +58,9 @@
       "Bash(git pull:*)",
       "Bash(grep -E \"\\\\.\\(tsx?|jsx?\\)$\")",
       "Bash(grep -E \"\\\\.\\(ts|tsx|sql\\)$\")",
-      "mcp__b4ee4bf4-f576-4301-acbf-7b9da9c01d7e__restore_project"
+      "mcp__b4ee4bf4-f576-4301-acbf-7b9da9c01d7e__restore_project",
+      "mcp__b4ee4bf4-f576-4301-acbf-7b9da9c01d7e__get_project",
+      "mcp__b4ee4bf4-f576-4301-acbf-7b9da9c01d7e__get_advisors"
     ]
   },
   "hooks": {
