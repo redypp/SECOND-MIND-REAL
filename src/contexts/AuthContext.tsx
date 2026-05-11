@@ -363,10 +363,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               fetchProfileOnce(existingSession.user.id),
               new Promise<null>((resolve) => setTimeout(() => resolve(null), 5000)),
             ]);
-            // Retry once if null — handles LockManager contention or slow network
+            // Retry once if null — handles LockManager contention or slow network.
+            // The retry MUST have its own timeout; without it a hung Supabase
+            // request blocks startup indefinitely and trips the outer
+            // AppStartup timeout, locking the user out cold.
             if (!resolvedProfile) {
               await new Promise(r => setTimeout(r, 1500));
-              resolvedProfile = await fetchProfile(existingSession.user.id);
+              resolvedProfile = await Promise.race([
+                fetchProfile(existingSession.user.id),
+                new Promise<null>((resolve) => setTimeout(() => resolve(null), 3000)),
+              ]);
             }
             setProfile(resolvedProfile);
           } catch {
@@ -496,11 +502,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           try {
             // Use fetchProfileOnce to share any in-flight fetch already started by
             // initializeAuth, preventing concurrent requests and lock contention.
-            let profileData = await fetchProfileOnce(currentSession.user.id);
-            // Retry once if null — handles LockManager contention on first attempt
+            let profileData = await Promise.race([
+              fetchProfileOnce(currentSession.user.id),
+              new Promise<null>((resolve) => setTimeout(() => resolve(null), 5000)),
+            ]);
+            // Retry once if null — handles LockManager contention on first attempt.
+            // Retry needs its own timeout or a hung request blocks the SIGNED_IN
+            // handler forever, stalling profileFetched and ProtectedRoute.
             if (!profileData) {
               await new Promise(r => setTimeout(r, 1500));
-              profileData = await fetchProfile(currentSession.user.id);
+              profileData = await Promise.race([
+                fetchProfile(currentSession.user.id),
+                new Promise<null>((resolve) => setTimeout(() => resolve(null), 3000)),
+              ]);
             }
             setProfile(profileData);
           } catch (err) {
