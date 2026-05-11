@@ -335,7 +335,12 @@ export function SpacesProvider({ children }: { children: ReactNode }) {
       // load where the fetch returned empty).
       const RESTORE_WINDOW_HOURS = 48;
       const windowCutoff = new Date(Date.now() - RESTORE_WINDOW_HOURS * 60 * 60 * 1000).toISOString();
-      await Promise.all([
+      // Race the restore against a 4s ceiling. The restore is non-critical
+      // best-effort recovery; if Supabase is slow we must NOT block the main
+      // data fetch (which has its own 15s timeout). Without this cap a hung
+      // .update() call here would stall startup past AppStartup's outer
+      // timeout and the user would see "Having trouble connecting".
+      const restorePromise = Promise.all([
         supabase
           .from('spaces')
           .update({ deleted_at: null })
@@ -358,6 +363,10 @@ export function SpacesProvider({ children }: { children: ReactNode }) {
             if (error) logLifecycle('Item restore failed (non-critical)', { error: error.message });
             else if (data && data.length > 0) logLifecycle('Self-healing restore: recovered items', { count: data.length });
           }),
+      ]);
+      await Promise.race([
+        restorePromise,
+        new Promise<void>((resolve) => setTimeout(resolve, 4000)),
       ]).catch(() => {
         logLifecycle('Self-healing restore failed (non-critical), continuing with fetch');
       });
