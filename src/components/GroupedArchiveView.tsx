@@ -198,12 +198,23 @@ export function GroupedArchiveView({ items, groups, onDeleteItem, onGroupsChange
       setRenamingLabel(null);
       return;
     }
-    const updatedGroups = groups.map(g =>
-      g.label === renamingLabel ? { ...g, label: next } : g
-    );
-    onGroupsChange(updatedGroups);
+    const isAutoGroup = !groups.some(g => g.label === renamingLabel);
+    if (isAutoGroup) {
+      // Renaming an auto-derived smart-category section. Materialize it as a
+      // real user-defined group carrying the items currently in that bucket —
+      // otherwise the rename would have nothing to attach to and the next
+      // render would just re-derive the original auto-label.
+      const autoGroup = groupedItems.find(g => g.label === renamingLabel);
+      const itemIds = autoGroup ? autoGroup.items.map(i => i.id) : [];
+      onGroupsChange([...groups, { label: next, item_ids: itemIds }]);
+    } else {
+      const updatedGroups = groups.map(g =>
+        g.label === renamingLabel ? { ...g, label: next } : g
+      );
+      onGroupsChange(updatedGroups);
+    }
     setRenamingLabel(null);
-  }, [renamingLabel, renameValue, groups, onGroupsChange]);
+  }, [renamingLabel, renameValue, groups, groupedItems, onGroupsChange]);
 
   const deleteGroup = useCallback((label: string) => {
     if (!onGroupsChange) return;
@@ -345,12 +356,14 @@ export function GroupedArchiveView({ items, groups, onDeleteItem, onGroupsChange
             >
               {/* Section header */}
               {(() => {
-                // Auto-derived smart-category buckets aren't user-managed — hide
-                // the rename/reorder/delete controls for them. Only user-defined
-                // groups appear in the `groups` prop.
+                // Auto-derived smart-category buckets aren't backed by stored
+                // group rows. Renaming one materializes it into a real group;
+                // reorder/delete still hidden because they'd just snap back on
+                // the next render.
                 const isAutoGroup = !groups.some(g => g.label === group.label);
                 const isRenaming = renamingLabel === group.label;
-                const showEditControls = headerEditMode && canEditGroups && !isAutoGroup;
+                const showEditControls = headerEditMode && canEditGroups;
+                const showStructuralControls = showEditControls && !isAutoGroup;
 
                 return (
                   <div className="flex items-center gap-2.5 mb-3">
@@ -390,22 +403,26 @@ export function GroupedArchiveView({ items, groups, onDeleteItem, onGroupsChange
                     )}
                     {showEditControls && !isRenaming && (
                       <div className="flex items-center gap-1 ml-1">
-                        <button
-                          onClick={() => moveGroup(group.label, -1)}
-                          disabled={gi === 0}
-                          className="w-6 h-6 rounded-md flex items-center justify-center text-muted-foreground hover:bg-secondary disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                          aria-label="Move section up"
-                        >
-                          <ChevronUp className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          onClick={() => moveGroup(group.label, 1)}
-                          disabled={gi === groups.length - 1}
-                          className="w-6 h-6 rounded-md flex items-center justify-center text-muted-foreground hover:bg-secondary disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                          aria-label="Move section down"
-                        >
-                          <ChevronDown className="w-3.5 h-3.5" />
-                        </button>
+                        {showStructuralControls && (
+                          <>
+                            <button
+                              onClick={() => moveGroup(group.label, -1)}
+                              disabled={gi === 0}
+                              className="w-6 h-6 rounded-md flex items-center justify-center text-muted-foreground hover:bg-secondary disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                              aria-label="Move section up"
+                            >
+                              <ChevronUp className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => moveGroup(group.label, 1)}
+                              disabled={gi === groups.length - 1}
+                              className="w-6 h-6 rounded-md flex items-center justify-center text-muted-foreground hover:bg-secondary disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                              aria-label="Move section down"
+                            >
+                              <ChevronDown className="w-3.5 h-3.5" />
+                            </button>
+                          </>
+                        )}
                         <button
                           onClick={() => startRename(group.label)}
                           className="w-6 h-6 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
@@ -413,13 +430,15 @@ export function GroupedArchiveView({ items, groups, onDeleteItem, onGroupsChange
                         >
                           <Pencil className="w-3.5 h-3.5" />
                         </button>
-                        <button
-                          onClick={() => deleteGroup(group.label)}
-                          className="w-6 h-6 rounded-md flex items-center justify-center text-destructive hover:bg-destructive/10 transition-colors"
-                          aria-label="Delete section"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+                        {showStructuralControls && (
+                          <button
+                            onClick={() => deleteGroup(group.label)}
+                            className="w-6 h-6 rounded-md flex items-center justify-center text-destructive hover:bg-destructive/10 transition-colors"
+                            aria-label="Delete section"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
                       </div>
                     )}
                     <div className="flex-1 h-px bg-border/50" />
