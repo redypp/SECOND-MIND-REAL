@@ -8,19 +8,20 @@
  */
 
 import { useState, useEffect, useCallback, useRef, ReactNode } from 'react';
-import { RefreshCw, AlertCircle, WifiOff, LogOut } from 'lucide-react';
+import { RefreshCw, AlertCircle, WifiOff, LogOut, Trash2 } from 'lucide-react';
 import splashLogo from '@/assets/splash-logo.png';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
 
-import { 
-  initAppLifecycle, 
-  canWarmResume, 
+import {
+  initAppLifecycle,
+  canWarmResume,
   markInitialLoadComplete,
   resetInitialLoad,
   subscribeLifecycle,
 } from '@/lib/appLifecycle';
 import { initResumeHandler, onResume, setOverlayLogoUrl } from '@/lib/resumeHandler';
+import { forceClearAllCaches } from '@/lib/localCache';
 
 type StartupPhase = 
   | 'immediate'      // First render - no async yet
@@ -46,8 +47,10 @@ interface AppStartupProps {
 }
 
 // Auth sub-operations have their own 3s timeouts. Data loading (SpacesContext) has
-// a 15s timeout. 20s covers both phases with room for slow connections.
-const STARTUP_TIMEOUT_MS = 20000;
+// a 15s timeout. 10s is enough for auth init on a working connection; if it hasn't
+// finished by then, show the error UI so the user can retry or clear data rather
+// than staring at a blank splash for 20+ seconds.
+const STARTUP_TIMEOUT_MS = 10000;
 
 // Logging helper
 function logStartup(message: string, data?: Record<string, any>) {
@@ -354,6 +357,17 @@ export function AppStartup({ children, onInitialize, onLogout, isDataReady }: Ap
     }
   }, [onLogout]);
 
+  // Nuclear recovery for stuck TestFlight installs: wipe every cache + storage
+  // key the app owns and hard-reload. This is the only fully offline escape
+  // hatch — it works even when the network/Supabase is unreachable.
+  const handleClearData = useCallback(() => {
+    logStartup('clear-data');
+    try { forceClearAllCaches(); } catch (err) { console.warn('[boot] clear caches failed', err); }
+    try { localStorage.clear(); } catch (err) { console.warn('[boot] localStorage.clear failed', err); }
+    try { sessionStorage.clear(); } catch (err) { console.warn('[boot] sessionStorage.clear failed', err); }
+    window.location.href = '/auth';
+  }, []);
+
   // When phase transitions to 'ready', start fading out the overlay so children
   // can mount and paint behind it before the user sees them.
   useEffect(() => {
@@ -423,16 +437,26 @@ export function AppStartup({ children, onInitialize, onLogout, isDataReady }: Ap
                   exit={{ opacity: 0, y: 10 }}
                   className="mt-8 flex flex-col items-center gap-3"
                 >
-                  <div className="flex gap-3">
+                  <div className="flex gap-2 flex-wrap justify-center">
                     <Button variant="default" size="sm" onClick={handleRetry} className="gap-2">
                       <RefreshCw className="w-4 h-4" /> Retry
                     </Button>
+                    {(phase === 'error' || showRetry) && (
+                      <Button variant="outline" size="sm" onClick={handleClearData} className="gap-2">
+                        <Trash2 className="w-4 h-4" /> Clear data
+                      </Button>
+                    )}
                     {(phase === 'error' || showRetry) && (
                       <Button variant="outline" size="sm" onClick={handleLogout} className="gap-2">
                         <LogOut className="w-4 h-4" /> Log out
                       </Button>
                     )}
                   </div>
+                  {phase === 'error' && (
+                    <p className="text-[11px] text-muted-foreground max-w-[280px] text-center mt-1">
+                      If retry doesn't help, "Clear data" wipes local cache and starts fresh (you stay signed in if your session is valid).
+                    </p>
+                  )}
                   {!isOnline && (
                     <p className="text-xs text-muted-foreground mt-2">Please check your connection and try again</p>
                   )}
