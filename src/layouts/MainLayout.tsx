@@ -288,16 +288,29 @@ export default function MainLayout() {
     if (!container) return;
     container.addEventListener('scroll', handleScroll, { passive: true });
 
-    // Prevent iOS Safari back/forward swipe when at scroll edges
+    // Prevent iOS Safari back/forward swipe when at the horizontal scroll
+    // edges. The container only has horizontal pages to protect when it's
+    // actually wider than its viewport — without this guard, when LIFE↔ARCHIVE
+    // horizontal scroll is disabled (scrollWidth === clientWidth) every
+    // touchmove is "at both edges" and we end up preventing default on every
+    // gesture, which kills vertical scrolling inside child pages like
+    // ArchivePage. Also require the gesture to be primarily horizontal so a
+    // mostly-vertical drag never gets canceled.
     let touchStartX = 0;
+    let touchStartY = 0;
     const onTouchStart = (e: TouchEvent) => {
       touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
     };
     const onTouchMove = (e: TouchEvent) => {
+      const hasHorizontalPages = container.scrollWidth > container.clientWidth + 1;
+      if (!hasHorizontalPages) return;
       const dx = e.touches[0].clientX - touchStartX;
+      const dy = e.touches[0].clientY - touchStartY;
+      // Only act on primarily-horizontal gestures.
+      if (Math.abs(dx) <= Math.abs(dy)) return;
       const atLeft = container.scrollLeft <= 0;
       const atRight = container.scrollLeft >= container.scrollWidth - container.clientWidth - 1;
-      // Block overscroll: swiping right at left edge, or swiping left at right edge
       if ((atLeft && dx > 0) || (atRight && dx < 0)) {
         e.preventDefault();
       }
