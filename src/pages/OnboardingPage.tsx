@@ -5,9 +5,29 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { User, Calendar, MapPin, ArrowRight, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Slider } from '@/components/ui/slider';
 import { useAuth } from '@/contexts/AuthContext';
 import { showErrorPopup } from '@/contexts/ErrorPopupContext';
 import { z } from 'zod';
+
+const AGE_MIN = 13;
+const AGE_MAX = 100;
+const DEFAULT_AGE = 25;
+
+// Approximates a birthday from an age. We don't ask for an exact date — Jan 1
+// of the inferred birth year is a stable, reproducible stand-in that's close
+// enough for the features that key off birthday (age math, milestone hints).
+const ageToBirthday = (age: number): string => {
+  const year = new Date().getFullYear() - age;
+  return `${year}-01-01`;
+};
+
+const birthdayToAge = (birthday: string): number => {
+  const yyyy = parseInt(birthday.slice(0, 4), 10);
+  if (Number.isNaN(yyyy)) return DEFAULT_AGE;
+  const age = new Date().getFullYear() - yyyy;
+  return Math.min(Math.max(age, AGE_MIN), AGE_MAX);
+};
 
 const onboardingSchema = z.object({
   fullName: z.string().trim().min(2, 'Name must be at least 2 characters').max(100, 'Name is too long'),
@@ -18,7 +38,7 @@ const onboardingSchema = z.object({
 export default function OnboardingPage() {
   const [step, setStep] = useState(1);
   const [fullName, setFullName] = useState('');
-  const [birthday, setBirthday] = useState('');
+  const [age, setAge] = useState<number>(DEFAULT_AGE);
   const [location, setLocation] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -29,9 +49,11 @@ export default function OnboardingPage() {
   // Pre-fill with existing data if available
   useEffect(() => {
     if (profile?.full_name) setFullName(profile.full_name);
-    if (profile?.birthday) setBirthday(profile.birthday);
+    if (profile?.birthday) setAge(birthdayToAge(profile.birthday));
     if (profile?.location) setLocation(profile.location);
   }, [profile]);
+
+  const birthday = ageToBirthday(age);
 
   const handleNext = () => {
     if (step === 1) {
@@ -42,10 +64,7 @@ export default function OnboardingPage() {
       setErrors({});
       setStep(2);
     } else if (step === 2) {
-      if (!birthday) {
-        setErrors({ birthday: 'Please enter your birthday' });
-        return;
-      }
+      // Age is always defined (slider has a default); no validation needed.
       setErrors({});
       setStep(3);
     }
@@ -166,24 +185,36 @@ export default function OnboardingPage() {
             </div>
 
             <h1 className="text-2xl font-bold text-foreground mb-2">
-              When's your birthday, {getFirstName()}?
+              How old are you, {getFirstName()}?
             </h1>
             <p className="text-muted-foreground text-[15px] mb-8">
-              We'll remember it and celebrate with you
+              Drag the slider — close enough is fine.
             </p>
 
-            <div className="space-y-4">
-              <div>
-                <Input
-                  type="date"
-                  value={birthday}
-                  onChange={(e) => setBirthday(e.target.value)}
-                  className="text-center text-lg"
-                  max={new Date().toISOString().split('T')[0]}
-                />
-                {errors.birthday && (
-                  <p className="text-destructive text-sm mt-2">{errors.birthday}</p>
-                )}
+            <div className="space-y-8">
+              <div className="space-y-5">
+                <div className="flex items-end justify-center gap-2">
+                  <span className="text-7xl font-bold tabular-nums leading-none text-foreground tracking-tight">
+                    {age}
+                  </span>
+                  <span className="text-base font-medium text-muted-foreground mb-2">
+                    {age === 1 ? 'year' : 'years'}
+                  </span>
+                </div>
+                <div className="px-1">
+                  <Slider
+                    value={[age]}
+                    min={AGE_MIN}
+                    max={AGE_MAX}
+                    step={1}
+                    onValueChange={(values) => setAge(values[0])}
+                    aria-label="Age"
+                  />
+                  <div className="flex justify-between text-[11px] text-muted-foreground/60 mt-2 tabular-nums">
+                    <span>{AGE_MIN}</span>
+                    <span>{AGE_MAX}</span>
+                  </div>
+                </div>
               </div>
 
               <div className="flex gap-3">
@@ -196,7 +227,6 @@ export default function OnboardingPage() {
                 </Button>
                 <Button
                   onClick={handleNext}
-                  disabled={!birthday}
                   className="flex-1 bg-primary hover:bg-primary/90"
                 >
                   Continue
