@@ -231,10 +231,11 @@ export function AppStartup({ children, onInitialize, onLogout, isDataReady }: Ap
     };
   }, [onInitialize]);
 
-  // Show retry after 5 seconds so users don't wait too long on slow connections.
+  // Show retry / clear-data / log-out buttons after 1.5s so a stuck launch is
+  // recoverable almost immediately instead of staring at a blank splash.
   useEffect(() => {
     if (phase === 'ready' || phase === 'error') return;
-    const timer = setTimeout(() => setShowRetry(true), 5000);
+    const timer = setTimeout(() => setShowRetry(true), 1500);
     return () => clearTimeout(timer);
   }, [phase]);
 
