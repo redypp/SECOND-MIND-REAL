@@ -1,11 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User, Calendar, MapPin, ArrowRight, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Slider } from '@/components/ui/slider';
 import { useAuth } from '@/contexts/AuthContext';
 import { showErrorPopup } from '@/contexts/ErrorPopupContext';
 import { z } from 'zod';
@@ -188,34 +187,11 @@ export default function OnboardingPage() {
               How old are you, {getFirstName()}?
             </h1>
             <p className="text-muted-foreground text-[15px] mb-8">
-              Drag the slider — close enough is fine.
+              Drag the bar — close enough is fine.
             </p>
 
             <div className="space-y-8">
-              <div className="space-y-5">
-                <div className="flex items-end justify-center gap-2">
-                  <span className="text-7xl font-bold tabular-nums leading-none text-foreground tracking-tight">
-                    {age}
-                  </span>
-                  <span className="text-base font-medium text-muted-foreground mb-2">
-                    {age === 1 ? 'year' : 'years'}
-                  </span>
-                </div>
-                <div className="px-1">
-                  <Slider
-                    value={[age]}
-                    min={AGE_MIN}
-                    max={AGE_MAX}
-                    step={1}
-                    onValueChange={(values) => setAge(values[0])}
-                    aria-label="Age"
-                  />
-                  <div className="flex justify-between text-[11px] text-muted-foreground/60 mt-2 tabular-nums">
-                    <span>{AGE_MIN}</span>
-                    <span>{AGE_MAX}</span>
-                  </div>
-                </div>
-              </div>
+              <AgeBar age={age} onChange={setAge} min={AGE_MIN} max={AGE_MAX} />
 
               <div className="flex gap-3">
                 <Button
@@ -309,6 +285,180 @@ export default function OnboardingPage() {
       >
         <span className="text-xs text-muted-foreground/50">Second Mind</span>
       </motion.div>
+    </div>
+  );
+}
+
+/* ───────────────────────── AgeBar ───────────────────────── */
+
+interface AgeBarProps {
+  age: number;
+  onChange: (age: number) => void;
+  min: number;
+  max: number;
+}
+
+/**
+ * AgeBar — a custom horizontal age picker. Big animated number above a
+ * gradient-filled track with decade tick marks. The bar is draggable
+ * from any point: tap-to-jump, drag-to-scrub. Designed to match the
+ * profile/portal aesthetic instead of looking like a stock UI slider.
+ */
+function AgeBar({ age, onChange, min, max }: AgeBarProps) {
+  const trackRef = useRef<HTMLDivElement | null>(null);
+  const isDraggingRef = useRef(false);
+
+  const valueFromClientX = useCallback((clientX: number): number => {
+    const el = trackRef.current;
+    if (!el) return age;
+    const rect = el.getBoundingClientRect();
+    const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+    return Math.round(min + ratio * (max - min));
+  }, [age, min, max]);
+
+  const handlePointerDown = useCallback((e: React.PointerEvent) => {
+    isDraggingRef.current = true;
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+    onChange(valueFromClientX(e.clientX));
+  }, [onChange, valueFromClientX]);
+
+  const handlePointerMove = useCallback((e: React.PointerEvent) => {
+    if (!isDraggingRef.current) return;
+    onChange(valueFromClientX(e.clientX));
+  }, [onChange, valueFromClientX]);
+
+  const handlePointerUp = useCallback((e: React.PointerEvent) => {
+    isDraggingRef.current = false;
+    try { (e.target as HTMLElement).releasePointerCapture(e.pointerId); } catch { /* ignore */ }
+  }, []);
+
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'ArrowLeft') { e.preventDefault(); onChange(Math.max(min, age - 1)); }
+    else if (e.key === 'ArrowRight') { e.preventDefault(); onChange(Math.min(max, age + 1)); }
+    else if (e.key === 'Home') { e.preventDefault(); onChange(min); }
+    else if (e.key === 'End') { e.preventDefault(); onChange(max); }
+  }, [age, min, max, onChange]);
+
+  const fillPct = ((age - min) / (max - min)) * 100;
+
+  // Decade tick marks (every 10) — visually structures the bar
+  const ticks: number[] = [];
+  const firstDecade = Math.ceil(min / 10) * 10;
+  for (let v = firstDecade; v <= max; v += 10) ticks.push(v);
+
+  return (
+    <div className="select-none">
+      {/* Big animated number readout */}
+      <div className="flex items-end justify-center gap-2 mb-6">
+        <motion.span
+          key={age}
+          initial={{ scale: 0.95, opacity: 0.7 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+          className="text-7xl font-bold tabular-nums leading-none tracking-tight text-foreground"
+          style={{ fontFamily: 'var(--font-display)', letterSpacing: '-0.045em' }}
+        >
+          {age}
+        </motion.span>
+        <span className="text-sm font-semibold uppercase tracking-[0.2em] text-muted-foreground/70 mb-2">
+          {age === 1 ? 'year' : 'years'}
+        </span>
+      </div>
+
+      {/* The bar itself */}
+      <div
+        ref={trackRef}
+        role="slider"
+        tabIndex={0}
+        aria-valuemin={min}
+        aria-valuemax={max}
+        aria-valuenow={age}
+        aria-label="Age"
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
+        onKeyDown={handleKeyDown}
+        className="relative h-12 rounded-full cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 touch-none"
+        style={{
+          background: 'hsl(var(--secondary) / 0.6)',
+          border: '1px solid hsl(var(--border) / 0.6)',
+          boxShadow: 'inset 0 1px 0 hsl(0 0% 100% / 0.04), inset 0 -1px 0 hsl(0 0% 0% / 0.2)',
+        }}
+      >
+        {/* Filled portion — gradient that follows the handle */}
+        <div
+          className="absolute top-0 bottom-0 left-0 rounded-full pointer-events-none"
+          style={{
+            width: `${fillPct}%`,
+            background:
+              'linear-gradient(90deg, hsl(var(--primary) / 0.85) 0%, hsl(var(--primary)) 100%)',
+            boxShadow: '0 0 24px hsl(var(--primary) / 0.35)',
+            transition: isDraggingRef.current ? 'none' : 'width 0.12s ease-out',
+          }}
+        />
+
+        {/* Decade ticks — drawn over both filled and unfilled portions */}
+        <div className="absolute inset-0 flex items-center pointer-events-none">
+          {ticks.map((v) => {
+            const left = ((v - min) / (max - min)) * 100;
+            const isPast = v <= age;
+            return (
+              <div
+                key={v}
+                className="absolute flex flex-col items-center"
+                style={{ left: `calc(${left}% )`, transform: 'translateX(-50%)' }}
+              >
+                <div
+                  className="w-px h-3"
+                  style={{
+                    background: isPast ? 'hsl(var(--primary-foreground) / 0.5)' : 'hsl(var(--foreground) / 0.2)',
+                  }}
+                />
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Handle */}
+        <div
+          className="absolute top-1/2 pointer-events-none"
+          style={{
+            left: `${fillPct}%`,
+            transform: 'translate(-50%, -50%)',
+            transition: isDraggingRef.current ? 'none' : 'left 0.12s ease-out',
+          }}
+        >
+          <div
+            className="w-9 h-9 rounded-full bg-background border-2 border-primary flex items-center justify-center"
+            style={{
+              boxShadow:
+                '0 8px 18px -6px hsl(var(--primary) / 0.55), 0 2px 6px -2px hsl(0 0% 0% / 0.3), inset 0 1px 0 hsl(0 0% 100% / 0.12)',
+            }}
+          >
+            <div
+              className="w-1.5 h-1.5 rounded-full bg-primary"
+              style={{ boxShadow: '0 0 8px hsl(var(--primary))' }}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Decade labels under the bar */}
+      <div className="relative h-5 mt-2">
+        {ticks.map((v) => {
+          const left = ((v - min) / (max - min)) * 100;
+          return (
+            <span
+              key={v}
+              className="absolute text-[10px] uppercase tracking-[0.18em] font-semibold tabular-nums text-muted-foreground/55"
+              style={{ left: `${left}%`, transform: 'translateX(-50%)' }}
+            >
+              {v}
+            </span>
+          );
+        })}
+      </div>
     </div>
   );
 }
