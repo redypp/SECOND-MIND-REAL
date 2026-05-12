@@ -451,6 +451,16 @@
 .life-section-meta    { color: hsl(var(--foreground) / 0.6); }
 .life-section-chevron { color: hsl(var(--foreground) / 0.3); }
 
+/* Section glyph — thin-stroke icon centered in each life tile.
+   Sits behind the label strip; muted by default and pops slightly on press. */
+.life-section-icon {
+  color: hsl(var(--foreground) / 0.78);
+  transform: translateY(-6%); /* nudge up so the label doesn't crowd it */
+  filter: drop-shadow(0 1px 0 hsl(var(--background) / 0.6));
+  transition: color 0.25s ease, transform 0.25s ease;
+}
+.life-section-card:active .life-section-icon { color: hsl(var(--foreground) / 0.95); }
+
 /* Archive glass cards — floating rounded cards (GPU-promoted for smooth scroll) */
 .archive-glass-card {
   transform: translateZ(0);

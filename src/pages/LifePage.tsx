@@ -1,20 +1,14 @@
-import { useMemo, useRef, useLayoutEffect } from 'react';
+import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useSpaces } from '@/contexts/SpacesContext';
 import { useCurrentDate } from '@/hooks/useCurrentDate';
 import { useLifeSubheadings } from '@/hooks/useLifeSubheadings';
-import ClockPage from '@/pages/ClockPage';
-import TodoPage from '@/pages/TodoPage';
-import HabitsPage from '@/pages/HabitsPage';
-import JournalPage from '@/pages/JournalPage';
 
 /**
- * LifePage — four glassy tiles, each a live miniature of the page it opens.
- *
- * No header — the four cards fill the viewport edge-to-edge. Tap a tile and
- * the corresponding sub-page opens immediately (no overlay animation —
- * MainLayout handles the page transition).
+ * LifePage — four glassy tiles, each a minimalist icon for the section it opens.
+ * Tap a tile and the corresponding sub-page opens. MainLayout handles the
+ * page transition.
  */
 
 interface LifePageProps {
@@ -25,14 +19,11 @@ interface LifePageProps {
 type SectionId = 'daily-plan' | 'todos' | 'habits' | 'journal';
 type Section = { id: SectionId; path: string; label: string; meta: string };
 
-const noop = () => {};
-
 export default function LifePage({ embedded = false, onNavigateToSection }: LifePageProps) {
   const navigate = useNavigate();
   const { items } = useSpaces();
   const { todayString } = useCurrentDate();
 
-  // Local fallbacks: computed from real data, shown instantly while AI loads (or if it fails)
   const fallbacks = useMemo(() => {
     const now = new Date();
     const nowTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
@@ -54,33 +45,18 @@ export default function LifePage({ embedded = false, onNavigateToSection }: Life
       daily_plan = 'no events scheduled today';
     }
 
-    let todo: string;
-    if (taskCount === 0) {
-      todo = 'no tasks yet';
-    } else {
-      todo = `${taskCount} task${taskCount !== 1 ? 's' : ''} on your list`;
-    }
+    const todo = taskCount === 0 ? 'no tasks yet' : `${taskCount} task${taskCount !== 1 ? 's' : ''} on your list`;
 
     return {
       daily_plan,
       todo,
-      habits: 'track today\'s habits',
-      journal: 'write today\'s entry',
+      habits: "track today's habits",
+      journal: "write today's entry",
     };
   }, [items, todayString]);
 
   const subheadings = useLifeSubheadings(fallbacks);
 
-  // Mount the four real pages once and reuse the elements as minis. Memo
-  // keeps them from re-rendering on every zoom-state flip.
-  const minis = useMemo<Record<SectionId, React.ReactNode>>(() => ({
-    'daily-plan': <ClockPage embedded onBack={noop} />,
-    'todos':      <TodoPage embedded onBack={noop} />,
-    'habits':     <HabitsPage embedded onBack={noop} />,
-    'journal':    <JournalPage embedded onBack={noop} />,
-  }), []);
-
-  // Four core sections — rendered as a 2×2 grid that fills the viewport.
   const sections: Section[] = [
     { id: 'daily-plan', path: '/daily-plan', label: 'Daily Plan', meta: subheadings.daily_plan },
     { id: 'todos',      path: '/todos',      label: 'To-Do',      meta: subheadings.todo },
@@ -88,8 +64,6 @@ export default function LifePage({ embedded = false, onNavigateToSection }: Life
     { id: 'journal',    path: '/journal',    label: 'Journal',    meta: subheadings.journal },
   ];
 
-  // Tap → navigate immediately. MainLayout handles whatever transition
-  // happens between Life and its sub-page.
   const handleTap = (section: Section) => {
     if (onNavigateToSection) onNavigateToSection(section.path);
     else navigate(section.path);
@@ -100,9 +74,6 @@ export default function LifePage({ embedded = false, onNavigateToSection }: Life
       className={`${embedded ? 'relative w-full h-full' : 'fixed inset-0 safe-area-top-ios'} flex flex-col bg-background overflow-hidden`}
       style={{ overscrollBehavior: 'none' }}
     >
-      {/* Header removed — four tiles fill the viewport. */}
-
-      {/* 2×2 section grid — four glassy rectangles filling the viewport */}
       <main
         className="flex-1 min-h-0 grid grid-cols-2 grid-rows-2 gap-3 p-3"
         style={{ paddingBottom: 'calc(var(--app-safe-bottom, 0px) + 12px)' }}
@@ -118,7 +89,7 @@ export default function LifePage({ embedded = false, onNavigateToSection }: Life
             onClick={() => handleTap(section)}
             aria-label={`Open ${section.label}`}
           >
-            <CardContent section={section} mini={minis[section.id]} />
+            <CardContent section={section} />
           </motion.button>
         ))}
       </main>
@@ -128,24 +99,20 @@ export default function LifePage({ embedded = false, onNavigateToSection }: Life
 
 /* ───────────────────────── Card content ───────────────────────── */
 
-function CardContent({
-  section,
-  mini,
-}: {
-  section: { label: string; meta: string };
-  mini: React.ReactNode;
-}) {
+function CardContent({ section }: { section: Section }) {
   return (
-    <div className="absolute inset-0">
-      {/* Real page rendered at iPhone reference size, scaled to fit the card */}
-      <MiniSnapshot>{mini}</MiniSnapshot>
+    <div className="absolute inset-0 flex flex-col">
+      {/* Icon area — fills the card; label strip sits over the bottom edge */}
+      <div className="flex-1 min-h-0 flex items-center justify-center">
+        <SectionIcon id={section.id} />
+      </div>
 
-      {/* Glass label strip at the bottom — readable over any snapshot */}
+      {/* Soft fade so the label always reads clean over the icon */}
       <div
         className="absolute left-0 right-0 bottom-0 px-4 py-3 pointer-events-none"
         style={{
           background:
-            'linear-gradient(180deg, hsl(var(--background) / 0) 0%, hsl(var(--background) / 0.85) 55%, hsl(var(--background) / 0.96) 100%)',
+            'linear-gradient(180deg, hsl(var(--background) / 0) 0%, hsl(var(--background) / 0.65) 60%, hsl(var(--background) / 0.92) 100%)',
         }}
       >
         <p
@@ -162,76 +129,111 @@ function CardContent({
   );
 }
 
-/* ───────────────────────── Mini snapshot ───────────────────────── */
+/* ───────────────────────── Minimalist section icons ───────────────────────── */
 
 /**
- * MiniSnapshot — renders its child at the actual viewport size and CSS-scales
- * the whole subtree to fit the card. Uses direct DOM writes (not React state)
- * so the scale tracks framer-motion's width/height animation every frame
- * without re-rendering the page subtree. At scale=1 the inner content fills
- * the viewport exactly, matching the real sub-page that mounts underneath
- * — no jitter at the end of the zoom.
+ * Custom thin-stroke SVGs — one motif per section. Sized to fill ~48% of the
+ * card via viewBox and `width: 48%`; stroke uses currentColor at low opacity
+ * so they sit gracefully behind the label. A slow breathing animation keeps
+ * the cards feeling alive without competing with the type.
  */
-function MiniSnapshot({ children }: { children: React.ReactNode }) {
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const innerRef = useRef<HTMLDivElement | null>(null);
-
-  useLayoutEffect(() => {
-    const el = containerRef.current;
-    const inner = innerRef.current;
-    if (!el || !inner) return;
-
-    let raf = 0;
-    const apply = () => {
-      raf = 0;
-      const r = el.getBoundingClientRect();
-      if (r.width === 0 || r.height === 0) return;
-      // Reference = current viewport. When the container animates up to
-      // fullscreen, scale lands at exactly 1.0 with content matching the
-      // real page's natural layout — seamless handoff.
-      const refW = window.innerWidth;
-      const refH = window.innerHeight;
-      inner.style.width = `${refW}px`;
-      inner.style.height = `${refH}px`;
-      const sx = r.width / refW;
-      const sy = r.height / refH;
-      // Cover-style: fills the card edge-to-edge with mild clipping that
-      // smoothly disappears as the card grows toward fullscreen.
-      const scale = Math.max(sx, sy);
-      inner.style.transform = `scale(${scale})`;
-    };
-    const schedule = () => {
-      if (raf) return;
-      raf = requestAnimationFrame(apply);
-    };
-
-    apply();
-    const ro = new ResizeObserver(schedule);
-    ro.observe(el);
-    window.addEventListener('resize', schedule);
-    return () => {
-      if (raf) cancelAnimationFrame(raf);
-      ro.disconnect();
-      window.removeEventListener('resize', schedule);
-    };
-  }, []);
-
+function SectionIcon({ id }: { id: SectionId }) {
   return (
-    <div
-      ref={containerRef}
-      className="absolute inset-0 overflow-hidden pointer-events-none select-none"
-      aria-hidden
+    <motion.div
+      className="life-section-icon"
+      initial={{ opacity: 0, scale: 0.92 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+      style={{ width: '48%', aspectRatio: '1 / 1', display: 'flex' }}
     >
-      <div
-        ref={innerRef}
-        className="absolute top-0 left-0"
-        style={{
-          transformOrigin: 'top left',
-          willChange: 'transform',
-        }}
+      <motion.div
+        style={{ width: '100%', height: '100%' }}
+        animate={{ scale: [1, 1.035, 1] }}
+        transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
       >
-        {children}
-      </div>
-    </div>
+        {id === 'daily-plan' && <DailyPlanGlyph />}
+        {id === 'todos'      && <TodoGlyph />}
+        {id === 'habits'     && <HabitsGlyph />}
+        {id === 'journal'    && <JournalGlyph />}
+      </motion.div>
+    </motion.div>
+  );
+}
+
+/* Shared SVG defaults — thin, round, currentColor */
+const svgProps = {
+  viewBox: '0 0 100 100',
+  fill: 'none',
+  stroke: 'currentColor',
+  strokeWidth: 1.25,
+  strokeLinecap: 'round' as const,
+  strokeLinejoin: 'round' as const,
+  width: '100%',
+  height: '100%',
+};
+
+/** Daily Plan — bare analog clock face, two hands. No tick marks. */
+function DailyPlanGlyph() {
+  return (
+    <svg {...svgProps} aria-hidden>
+      <circle cx="50" cy="50" r="34" />
+      {/* hour hand */}
+      <line x1="50" y1="50" x2="50" y2="32" />
+      {/* minute hand */}
+      <line x1="50" y1="50" x2="66" y2="56" />
+      {/* center pin */}
+      <circle cx="50" cy="50" r="1.6" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+/** To-Do — three stacked rows, the top one ticked off. */
+function TodoGlyph() {
+  return (
+    <svg {...svgProps} aria-hidden>
+      {/* row 1 — checked */}
+      <circle cx="24" cy="30" r="5.5" />
+      <path d="M21 30 l2.5 2.5 L28 27.5" />
+      <line x1="36" y1="30" x2="78" y2="30" />
+      {/* row 2 */}
+      <circle cx="24" cy="50" r="5.5" />
+      <line x1="36" y1="50" x2="72" y2="50" />
+      {/* row 3 */}
+      <circle cx="24" cy="70" r="5.5" />
+      <line x1="36" y1="70" x2="66" y2="70" />
+    </svg>
+  );
+}
+
+/** Habits — five-dot streak; the last three filled (today + recent). */
+function HabitsGlyph() {
+  return (
+    <svg {...svgProps} aria-hidden>
+      {/* baseline */}
+      <line x1="14" y1="50" x2="86" y2="50" opacity="0.35" />
+      {/* dots */}
+      <circle cx="20" cy="50" r="3.2" />
+      <circle cx="35" cy="50" r="3.2" />
+      <circle cx="50" cy="50" r="3.6" fill="currentColor" />
+      <circle cx="65" cy="50" r="3.6" fill="currentColor" />
+      <circle cx="80" cy="50" r="3.6" fill="currentColor" />
+      {/* ascending arc above the filled portion — subtle "growth" cue */}
+      <path d="M50 38 Q65 28 80 36" opacity="0.55" />
+    </svg>
+  );
+}
+
+/** Journal — three text lines with a diagonal pen stroke across them. */
+function JournalGlyph() {
+  return (
+    <svg {...svgProps} aria-hidden>
+      {/* page lines */}
+      <line x1="22" y1="34" x2="74" y2="34" />
+      <line x1="22" y1="50" x2="78" y2="50" />
+      <line x1="22" y1="66" x2="62" y2="66" />
+      {/* pen / nib stroke crossing the page */}
+      <path d="M30 80 L78 22" opacity="0.9" />
+      <path d="M76 20 L82 26 L78 30 Z" fill="currentColor" stroke="none" opacity="0.9" />
+    </svg>
   );
 }
