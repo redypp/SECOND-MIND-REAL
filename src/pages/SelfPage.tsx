@@ -1,7 +1,7 @@
 import { useState, useMemo, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bell, Settings as SettingsIcon, Send, Loader2, CheckCircle2, RefreshCw } from 'lucide-react';
+import { Bell, Settings as SettingsIcon, Send, Loader2, CheckCircle2, RefreshCw, ChevronRight, Sparkles, MapPin, Calendar, Cake } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSpaces } from '@/contexts/SpacesContext';
 import { useIntelligentCapture } from '@/hooks/useIntelligentCapture';
@@ -9,18 +9,25 @@ import { useSelfRecommendations, Recommendation } from '@/hooks/useSelfRecommend
 import { showErrorPopup } from '@/contexts/ErrorPopupContext';
 
 /**
- * SelfPage — clean personal hub.
+ * SelfPage — the user's personal hub.
  *
- * One ink color (with opacity-only variation), one font family (inherited
- * from the global stack), one weight (inherited from the 700 body baseline),
- * four sizes (from --text-hero / --text-title / --text-body / --text-label),
- * consistent gap spacing. No decorative cards, shadows, or gradients —
- * sections are separated by a single hairline rule.
+ * Visual language follows the SELF tile in EntryPortal: deep blue-gray
+ * atmosphere, cool blue accent, layered radial gradients, hairline
+ * borders. Sections are real cards with content density (monogram hero,
+ * activity heatmap, themed stats, quick capture, recommendations) so the
+ * page feels like a dashboard, not a wireframe.
  */
+
+const ACCENT = 'hsl(205 75% 66%)';
+const ACCENT_SOFT = 'hsl(205 80% 64% / 0.18)';
+const BORDER = 'hsl(210 20% 92% / 0.07)';
+const PANEL_BG =
+  'linear-gradient(180deg, hsl(220 14% 13%) 0%, hsl(220 14% 11%) 100%)';
+
 export default function SelfPage() {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
-  const { spaces } = useSpaces();
+  const { spaces, items } = useSpaces();
   const { capture, isProcessing } = useIntelligentCapture();
   const { recommendations, isLoading: recsLoading, refresh } = useSelfRecommendations();
 
@@ -30,11 +37,74 @@ export default function SelfPage() {
 
   const displayName = profile?.full_name?.trim() || user?.email?.split('@')[0] || 'You';
   const firstName = displayName.split(' ')[0];
+  const initials = useMemo(() => {
+    const parts = displayName.split(/\s+/).filter(Boolean);
+    if (parts.length === 0) return 'YO';
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  }, [displayName]);
+
   const archiveCount = spaces.length;
   const totalEntries = useMemo(
     () => spaces.reduce((acc, s) => acc + (s.itemCount ?? 0), 0),
     [spaces]
   );
+
+  // ── Derived activity stats ────────────────────────────────────────────────
+  const { heatmap, currentStreak, todayCount, weekCount, ageYears, daysSince } = useMemo(() => {
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const DAY = 24 * 60 * 60 * 1000;
+
+    // Bucket items by day (last 28 days)
+    const HEATMAP_DAYS = 28;
+    const buckets = new Array(HEATMAP_DAYS).fill(0);
+    items.forEach(i => {
+      const t = i.createdAt instanceof Date ? i.createdAt.getTime() : new Date(i.createdAt as any).getTime();
+      const daysAgo = Math.floor((startOfToday - t) / DAY);
+      if (daysAgo >= 0 && daysAgo < HEATMAP_DAYS) {
+        buckets[HEATMAP_DAYS - 1 - daysAgo] += 1;
+      }
+    });
+
+    // Today count is included for stats (use 0 offset)
+    const today = items.filter(i => {
+      const t = i.createdAt instanceof Date ? i.createdAt.getTime() : new Date(i.createdAt as any).getTime();
+      return t >= startOfToday;
+    }).length;
+
+    // 7-day window
+    const startOfWeek = startOfToday - 6 * DAY;
+    const week = items.filter(i => {
+      const t = i.createdAt instanceof Date ? i.createdAt.getTime() : new Date(i.createdAt as any).getTime();
+      return t >= startOfWeek;
+    }).length;
+
+    // Streak — count back from today while bucket > 0. Today counts if any entries.
+    let streak = 0;
+    for (let i = HEATMAP_DAYS - 1; i >= 0; i--) {
+      if (buckets[i] > 0) streak++;
+      else break;
+    }
+
+    // Age from birthday (rough — Jan 1 storage means it's just years since birth year)
+    let age = 0;
+    if (profile?.birthday) {
+      const by = parseInt(profile.birthday.slice(0, 4), 10);
+      if (!Number.isNaN(by)) age = Math.max(0, now.getFullYear() - by);
+    }
+
+    // Days since joining (member age) — uses user.created_at
+    let since = 0;
+    if (user?.created_at) {
+      const joined = new Date(user.created_at).getTime();
+      if (!Number.isNaN(joined)) since = Math.max(1, Math.floor((Date.now() - joined) / DAY));
+    }
+
+    return { heatmap: buckets, currentStreak: streak, todayCount: today, weekCount: week, ageYears: age, daysSince: since };
+  }, [items, profile, user]);
+
+  const heatmapMax = Math.max(1, ...heatmap);
 
   const autosize = useCallback((el: HTMLTextAreaElement | null) => {
     if (!el) return;
@@ -73,206 +143,575 @@ export default function SelfPage() {
   }, [spaces, navigate]);
 
   return (
-    <div className="fixed inset-0 flex flex-col bg-background text-foreground safe-area-top-ios overflow-y-auto">
-      {/* Header — pinned tight to the top of the safe area, no tall padding.
-          Container already provides safe-area-top inset, so the sticky header
-          uses top-0 (otherwise both insets stack and the header floats ~94px
-          down on iPhone). */}
-      <header className="sticky top-0 z-20 bg-background/95 backdrop-blur-xl">
-        <div className="flex items-center justify-end px-4 py-2">
+    <div className="fixed inset-0 flex flex-col text-foreground safe-area-top-ios overflow-hidden">
+      {/* Atmospheric background — cool blue gradient matching the SELF tile */}
+      <div
+        aria-hidden
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background:
+            'radial-gradient(120% 60% at 10% -10%, hsl(210 35% 22% / 0.7) 0%, transparent 55%), radial-gradient(140% 80% at 110% 100%, hsl(220 18% 6%) 0%, transparent 60%), linear-gradient(180deg, hsl(220 14% 11%) 0%, hsl(220 14% 8%) 100%)',
+        }}
+      />
+      <div
+        aria-hidden
+        className="absolute inset-0 pointer-events-none opacity-[0.04] mix-blend-overlay"
+        style={{
+          backgroundImage: 'radial-gradient(hsl(0 0% 100%) 0.5px, transparent 0.5px)',
+          backgroundSize: '3px 3px',
+        }}
+      />
+
+      {/* Header */}
+      <header className="relative z-20 sticky top-0 backdrop-blur-xl bg-background/30">
+        <div className="flex items-center justify-between px-4 py-2 max-w-2xl mx-auto w-full">
+          <span
+            className="uppercase font-semibold tracking-[0.3em]"
+            style={{ fontSize: '10px', color: 'hsl(210 25% 80% / 0.6)' }}
+          >
+            Profile
+          </span>
           <div className="flex items-center gap-1">
-            <button
-              onClick={() => navigate('/notifications')}
-              aria-label="Notifications"
-              className="inline-flex items-center justify-center w-9 h-9"
-            >
+            <IconBtn label="Notifications" onClick={() => navigate('/notifications')}>
               <Bell className="w-5 h-5" />
-            </button>
-            <button
-              onClick={() => navigate('/settings')}
-              aria-label="Settings"
-              className="inline-flex items-center justify-center w-9 h-9"
-            >
+            </IconBtn>
+            <IconBtn label="Settings" onClick={() => navigate('/settings')}>
               <SettingsIcon className="w-5 h-5" />
-            </button>
+            </IconBtn>
           </div>
         </div>
       </header>
 
-      <main className="flex-1 px-4 pb-24 flex flex-col gap-6 max-w-2xl w-full mx-auto">
-        {/* Identity */}
-        <section className="pt-3">
-          <span className="uppercase tracking-[0.3em] opacity-70" style={{ fontSize: 'var(--text-label)' }}>
-            {greeting()}
-          </span>
-          <h1
-            className="uppercase leading-[0.88] mt-2"
-            style={{ fontSize: 'var(--text-hero)', letterSpacing: '-0.04em' }}
-          >
-            {firstName}
-          </h1>
-          {(profile?.location || profile?.birthday || user?.created_at) && (
-            <div
-              className="flex flex-wrap gap-x-5 gap-y-1 mt-4 opacity-70"
-              style={{ fontSize: 'var(--text-body)' }}
-            >
-              {profile?.location && <span>{profile.location}</span>}
-              {profile?.birthday && <span>{formatBirthday(profile.birthday)}</span>}
-              {user?.created_at && <span>Since {formatMonthYear(user.created_at)}</span>}
-            </div>
-          )}
-        </section>
-
-        {/* Stats */}
-        <section className="grid grid-cols-2 gap-4 pt-4 border-t border-foreground/15">
-          <Stat label="Archives" value={archiveCount} />
-          <Stat label="Entries" value={totalEntries} />
-        </section>
-
-        {/* Quick capture */}
-        <section className="pt-4 border-t border-foreground/15">
-          <div className="flex items-center justify-between mb-3">
-            <span className="uppercase tracking-[0.3em] opacity-70" style={{ fontSize: 'var(--text-label)' }}>
-              Quick capture
-            </span>
-            {isProcessing && (
-              <span
-                className="inline-flex items-center gap-1.5 uppercase tracking-[0.25em] opacity-70"
-                style={{ fontSize: 'var(--text-label)' }}
-              >
-                <Loader2 className="w-3.5 h-3.5 animate-spin" /> Routing
-              </span>
-            )}
-          </div>
-
-          <textarea
-            ref={textareaRef}
-            value={captureText}
-            onChange={(e) => {
-              setCaptureText(e.target.value);
-              autosize(textareaRef.current);
+      <main className="relative z-10 flex-1 overflow-y-auto overscroll-contain">
+        <div className="px-4 pb-24 pt-3 flex flex-col gap-3.5 max-w-2xl w-full mx-auto">
+          {/* ── Hero ─────────────────────────────────────────────────────── */}
+          <motion.section
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+            className="relative rounded-3xl overflow-hidden"
+            style={{
+              background: PANEL_BG,
+              boxShadow:
+                '0 20px 50px -22px hsl(220 30% 2% / 0.55), inset 0 1px 0 hsl(0 0% 100% / 0.04)',
             }}
-            onKeyDown={handleKeyDown}
-            placeholder={`What's on your mind, ${firstName}?`}
-            rows={2}
-            className="w-full bg-transparent resize-none focus:outline-none placeholder:opacity-50"
-            style={{ fontSize: 'var(--text-body)' }}
-          />
-
-          <div className="mt-3 flex items-center justify-between">
-            <span
-              className="uppercase tracking-[0.25em] opacity-50"
-              style={{ fontSize: 'var(--text-label)' }}
-            >
-              Tap send — I'll route it
-            </span>
-            <button
-              onClick={handleCapture}
-              disabled={!captureText.trim() || isProcessing}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full uppercase tracking-[0.25em] bg-primary text-primary-foreground disabled:opacity-40"
-              style={{ fontSize: 'var(--text-label)' }}
-            >
-              {isProcessing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
-              Send
-            </button>
-          </div>
-
-          <AnimatePresence>
-            {lastResult && (
-              <motion.div
-                initial={{ opacity: 0, y: 4 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 4 }}
-                className="mt-3 inline-flex items-center gap-2"
-                style={{ fontSize: 'var(--text-label)' }}
-              >
-                <CheckCircle2 className="w-3.5 h-3.5" />
-                Saved to <span className="uppercase tracking-[0.2em]">{lastResult.where}</span>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </section>
-
-        {/* Recommendations */}
-        {recommendations.length > 0 && (
-          <section className="pt-4 border-t border-foreground/15">
-            <div className="flex items-center justify-between mb-3">
-              <span
-                className="uppercase tracking-[0.3em] opacity-70"
-                style={{ fontSize: 'var(--text-label)' }}
-              >
-                Worth a look today
-              </span>
-              <button
-                onClick={refresh}
-                disabled={recsLoading}
-                aria-label="Refresh"
-                className="inline-flex items-center justify-center w-7 h-7 disabled:opacity-40"
-              >
-                <RefreshCw className={`w-3.5 h-3.5 ${recsLoading ? 'animate-spin' : ''}`} />
-              </button>
-            </div>
-
-            <ul className="flex flex-col gap-4">
-              {recommendations.slice(0, 4).map((rec, i) => (
-                <li key={i}>
-                  <button
-                    onClick={() => openRecommendation(rec)}
-                    disabled={!rec.related_archive}
-                    className="text-left w-full disabled:cursor-default"
+          >
+            <PanelDecorations accent={ACCENT_SOFT} border={BORDER} cornerGlowAt="top-right" />
+            <div className="relative p-6 flex flex-col gap-5">
+              <div className="flex items-start gap-4">
+                <Monogram initials={initials} accent={ACCENT} />
+                <div className="flex-1 min-w-0 pt-1">
+                  <div
+                    className="uppercase font-semibold"
+                    style={{
+                      fontSize: '10px',
+                      letterSpacing: '0.3em',
+                      color: 'hsl(210 25% 80% / 0.6)',
+                    }}
                   >
-                    <div
-                      className="uppercase leading-[1.05]"
-                      style={{ fontSize: 'var(--text-title)', letterSpacing: '-0.03em' }}
+                    {greeting()}
+                  </div>
+                  <h1
+                    className="leading-[0.9] mt-1 truncate"
+                    style={{
+                      fontSize: 'clamp(2rem, 8vw, 2.75rem)',
+                      fontFamily: 'var(--font-display)',
+                      fontWeight: 700,
+                      letterSpacing: '-0.04em',
+                    }}
+                  >
+                    {firstName}
+                  </h1>
+                </div>
+              </div>
+
+              {/* Identity pills */}
+              <div className="flex flex-wrap gap-1.5">
+                {profile?.location && (
+                  <Pill icon={<MapPin className="w-3 h-3" />} text={profile.location} />
+                )}
+                {ageYears > 0 && (
+                  <Pill icon={<Cake className="w-3 h-3" />} text={`Age ${ageYears}`} />
+                )}
+                {daysSince > 0 && (
+                  <Pill icon={<Calendar className="w-3 h-3" />} text={`Day ${daysSince.toLocaleString()}`} />
+                )}
+              </div>
+            </div>
+          </motion.section>
+
+          {/* ── Activity heatmap ─────────────────────────────────────────── */}
+          <motion.section
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1], delay: 0.05 }}
+            className="relative rounded-3xl overflow-hidden"
+            style={{
+              background: PANEL_BG,
+              boxShadow:
+                '0 20px 50px -22px hsl(220 30% 2% / 0.55), inset 0 1px 0 hsl(0 0% 100% / 0.04)',
+            }}
+          >
+            <PanelDecorations accent={ACCENT_SOFT} border={BORDER} cornerGlowAt="bottom-left" />
+            <div className="relative p-5">
+              <div className="flex items-end justify-between mb-4">
+                <div>
+                  <div
+                    className="uppercase font-semibold"
+                    style={{
+                      fontSize: '10px',
+                      letterSpacing: '0.3em',
+                      color: 'hsl(210 25% 80% / 0.6)',
+                    }}
+                  >
+                    Activity · 28 days
+                  </div>
+                  <div className="flex items-baseline gap-2 mt-1.5">
+                    <span
+                      className="tabular-nums"
+                      style={{
+                        fontSize: '2.25rem',
+                        fontWeight: 700,
+                        letterSpacing: '-0.04em',
+                        color: 'hsl(0 0% 96%)',
+                        fontFamily: 'var(--font-display)',
+                        lineHeight: 1,
+                      }}
                     >
-                      {rec.title}
-                    </div>
-                    <div
-                      className="opacity-70 mt-1"
-                      style={{ fontSize: 'var(--text-body)' }}
+                      {currentStreak}
+                    </span>
+                    <span
+                      className="uppercase"
+                      style={{
+                        fontSize: '11px',
+                        letterSpacing: '0.2em',
+                        color: 'hsl(210 25% 80% / 0.7)',
+                        fontWeight: 600,
+                      }}
                     >
-                      {rec.rationale}
-                    </div>
+                      day{currentStreak === 1 ? '' : 's'} streak
+                    </span>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div
+                    className="tabular-nums"
+                    style={{
+                      fontSize: '1.25rem',
+                      fontWeight: 700,
+                      color: ACCENT,
+                    }}
+                  >
+                    +{weekCount}
+                  </div>
+                  <div
+                    className="uppercase"
+                    style={{
+                      fontSize: '10px',
+                      letterSpacing: '0.2em',
+                      color: 'hsl(210 25% 80% / 0.55)',
+                      fontWeight: 600,
+                    }}
+                  >
+                    this week
+                  </div>
+                </div>
+              </div>
+
+              {/* Heatmap grid — 4 weeks × 7 days */}
+              <div className="grid grid-cols-[repeat(28,1fr)] gap-[3px]">
+                {heatmap.map((count, i) => {
+                  const intensity = count === 0 ? 0 : Math.min(1, 0.25 + (count / heatmapMax) * 0.75);
+                  return (
+                    <div
+                      key={i}
+                      className="aspect-square rounded-[3px]"
+                      style={{
+                        background: count === 0
+                          ? 'hsl(210 20% 92% / 0.05)'
+                          : `hsl(205 75% 60% / ${intensity})`,
+                        border: count === 0
+                          ? `1px solid hsl(210 20% 92% / 0.05)`
+                          : `1px solid hsl(205 75% 70% / ${Math.min(1, intensity + 0.1)})`,
+                      }}
+                      title={`${count} ${count === 1 ? 'entry' : 'entries'}`}
+                    />
+                  );
+                })}
+              </div>
+              <div className="flex items-center justify-between mt-2.5 text-[10px] uppercase tracking-[0.18em] text-muted-foreground/55 font-semibold tabular-nums">
+                <span>28d ago</span>
+                <div className="flex items-center gap-1">
+                  <span>less</span>
+                  {[0.15, 0.4, 0.65, 0.9].map(o => (
+                    <span
+                      key={o}
+                      className="w-2 h-2 rounded-[2px]"
+                      style={{ background: `hsl(205 75% 60% / ${o})` }}
+                    />
+                  ))}
+                  <span>more</span>
+                </div>
+                <span>today</span>
+              </div>
+            </div>
+          </motion.section>
+
+          {/* ── Stat grid ────────────────────────────────────────────────── */}
+          <motion.section
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
+            className="grid grid-cols-2 gap-3"
+          >
+            <StatCard label="Archives" value={archiveCount} accent={ACCENT} />
+            <StatCard label="Entries" value={totalEntries} accent={ACCENT} />
+            <StatCard label="Today" value={todayCount} accent={ACCENT} />
+            <StatCard label="Streak" value={currentStreak} suffix={currentStreak === 1 ? 'day' : 'days'} accent={ACCENT} />
+          </motion.section>
+
+          {/* ── Quick capture ────────────────────────────────────────────── */}
+          <motion.section
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1], delay: 0.15 }}
+            className="relative rounded-3xl overflow-hidden"
+            style={{
+              background: PANEL_BG,
+              boxShadow:
+                '0 20px 50px -22px hsl(220 30% 2% / 0.55), inset 0 1px 0 hsl(0 0% 100% / 0.04)',
+            }}
+          >
+            <PanelDecorations accent={ACCENT_SOFT} border={BORDER} cornerGlowAt="top-right" />
+            <div className="relative p-5">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-3.5 h-3.5" style={{ color: ACCENT }} />
+                  <span
+                    className="uppercase font-semibold"
+                    style={{
+                      fontSize: '10px',
+                      letterSpacing: '0.3em',
+                      color: 'hsl(210 25% 80% / 0.65)',
+                    }}
+                  >
+                    Quick capture
+                  </span>
+                </div>
+                {isProcessing && (
+                  <span
+                    className="inline-flex items-center gap-1.5 uppercase font-semibold"
+                    style={{
+                      fontSize: '10px',
+                      letterSpacing: '0.2em',
+                      color: ACCENT,
+                    }}
+                  >
+                    <Loader2 className="w-3 h-3 animate-spin" /> Routing
+                  </span>
+                )}
+              </div>
+
+              <textarea
+                ref={textareaRef}
+                value={captureText}
+                onChange={(e) => {
+                  setCaptureText(e.target.value);
+                  autosize(textareaRef.current);
+                }}
+                onKeyDown={handleKeyDown}
+                placeholder={`What's on your mind, ${firstName}?`}
+                rows={2}
+                className="w-full bg-transparent resize-none focus:outline-none placeholder:text-muted-foreground/40 text-foreground"
+                style={{ fontSize: '15px', lineHeight: 1.5 }}
+              />
+
+              <div className="mt-3 flex items-center justify-between">
+                <span
+                  className="uppercase tabular-nums"
+                  style={{
+                    fontSize: '10px',
+                    letterSpacing: '0.2em',
+                    color: 'hsl(210 25% 80% / 0.5)',
+                    fontWeight: 600,
+                  }}
+                >
+                  AI routes it for you
+                </span>
+                <button
+                  onClick={handleCapture}
+                  disabled={!captureText.trim() || isProcessing}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full uppercase font-semibold disabled:opacity-40 transition-opacity"
+                  style={{
+                    fontSize: '10px',
+                    letterSpacing: '0.22em',
+                    background: ACCENT,
+                    color: 'hsl(220 14% 8%)',
+                  }}
+                >
+                  {isProcessing ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
+                  Send
+                </button>
+              </div>
+
+              <AnimatePresence>
+                {lastResult && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 4 }}
+                    className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-full"
+                    style={{
+                      fontSize: '11px',
+                      background: ACCENT_SOFT,
+                      color: 'hsl(205 80% 88%)',
+                    }}
+                  >
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    Saved to <span className="uppercase font-semibold tracking-[0.18em]">{lastResult.where}</span>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </motion.section>
+
+          {/* ── Recommendations ──────────────────────────────────────────── */}
+          {recommendations.length > 0 && (
+            <motion.section
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1], delay: 0.2 }}
+              className="relative rounded-3xl overflow-hidden"
+              style={{
+                background: PANEL_BG,
+                boxShadow:
+                  '0 20px 50px -22px hsl(220 30% 2% / 0.55), inset 0 1px 0 hsl(0 0% 100% / 0.04)',
+              }}
+            >
+              <PanelDecorations accent={ACCENT_SOFT} border={BORDER} cornerGlowAt="bottom-left" />
+              <div className="relative p-5">
+                <div className="flex items-center justify-between mb-3">
+                  <span
+                    className="uppercase font-semibold"
+                    style={{
+                      fontSize: '10px',
+                      letterSpacing: '0.3em',
+                      color: 'hsl(210 25% 80% / 0.65)',
+                    }}
+                  >
+                    Worth a look today
+                  </span>
+                  <button
+                    onClick={refresh}
+                    disabled={recsLoading}
+                    aria-label="Refresh"
+                    className="inline-flex items-center justify-center w-7 h-7 rounded-full hover:bg-foreground/5 disabled:opacity-40"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${recsLoading ? 'animate-spin' : ''}`} style={{ color: ACCENT }} />
                   </button>
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
+                </div>
+
+                <ul className="flex flex-col gap-2">
+                  {recommendations.slice(0, 4).map((rec, i) => (
+                    <li key={i}>
+                      <button
+                        onClick={() => openRecommendation(rec)}
+                        disabled={!rec.related_archive}
+                        className="text-left w-full flex items-start gap-3 px-3 py-3 rounded-2xl transition-colors hover:bg-foreground/5 disabled:cursor-default"
+                        style={{ border: `1px solid ${BORDER}` }}
+                      >
+                        <div
+                          className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 mt-0.5"
+                          style={{ background: ACCENT_SOFT, color: ACCENT }}
+                        >
+                          <Sparkles className="w-3.5 h-3.5" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div
+                            className="leading-snug"
+                            style={{
+                              fontSize: '14px',
+                              fontWeight: 600,
+                              letterSpacing: '-0.01em',
+                              color: 'hsl(0 0% 96%)',
+                            }}
+                          >
+                            {rec.title}
+                          </div>
+                          <div
+                            className="mt-1"
+                            style={{
+                              fontSize: '12px',
+                              lineHeight: 1.45,
+                              color: 'hsl(210 25% 80% / 0.7)',
+                            }}
+                          >
+                            {rec.rationale}
+                          </div>
+                        </div>
+                        {rec.related_archive && (
+                          <ChevronRight className="w-4 h-4 shrink-0 mt-1" style={{ color: 'hsl(210 25% 80% / 0.4)' }} />
+                        )}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </motion.section>
+          )}
+        </div>
       </main>
     </div>
   );
 }
 
-/* ───────────────────────── Helpers ───────────────────────── */
+/* ───────────────────────── Sub-components ───────────────────────── */
 
-function Stat({ label, value }: { label: string; value: number }) {
+function IconBtn({ children, onClick, label }: { children: React.ReactNode; onClick: () => void; label: string }) {
   return (
-    <div>
-      <div className="tabular-nums leading-none" style={{ fontSize: 'var(--text-title)' }}>
-        {value}
-      </div>
+    <button
+      onClick={onClick}
+      aria-label={label}
+      className="inline-flex items-center justify-center w-9 h-9 rounded-full text-foreground/70 hover:text-foreground hover:bg-foreground/5 transition-colors"
+    >
+      {children}
+    </button>
+  );
+}
+
+function Monogram({ initials, accent }: { initials: string; accent: string }) {
+  return (
+    <div
+      className="relative w-16 h-16 rounded-2xl flex items-center justify-center shrink-0 overflow-hidden"
+      style={{
+        background:
+          `linear-gradient(140deg, ${accent} 0%, hsl(205 60% 38%) 70%, hsl(220 30% 18%) 100%)`,
+        boxShadow:
+          'inset 0 1px 0 hsl(0 0% 100% / 0.18), 0 8px 20px -10px hsl(205 80% 50% / 0.45)',
+      }}
+    >
       <div
-        className="uppercase tracking-[0.3em] mt-1 opacity-70"
-        style={{ fontSize: 'var(--text-label)' }}
+        aria-hidden
+        className="absolute inset-0 opacity-30"
+        style={{
+          background:
+            'radial-gradient(80% 100% at 30% 20%, hsl(0 0% 100% / 0.5), transparent 60%)',
+        }}
+      />
+      <span
+        className="relative tabular-nums"
+        style={{
+          fontFamily: 'var(--font-display)',
+          fontWeight: 700,
+          fontSize: '22px',
+          letterSpacing: '-0.03em',
+          color: 'hsl(220 30% 12%)',
+        }}
       >
-        {label}
+        {initials}
+      </span>
+    </div>
+  );
+}
+
+function Pill({ icon, text }: { icon: React.ReactNode; text: string }) {
+  return (
+    <span
+      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full"
+      style={{
+        background: 'hsl(0 0% 100% / 0.045)',
+        border: `1px solid ${BORDER}`,
+        fontSize: '11px',
+        fontWeight: 600,
+        color: 'hsl(210 25% 90% / 0.85)',
+      }}
+    >
+      <span style={{ color: 'hsl(210 25% 80% / 0.6)' }}>{icon}</span>
+      {text}
+    </span>
+  );
+}
+
+function StatCard({ label, value, suffix, accent }: { label: string; value: number; suffix?: string; accent: string }) {
+  return (
+    <div
+      className="relative rounded-2xl p-4 overflow-hidden"
+      style={{
+        background: PANEL_BG,
+        boxShadow:
+          '0 12px 24px -16px hsl(220 30% 2% / 0.5), inset 0 1px 0 hsl(0 0% 100% / 0.04)',
+        border: `1px solid ${BORDER}`,
+      }}
+    >
+      <div
+        aria-hidden
+        className="absolute inset-0 pointer-events-none opacity-50"
+        style={{
+          background: `radial-gradient(80% 60% at 100% 0%, ${ACCENT_SOFT}, transparent 70%)`,
+        }}
+      />
+      <div className="relative">
+        <div
+          className="uppercase font-semibold"
+          style={{
+            fontSize: '10px',
+            letterSpacing: '0.28em',
+            color: 'hsl(210 25% 80% / 0.6)',
+          }}
+        >
+          {label}
+        </div>
+        <div className="flex items-baseline gap-1.5 mt-1.5">
+          <span
+            className="tabular-nums"
+            style={{
+              fontSize: '1.75rem',
+              fontWeight: 700,
+              letterSpacing: '-0.04em',
+              fontFamily: 'var(--font-display)',
+              color: 'hsl(0 0% 96%)',
+              lineHeight: 1,
+            }}
+          >
+            {value.toLocaleString()}
+          </span>
+          {suffix && (
+            <span
+              className="uppercase"
+              style={{
+                fontSize: '10px',
+                letterSpacing: '0.18em',
+                fontWeight: 600,
+                color: 'hsl(210 25% 80% / 0.55)',
+              }}
+            >
+              {suffix}
+            </span>
+          )}
+        </div>
       </div>
     </div>
   );
 }
 
-function formatBirthday(birthday: string): string {
-  const d = new Date(birthday);
-  if (Number.isNaN(d.getTime())) return birthday;
-  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+function PanelDecorations({ accent, border, cornerGlowAt }: { accent: string; border: string; cornerGlowAt: 'top-right' | 'bottom-left' }) {
+  const glow =
+    cornerGlowAt === 'top-right'
+      ? `radial-gradient(60% 80% at 95% 5%, ${accent}, transparent 70%)`
+      : `radial-gradient(60% 80% at 5% 95%, ${accent}, transparent 70%)`;
+  return (
+    <>
+      <div aria-hidden className="absolute inset-0 pointer-events-none" style={{ background: glow }} />
+      <div
+        aria-hidden
+        className="absolute inset-0 pointer-events-none rounded-3xl"
+        style={{ boxShadow: `inset 0 0 0 1px ${border}` }}
+      />
+    </>
+  );
 }
 
-function formatMonthYear(iso: string): string {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return '';
-  return d.toLocaleDateString(undefined, { month: 'short', year: 'numeric' });
-}
+/* ───────────────────────── Helpers ───────────────────────── */
 
 function greeting(): string {
   const hour = new Date().getHours();
