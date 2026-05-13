@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Settings, Sparkles, Bell, Sunrise, HelpCircle, X, Plus, FlaskConical, MessageCircleQuestion, PenLine } from 'lucide-react';
+import { Settings, Sparkles, Sunrise, HelpCircle, X, Plus, FlaskConical, MessageCircleQuestion, PenLine } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import secondMindLogo from '@/assets/secondmind-logo.jpg';
 import { DailyBriefingModal } from '@/components/DailyBriefing';
@@ -168,12 +168,6 @@ export function RadialMenu({ pageIndex }: RadialMenuProps) {
         icon: <Sunrise className="w-5 h-5" />,
         label: 'Daily Briefing',
         onClick: () => { setOpen(false); setShowBriefing(true); },
-        className: 'bg-secondary text-foreground',
-      },
-      {
-        icon: <Bell className="w-5 h-5" />,
-        label: 'Notifications',
-        onClick: () => { setOpen(false); navigate('/notifications'); },
         className: 'bg-secondary text-foreground',
       },
     ];
