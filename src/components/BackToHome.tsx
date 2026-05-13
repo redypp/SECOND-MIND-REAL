@@ -16,7 +16,13 @@ import { ChevronLeft } from 'lucide-react';
  */
 
 const ARROW_SKIP_PREFIXES = ['/space/', '/item/'];
-const ARROW_SKIP_EXACT = new Set(['/', '/settings', '/notifications', '/people']);
+// Life sub-pages render their own in-page back arrow via the embedded
+// ClockPage / TodoPage / HabitsPage / JournalPage components — skipping
+// them here avoids two stacked arrows in the same corner.
+const ARROW_SKIP_EXACT = new Set([
+  '/', '/settings', '/notifications', '/people',
+  '/daily-plan', '/todos', '/habits', '/journal',
+]);
 
 const SWIPE_SKIP_PREFIXES = ['/space/'];
 const SWIPE_SKIP_EXACT = new Set(['/']);

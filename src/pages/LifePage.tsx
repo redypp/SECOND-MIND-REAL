@@ -88,8 +88,9 @@ export default function LifePage({ embedded = false, onNavigateToSection }: Life
       <main
         className="flex-1 min-h-0 grid grid-cols-2 grid-rows-2 gap-3 p-3"
         style={{
-          paddingTop: 'calc(var(--app-safe-top, env(safe-area-inset-top, 0px)) + 12px)',
-          paddingBottom: 'calc(var(--app-safe-bottom, 0px) + 12px)',
+          // Just clear the iOS clock; let the tiles claim the rest of the viewport.
+          paddingTop: 'calc(var(--app-safe-top, env(safe-area-inset-top, 0px)) + 4px)',
+          paddingBottom: 'calc(var(--app-safe-bottom, 0px) + 8px)',
         }}
       >
         {sections.map((section, i) => (
