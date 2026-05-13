@@ -197,13 +197,13 @@ export function AddSpaceDialog({ variant = 'card', trigger, navigateAfterCreate 
       </DialogTrigger>
 
       <DialogContent
-        className="sm:max-w-lg rounded-2xl p-0 overflow-hidden gap-0 flex flex-col [&>button:last-child]:hidden translate-y-0 sm:top-[50%] sm:translate-y-[-50%] top-[calc(env(safe-area-inset-top,0px)+24px)] max-h-[calc(100svh-env(safe-area-inset-top,0px)-48px)] sm:max-h-[90svh]"
+        className="sm:max-w-lg rounded-3xl p-0 overflow-hidden gap-0 flex flex-col [&>button:last-child]:hidden translate-y-0 sm:top-[50%] sm:translate-y-[-50%] top-[calc(var(--app-safe-top,env(safe-area-inset-top,0px))+12px)] max-h-[calc(100svh-var(--app-safe-top,env(safe-area-inset-top,0px))-var(--app-safe-bottom,env(safe-area-inset-bottom,0px))-24px)] sm:max-h-[90svh]"
         style={{ display: 'flex', flexDirection: 'column' }}
       >
         {/* ── STEP 1: Pick a category ─────────────────────────────────────── */}
         {step === 'pick' && (
           <>
-            <DialogHeader className="px-5 pt-5 pb-0 shrink-0">
+            <DialogHeader className="px-5 pt-4 pb-0 shrink-0">
               <DialogTitle className="text-lg">Create Archive</DialogTitle>
             </DialogHeader>
 
@@ -334,11 +334,11 @@ export function AddSpaceDialog({ variant = 'card', trigger, navigateAfterCreate 
         {/* ── STEP 2: Confirm name + photo preview ────────────────────────── */}
         {step === 'confirm' && (
           <>
-            <DialogHeader className="px-5 pt-5 pb-0 shrink-0">
+            <DialogHeader className="px-5 pt-4 pb-0 shrink-0">
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setStep('pick')}
-                  className="p-1.5 rounded-lg hover:bg-secondary transition-colors"
+                  className="p-1.5 -ml-1.5 rounded-lg hover:bg-secondary transition-colors"
                 >
                   <ArrowLeft className="w-4 h-4" />
                 </button>
