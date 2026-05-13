@@ -39,10 +39,9 @@ export function EntryPortal() {
 
   const firstName = (profile?.full_name?.trim().split(/\s+/)[0]) || '';
 
-  const { dayLabel, dateLabel, todayCount, archiveCount, totalItems, recentArchive } = useMemo(() => {
+  const { dayLabel, todayCount, archiveCount, totalItems, recentArchive } = useMemo(() => {
     const now = new Date();
     const day = now.toLocaleDateString(undefined, { weekday: 'long' });
-    const date = now.toLocaleDateString(undefined, { month: 'long', day: 'numeric' });
 
     const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
     const today = items.filter(i => {
@@ -58,7 +57,6 @@ export function EntryPortal() {
 
     return {
       dayLabel: day,
-      dateLabel: date,
       todayCount: today,
       archiveCount: archives,
       totalItems: total,
@@ -80,22 +78,7 @@ export function EntryPortal() {
           paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 1rem)',
         }}
       >
-        {/* Header — date on the left, wordmark on the right */}
-        <motion.header
-          initial={{ y: -6, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-          className="relative w-full max-w-md mx-auto flex items-center justify-between mb-6"
-        >
-          <span className="text-[10px] uppercase tabular-nums font-medium tracking-[0.32em] text-muted-foreground/70">
-            {dayLabel} · {dateLabel}
-          </span>
-          <span className="text-[10px] uppercase font-medium tracking-[0.32em] text-muted-foreground/70">
-            Second Mind
-          </span>
-        </motion.header>
-
-        {/* Tile stack */}
+        {/* Tile stack — fills the viewport, no header */}
         <div className="relative flex-1 min-h-0 flex flex-col items-stretch gap-3 w-full max-w-md mx-auto">
           <PortalSection
             slot="top"
