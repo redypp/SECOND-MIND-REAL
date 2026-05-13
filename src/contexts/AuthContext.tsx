@@ -613,10 +613,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         },
       },
     });
-    if (!error) {
-      // Flag for TutorialContext to start the tutorial on first login
-      localStorage.setItem('secondmind_trigger_tutorial', 'true');
-    }
     return { error, session: data?.session ?? null };
   };
 

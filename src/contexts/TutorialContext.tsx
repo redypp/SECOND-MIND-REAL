@@ -203,22 +203,18 @@ interface TutorialContextType {
 const TutorialContext = createContext<TutorialContextType | undefined>(undefined);
 
 function resolveInitialPhase(): OnboardingPhase {
-  // Check new unified key first
+  // The auto-shown tour was popping up on fresh devices / cleared storage for
+  // existing users who'd already moved past it. Default everyone to 'complete'.
+  // The flow can still be started explicitly via Settings → Restart tutorial,
+  // which calls resetOnboarding().
   const saved = localStorage.getItem(STORAGE_KEY);
+  if (saved === 'complete') return 'complete';
+  // If someone is mid-flow because they explicitly opted in via Settings,
+  // honor it. Otherwise treat them as complete.
   if (saved && PHASE_ORDER.includes(saved as OnboardingPhase)) {
     return saved as OnboardingPhase;
   }
-  // Legacy mapping: old welcome slides → new AI personality phases
-  if (saved === 'welcome-1') return 'ai-name';
-  if (saved === 'welcome-2') return 'ai-tone';
-  // Migration: if user completed both old onboarding + old tutorial, mark as complete
-  const legacyOnboarding = localStorage.getItem('secondmind_onboarding_done');
-  const legacyTutorial = localStorage.getItem('secondmind_tutorial_step');
-  if (legacyOnboarding === 'true' && legacyTutorial === 'completed') {
-    return 'complete';
-  }
-  // New user — start from the beginning
-  return 'ai-name';
+  return 'complete';
 }
 
 export function TutorialProvider({ children }: { children: ReactNode }) {
@@ -240,13 +236,10 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
     localStorage.setItem(STORAGE_KEY, currentPhase);
   }, [currentPhase]);
 
-  // Handle legacy trigger key (from old Settings restart flow)
+  // Clean up any stale trigger flag from older builds — the auto-show flow has
+  // been retired. The tutorial can only be started via Settings → Restart.
   useEffect(() => {
-    const trigger = localStorage.getItem('secondmind_trigger_tutorial');
-    if (trigger === 'true') {
-      localStorage.removeItem('secondmind_trigger_tutorial');
-      setCurrentPhase('ai-name');
-    }
+    localStorage.removeItem('secondmind_trigger_tutorial');
   }, []);
 
   const advancePhase = useCallback(() => {
