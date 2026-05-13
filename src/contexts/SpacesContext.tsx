@@ -505,6 +505,18 @@ export function SpacesProvider({ children }: { children: ReactNode }) {
 
        dbSpacesRef.current = dbSpaces;
        setSpaces(prev => {
+         // Defensive: cloud just returned zero spaces while we still have some
+         // in memory. The cache's mergeFromCloud already preserved local-only
+         // rows, so an empty cloud response while local state is non-empty is
+         // almost always a transient RLS/auth glitch (common on iOS resume or
+         // mid token-refresh) rather than the user actually wiping everything.
+         // Preserve local state — the next backgroundRefresh reconciles it.
+         if (dbSpaces.length === 0 && prev.length > 0) {
+           logLifecycle('[Persistence] fetchData: empty cloud spaces response with local data — keeping local state', {
+             localCount: prev.length,
+           });
+           return prev;
+         }
          const cloudSpaceIds = new Set(dbSpaces.map(s => s.id));
          const mapped = dbSpaces.map(s => {
            // Case 1: space is in cloud AND has pending local edits → keep local version
@@ -527,6 +539,13 @@ export function SpacesProvider({ children }: { children: ReactNode }) {
          return localOnlyPending.length === 0 ? mapped : [...mapped, ...localOnlyPending];
        });
        setItems(prev => {
+         // Same defensive guard as spaces above.
+         if (dbItems.length === 0 && prev.length > 0) {
+           logLifecycle('[Persistence] fetchData: empty cloud items response with local data — keeping local state', {
+             localCount: prev.length,
+           });
+           return prev;
+         }
          const cloudItemIds = new Set(dbItems.map(i => i.id));
          const mapped = dbItems.map(i => {
            // Case 1: item is in cloud AND has pending local edits → keep local version
@@ -720,6 +739,15 @@ export function SpacesProvider({ children }: { children: ReactNode }) {
 
         dbSpacesRef.current = dbSpaces;
         setSpaces(prev => {
+          // Same defensive guard as fetchData — a backgroundRefresh on iOS
+          // resume that comes back with 0 rows is almost always a transient
+          // auth blip, not a legitimate empty state.
+          if (dbSpaces.length === 0 && prev.length > 0) {
+            logLifecycle('[Persistence] backgroundRefresh: empty cloud spaces with local data — keeping local state', {
+              localCount: prev.length,
+            });
+            return prev;
+          }
           const cloudSpaceIds = new Set(dbSpaces.map(s => s.id));
           const mapped = dbSpaces.map(s => {
             if (pendingSpaceIds.has(s.id)) {
@@ -734,6 +762,12 @@ export function SpacesProvider({ children }: { children: ReactNode }) {
           return localOnlyPending.length === 0 ? mapped : [...mapped, ...localOnlyPending];
         });
         setItems(prev => {
+          if (dbItems.length === 0 && prev.length > 0) {
+            logLifecycle('[Persistence] backgroundRefresh: empty cloud items with local data — keeping local state', {
+              localCount: prev.length,
+            });
+            return prev;
+          }
           const cloudItemIds = new Set(dbItems.map(i => i.id));
           const mapped = dbItems.map(i => {
             if (pendingItemIds.has(i.id)) {
