@@ -1,5 +1,6 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { RefreshCw } from 'lucide-react';
+import { errorTracking } from '@/lib/errorTracking';
 
 interface Props {
   children: ReactNode;
@@ -22,6 +23,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('[ErrorBoundary] Caught error:', error, errorInfo);
+    errorTracking.captureException(error, { componentStack: errorInfo.componentStack });
   }
 
   handleReload = () => {

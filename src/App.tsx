@@ -37,6 +37,8 @@ import { PeopleProvider } from "@/contexts/PeopleContext";
 import { useCallback, useEffect } from "react";
 import { forceClearAllCaches } from "@/lib/localCache";
 import { prefetchLifeSubheadings } from "@/hooks/useLifeSubheadings";
+import { analytics, Events } from "@/lib/analytics";
+import { errorTracking } from "@/lib/errorTracking";
 
 const queryClient = new QueryClient();
 
@@ -70,8 +72,26 @@ function AppContent() {
   }, [initializeAuth]);
 
   const handleLogout = useCallback(async () => {
+    analytics.capture(Events.Logout);
     await signOut();
+    analytics.reset();
+    errorTracking.clearUser();
   }, [signOut]);
+
+  // Identify the user in analytics + error tracking whenever auth state changes.
+  // Runs as a side-effect of `user` flipping; safe to call repeatedly.
+  useEffect(() => {
+    if (user) {
+      analytics.identify(user.id, { email: user.email });
+      errorTracking.identifyUser(user.id, user.email ?? undefined);
+      analytics.capture(Events.AppOpen);
+    }
+  }, [user]);
+
+  // Manual pageview on every route change.
+  useEffect(() => {
+    analytics.pageview(location.pathname);
+  }, [location.pathname]);
 
   // Auth route is always accessible — never behind AppStartup loader
   const isPublicRoute = location.pathname === '/auth' || location.pathname.startsWith('/p/');
