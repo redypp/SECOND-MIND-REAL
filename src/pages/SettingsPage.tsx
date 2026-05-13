@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Loader2, User, Users, LogOut, Lightbulb, Sunrise,
-  Check, X, RotateCcw, Mail, Mic, MapPin, Navigation, ChevronRight,
+  Check, X, RotateCcw, Mail, Mic, MapPin, Navigation, ChevronRight, Trash2,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Switch } from '@/components/ui/switch';
@@ -10,6 +10,9 @@ import { FeatureTour } from '@/components/FeatureTour';
 import { useTutorial } from '@/contexts/TutorialContext';
 import { DailyBriefingModal } from '@/components/DailyBriefing';
 import { useAISettings } from '@/contexts/AISettingsContext';
+import { supabase } from '@/integrations/supabase/app-client';
+import { analytics, Events } from '@/lib/analytics';
+import { errorTracking } from '@/lib/errorTracking';
 
 export default function SettingsPage() {
   const navigate = useNavigate();
@@ -26,10 +29,33 @@ export default function SettingsPage() {
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [isDetectingLocation, setIsDetectingLocation] = useState(false);
   const [locationError, setLocationError] = useState('');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const handleSignOut = async () => {
     await signOut();
     navigate('/auth');
+  };
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmText !== 'DELETE') return;
+    setIsDeleting(true);
+    setDeleteError(null);
+    try {
+      const { error } = await supabase.functions.invoke('delete-account', { method: 'POST' });
+      if (error) throw new Error(error.message);
+      analytics.capture(Events.AccountDeleted);
+      await signOut();
+      navigate('/auth', { replace: true });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to delete account.';
+      setDeleteError(message);
+      errorTracking.captureException(err, { where: 'settings.deleteAccount' });
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const startEditProfile = () => {
@@ -310,6 +336,63 @@ export default function SettingsPage() {
             <LogOut className="w-4 h-4" />
             Sign Out
           </button>
+        </div>
+
+        {/* Delete account — Apple requires in-app account deletion */}
+        <div className="rounded-2xl bg-card border border-border/40 overflow-hidden">
+          {!showDeleteConfirm ? (
+            <button
+              onClick={() => setShowDeleteConfirm(true)}
+              className="w-full flex items-center justify-center gap-2 px-4 py-4 text-sm font-medium text-red-500 hover:bg-red-500/5 transition-colors"
+            >
+              <Trash2 className="w-4 h-4" />
+              Delete Account
+            </button>
+          ) : (
+            <div className="p-4 space-y-3">
+              <div>
+                <p className="text-sm font-semibold text-foreground">Delete your account</p>
+                <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                  This permanently removes your profile, archive, journals, habits, and all other data. This cannot be undone.
+                </p>
+                <p className="text-xs text-muted-foreground mt-2">
+                  An active App Store subscription must be cancelled separately in iOS Settings → Apple ID → Subscriptions.
+                </p>
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground">
+                  Type <span className="font-mono font-semibold">DELETE</span> to confirm
+                </label>
+                <input
+                  type="text"
+                  value={deleteConfirmText}
+                  onChange={(e) => setDeleteConfirmText(e.target.value)}
+                  className="mt-1 w-full px-3 py-2 text-sm rounded-md border border-border bg-background"
+                  autoCapitalize="characters"
+                  autoCorrect="off"
+                  spellCheck={false}
+                />
+              </div>
+              {deleteError && <p className="text-xs text-red-500">{deleteError}</p>}
+              <div className="flex gap-2">
+                <button
+                  onClick={() => { setShowDeleteConfirm(false); setDeleteConfirmText(''); setDeleteError(null); }}
+                  disabled={isDeleting}
+                  className="flex-1 px-3 py-2 text-sm rounded-md border border-border hover:bg-foreground/5 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDeleteAccount}
+                  disabled={deleteConfirmText !== 'DELETE' || isDeleting}
+                  className="flex-1 px-3 py-2 text-sm font-semibold rounded-md bg-red-500 text-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-red-600 transition-colors flex items-center justify-center gap-1.5"
+                >
+                  {isDeleting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
+                  Delete forever
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

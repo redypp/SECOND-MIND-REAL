@@ -9,6 +9,8 @@ import { AISettingsProvider } from "@/contexts/AISettingsContext";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { EntitlementProvider } from "@/contexts/EntitlementContext";
 import PaywallPage from "@/pages/PaywallPage";
+import PrivacyPage from "@/pages/PrivacyPage";
+import TermsPage from "@/pages/TermsPage";
 import { ErrorPopupProvider } from "@/contexts/ErrorPopupContext";
 import { AppStartup } from "@/components/AppStartup";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
@@ -96,13 +98,19 @@ function AppContent() {
   }, [location.pathname]);
 
   // Auth route is always accessible — never behind AppStartup loader
-  const isPublicRoute = location.pathname === '/auth' || location.pathname.startsWith('/p/');
+  const isPublicRoute =
+    location.pathname === '/auth' ||
+    location.pathname === '/privacy' ||
+    location.pathname === '/terms' ||
+    location.pathname.startsWith('/p/');
 
   const routes = (
     <Routes>
       {/* Public routes */}
       <Route path="/auth" element={<AuthPage />} />
       <Route path="/p/:slug" element={<PublicArchivePage />} />
+      <Route path="/privacy" element={<PrivacyPage />} />
+      <Route path="/terms" element={<TermsPage />} />
 
       {/* Protected routes */}
       <Route path="/onboarding" element={
