@@ -1,8 +1,15 @@
 import { ReactNode, useRef, useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useEntitlement } from '@/contexts/EntitlementContext';
 import { InitialSyncLoader } from '@/components/InitialSyncLoader';
 import { SUPABASE_AUTH_STORAGE_KEY } from '@/integrations/supabase/app-client';
+
+/**
+ * Paths that are reachable while authenticated but NOT yet a Plus subscriber.
+ * Everything else routes through the paywall.
+ */
+const ENTITLEMENT_BYPASS_PATHS = ['/paywall', '/onboarding', '/privacy', '/terms'];
 
 /**
  * True when a Supabase session is cached in localStorage that is either
@@ -71,6 +78,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     setLoadingPhase,
     setLoadingProgress,
   } = useAuth();
+  const { isPlus } = useEntitlement();
   const location = useLocation();
 
   // Track if we ever had a user to enable grace period
@@ -180,6 +188,9 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     if (!isOnboardingComplete && location.pathname !== '/onboarding') {
       return <Navigate to="/onboarding" replace />;
     }
+    if (!isPlus && !ENTITLEMENT_BYPASS_PATHS.includes(location.pathname)) {
+      return <Navigate to="/paywall" replace />;
+    }
     return <>{children}</>;
   }
 
@@ -229,6 +240,11 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   // Authenticated but onboarding incomplete (profile must be fetched first)
   if (profileFetched && !isOnboardingComplete && location.pathname !== '/onboarding') {
     return <Navigate to="/onboarding" replace />;
+  }
+
+  // Authenticated + onboarded but not a Plus subscriber → hard paywall.
+  if (profileFetched && isOnboardingComplete && !isPlus && !ENTITLEMENT_BYPASS_PATHS.includes(location.pathname)) {
+    return <Navigate to="/paywall" replace />;
   }
 
   return <>{children}</>;

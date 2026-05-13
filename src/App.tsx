@@ -7,6 +7,8 @@ import { TutorialProvider } from "@/contexts/TutorialContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { AISettingsProvider } from "@/contexts/AISettingsContext";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { EntitlementProvider } from "@/contexts/EntitlementContext";
+import PaywallPage from "@/pages/PaywallPage";
 import { ErrorPopupProvider } from "@/contexts/ErrorPopupContext";
 import { AppStartup } from "@/components/AppStartup";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
@@ -106,6 +108,9 @@ function AppContent() {
       <Route path="/onboarding" element={
         <ProtectedRoute><OnboardingPage /></ProtectedRoute>
       } />
+      <Route path="/paywall" element={
+        <ProtectedRoute><PaywallPage /></ProtectedRoute>
+      } />
 
       {/* MainLayout stays mounted — detail pages render as children */}
       <Route path="/invite/:token" element={
@@ -191,9 +196,11 @@ const App = () => (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <AuthProvider>
-          <ErrorPopupProvider>
-            <AppContent />
-          </ErrorPopupProvider>
+          <EntitlementProvider>
+            <ErrorPopupProvider>
+              <AppContent />
+            </ErrorPopupProvider>
+          </EntitlementProvider>
         </AuthProvider>
       </BrowserRouter>
     </QueryClientProvider>
