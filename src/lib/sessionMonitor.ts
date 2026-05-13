@@ -6,6 +6,7 @@
 import { supabase } from '@/integrations/supabase/app-client';
 import { logLifecycle, startTiming, endTiming, endTimingWithError } from './performanceLogger';
 import { showErrorPopup } from '@/contexts/ErrorPopupContext';
+import { navigateToAuth } from './authRedirect';
 
 type SessionListener = (event: SessionEvent) => void;
 type SessionEvent = 
@@ -155,7 +156,7 @@ export async function refreshSession(): Promise<boolean> {
       setSignOutReason('token_expired');
       showErrorPopup(
         'Your session has expired. Please sign in again to continue.',
-        () => window.location.href = '/auth'
+        navigateToAuth
       );
     } else if (!navigator.onLine) {
       // Network issue - don't show error, will retry when online
@@ -164,7 +165,7 @@ export async function refreshSession(): Promise<boolean> {
       setSignOutReason('refresh_failed');
       showErrorPopup(
         'Unable to refresh your session. Please sign in again.',
-        () => window.location.href = '/auth'
+        navigateToAuth
       );
     }
     

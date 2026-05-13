@@ -22,6 +22,7 @@ import {
 } from '@/lib/appLifecycle';
 import { initResumeHandler, onResume, setOverlayLogoUrl } from '@/lib/resumeHandler';
 import { forceClearAllCaches } from '@/lib/localCache';
+import { navigateToAuth } from '@/lib/authRedirect';
 
 type StartupPhase = 
   | 'immediate'      // First render - no async yet
@@ -326,7 +327,7 @@ export function AppStartup({ children, onInitialize, onLogout, isDataReady }: Ap
         if (phaseRef.current === 'ready') {
           logStartup('session-missing-on-resume');
           onLogout().catch(() => {
-            window.location.href = '/auth';
+            navigateToAuth();
           });
         }
       }
@@ -351,10 +352,10 @@ export function AppStartup({ children, onInitialize, onLogout, isDataReady }: Ap
     resetInitialLoad();
     try {
       await onLogout();
-      window.location.href = '/auth';
+      navigateToAuth();
     } catch (err) {
       console.error('[boot:logout-error]', err);
-      window.location.href = '/auth';
+      navigateToAuth();
     }
   }, [onLogout]);
 
