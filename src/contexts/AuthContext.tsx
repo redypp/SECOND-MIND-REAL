@@ -32,6 +32,34 @@ interface Profile {
   updated_at: string;
 }
 
+// Persisted-profile cache. Prevents the `/onboarding` re-prompt that
+// happened when fetchProfile returned null on a transient network blip
+// or RLS hiccup: previously the live profile state was overwritten with
+// null, isOnboardingComplete flipped to false, and ProtectedRoute
+// redirected an already-onboarded user to the onboarding screen.
+// Now we mirror the profile into localStorage on every successful fetch
+// and hydrate from it whenever a fresh fetch fails or hasn't run yet.
+const PROFILE_CACHE_KEY = 'sm_profile_cache_v1';
+
+function loadCachedProfile(userId: string): Profile | null {
+  try {
+    const raw = localStorage.getItem(PROFILE_CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Profile | null;
+    if (!parsed || parsed.user_id !== userId) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function saveCachedProfile(profile: Profile | null): void {
+  try {
+    if (profile) localStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify(profile));
+    else localStorage.removeItem(PROFILE_CACHE_KEY);
+  } catch { /* storage full / unavailable — ignore */ }
+}
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
@@ -355,6 +383,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Use the already-fetched profile if user ID matches, otherwise re-fetch quickly
         if (cachedUserId === existingSession.user.id && profileData) {
           setProfile(profileData);
+          saveCachedProfile(profileData);
         } else {
           // Either user ID mismatch OR cachedUserId was null (JWT expired in localStorage)
           // OR the parallel profile fetch timed out — fetch/retry the profile now.
@@ -374,9 +403,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 new Promise<null>((resolve) => setTimeout(() => resolve(null), 3000)),
               ]);
             }
-            setProfile(resolvedProfile);
+            // If the live fetch failed/timed out, fall back to the cached
+            // profile from a prior successful sync. This is what prevents
+            // the spurious "redirect to /onboarding" on transient blips.
+            const finalProfile = resolvedProfile ?? loadCachedProfile(existingSession.user.id);
+            setProfile(finalProfile);
+            if (resolvedProfile) saveCachedProfile(resolvedProfile);
           } catch {
-            setProfile(null);
+            setProfile(loadCachedProfile(existingSession.user.id));
           }
         }
         // Mark profile fetch as complete so onboarding check can be evaluated.
@@ -437,6 +471,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setDataReady(false);
             setLoadingPhase('complete');
             setProfile(null);
+            saveCachedProfile(null);
             setProfileFetched(false);
             stopSessionMonitor();
             setSession(null);
@@ -516,10 +551,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 new Promise<null>((resolve) => setTimeout(() => resolve(null), 3000)),
               ]);
             }
-            setProfile(profileData);
+            // Fall back to cached profile on transient failure (same
+            // reasoning as the cold-start path above).
+            const finalProfile = profileData ?? loadCachedProfile(currentSession.user.id);
+            setProfile(finalProfile);
+            if (profileData) saveCachedProfile(profileData);
           } catch (err) {
             console.error('[Auth] Unexpected error fetching profile in auth state change:', err);
-            setProfile(null);
+            setProfile(loadCachedProfile(currentSession.user.id));
           }
           // Signal that profile fetch is complete (success or failure) so
           // ProtectedRoute can safely evaluate isOnboardingComplete.
@@ -663,6 +702,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
     setSession(null);
     setProfile(null);
+    saveCachedProfile(null);
     setProfileFetched(false);
     setDataReady(false);
     setDataLoaded(true); // No user = nothing to load
@@ -678,7 +718,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!error) {
       // Refresh profile data
       const profileData = await fetchProfile(user.id);
-      setProfile(profileData);
+      if (profileData) {
+        setProfile(profileData);
+        saveCachedProfile(profileData);
+      }
     }
 
     return { error };
