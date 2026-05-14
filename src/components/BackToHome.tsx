@@ -25,7 +25,16 @@ const ARROW_SKIP_EXACT = new Set([
 ]);
 
 const SWIPE_SKIP_PREFIXES = ['/space/'];
-const SWIPE_SKIP_EXACT = new Set(['/']);
+// Life sub-pages already have MainLayout's internal swipe gesture wired up
+// (it animates the embedded sub-page off-screen and routes to /life). The
+// global edge-swipe was a second handler racing the same gesture and
+// sometimes resolving to navigate(-1) instead of /life — i.e., back to the
+// app home instead of the Life dashboard. Skipping the global handler
+// here lets MainLayout own the gesture entirely.
+const SWIPE_SKIP_EXACT = new Set([
+  '/',
+  '/daily-plan', '/todos', '/habits', '/journal',
+]);
 
 const LIFE_SUB_ROUTES = new Set(['/daily-plan', '/todos', '/habits', '/journal']);
 
@@ -111,20 +120,27 @@ export function BackToHome() {
 
   return (
     <>
-      {/* Visual feedback while the user drags from the edge */}
+      {/* Visual feedback while the user drags from the edge.
+          Soft tint fading in with progress + a translucent chevron pill that
+          rubber-bands rightward. No hard borders or drop shadows — the
+          previous look read as a Material chip; this one disappears into
+          the page chrome the way an iOS edge gesture should. */}
       {swipeProgress > 0 && (
         <div
           className="fixed left-0 top-0 bottom-0 z-[99998] pointer-events-none flex items-center"
           style={{
-            width: `${swipeProgress * 60}px`,
-            background: 'linear-gradient(to right, hsl(var(--foreground)/0.08), transparent)',
+            width: `${swipeProgress * 64}px`,
+            background: `linear-gradient(to right, hsl(var(--foreground) / ${swipeProgress * 0.07}), transparent)`,
           }}
         >
           <div
-            className="ml-2 w-8 h-8 rounded-full bg-background/90 border border-border flex items-center justify-center shadow-md"
-            style={{ opacity: swipeProgress, transform: `scale(${0.7 + swipeProgress * 0.3})` }}
+            className="ml-3 w-9 h-9 rounded-full flex items-center justify-center bg-foreground/10 backdrop-blur-md"
+            style={{
+              opacity: Math.min(1, swipeProgress * 1.4),
+              transform: `translateX(${swipeProgress * 6}px) scale(${0.88 + swipeProgress * 0.12})`,
+            }}
           >
-            <ChevronLeft className="w-4 h-4 text-foreground" />
+            <ChevronLeft className="w-5 h-5 text-foreground" strokeWidth={2.25} />
           </div>
         </div>
       )}
