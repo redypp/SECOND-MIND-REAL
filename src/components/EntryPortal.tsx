@@ -74,8 +74,9 @@ export function EntryPortal() {
         transition={{ duration: 0.25 }}
         className="fixed inset-0 z-[20000] bg-background flex flex-col overflow-hidden px-5 safe-area-top-ios"
         style={{
-          paddingTop: 'calc(var(--app-safe-top, env(safe-area-inset-top, 0px)) + 1.5rem)',
-          paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 1rem)',
+          // Just clear the iOS clock; no extra padding. Tiles fill the rest.
+          paddingTop: 'calc(var(--app-safe-top, env(safe-area-inset-top, 0px)) + 0.5rem)',
+          paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 0.75rem)',
         }}
       >
         {/* Tile stack — fills the viewport, no header */}
