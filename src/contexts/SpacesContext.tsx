@@ -100,6 +100,36 @@ const SpacesContext = createContext<SpacesContextType | undefined>(undefined);
 // Matches resumeHandler's BACKGROUND_THRESHOLD_MS so both systems stay in sync.
 const BACKGROUND_REFRESH_THRESHOLD_MS = 5 * 60 * 1000; // 5 minutes
 
+// Persisted "last successful sync" counts — a tripwire for ghost-empty UI.
+// Updated every time the cloud returns a successful response (any count,
+// including legitimate zero). On startup or after a fetch we cross-check
+// these against the live state: if state goes empty while the tripwire
+// remembers non-zero counts, we know not to trust the empty render and
+// schedule one automatic retry (see ghostRetryRef). Without this, a
+// transient query failure paired with an empty/corrupt local cache left
+// the user staring at "no archives" even though 22 archives were sitting
+// in the cloud — diagnosed by direct DB inspection.
+const LAST_KNOWN_SPACES_KEY = 'sm_last_known_spaces_count';
+const LAST_KNOWN_ITEMS_KEY = 'sm_last_known_items_count';
+
+function readLastKnown(key: string): number {
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return 0;
+    const n = parseInt(raw, 10);
+    return Number.isFinite(n) && n >= 0 ? n : 0;
+  } catch {
+    return 0;
+  }
+}
+
+function writeLastKnown(key: string, count: number): void {
+  try {
+    if (count > 0) localStorage.setItem(key, String(count));
+    else localStorage.removeItem(key);
+  } catch { /* localStorage may be full / unavailable */ }
+}
+
 // ─── Synchronous cache loader ────────────────────────────────────────────────
 // Called once during the first render (via useState lazy initializer) so that
 // spaces and items are already populated BEFORE the first paint. This eliminates
@@ -194,6 +224,12 @@ export function SpacesProvider({ children }: { children: ReactNode }) {
   // call via the effect below. Used by fetchData to detect the "same user, empty state after
   // sign-out" case without needing spaces/items in the callback's dependency array.
   const stateHasDataRef = useRef(initialCache.spaces.length > 0 || initialCache.items.length > 0);
+  // One-shot automatic retry latch: if a fetch finishes and we're showing
+  // empty state while the persisted tripwire says we should have data, we
+  // schedule exactly one retry. Subsequent ghost-empty detections in the
+  // same session are honored (no retry loop) — at that point the user can
+  // pull-to-refresh or sign out / in.
+  const ghostRetryUsedRef = useRef(false);
 
    // ── Cache-first: signal auth context if we already have cached data ──
    // State (spaces/items/loading) is already initialized synchronously by loadInitialCacheState.
@@ -570,6 +606,10 @@ export function SpacesProvider({ children }: { children: ReactNode }) {
 
        // Complete! Mark data as successfully loaded
        notifyDataStatus({ kind: 'success' });
+       // Refresh the ghost-empty tripwire — we just got an authoritative
+       // cloud response, so these are the canonical counts going forward.
+       writeLastKnown(LAST_KNOWN_SPACES_KEY, dbSpaces.length);
+       writeLastKnown(LAST_KNOWN_ITEMS_KEY, dbItems.length);
 
        // Fetch shared spaces (non-blocking, fire-and-forget)
        supabase
@@ -676,6 +716,8 @@ export function SpacesProvider({ children }: { children: ReactNode }) {
              hasCachedDataRef.current = retrySpaces.length > 0 || retryItems.length > 0;
              notifyDataStatus({ kind: 'success' });
              markInitialLoadComplete();
+             writeLastKnown(LAST_KNOWN_SPACES_KEY, retrySpaces.length);
+             writeLastKnown(LAST_KNOWN_ITEMS_KEY, retryItems.length);
              logLifecycle('Clean retry succeeded', { spaces: retrySpaces.length, items: retryItems.length });
            } catch (retryErr) {
              // Final failure — show friendly error
@@ -697,7 +739,34 @@ export function SpacesProvider({ children }: { children: ReactNode }) {
    }, [user, notifyDataStatus]);
  
    useEffect(() => {
-     fetchData();
+     let cancelled = false;
+     fetchData().finally(() => {
+       if (cancelled) return;
+       // Ghost-empty tripwire: if we landed at zero spaces/items but the
+       // last successful sync remembered non-zero counts, we're almost
+       // certainly looking at a transient failure (cache cleared, RLS
+       // blip, or a network hiccup that bypassed the in-line guards).
+       // Schedule exactly one auto-retry — enough to recover the common
+       // case without risking a loop if the server legitimately has zero
+       // for this user. Use a small delay so React commits the state
+       // first and we read a stable value via stateHasDataRef.
+       if (ghostRetryUsedRef.current) return;
+       const tripSpaces = readLastKnown(LAST_KNOWN_SPACES_KEY);
+       const tripItems = readLastKnown(LAST_KNOWN_ITEMS_KEY);
+       if (tripSpaces === 0 && tripItems === 0) return;
+       setTimeout(() => {
+         if (cancelled) return;
+         if (stateHasDataRef.current) return; // recovered on its own
+         ghostRetryUsedRef.current = true;
+         console.warn('[SpacesContext] Ghost-empty detected — auto-retry', {
+           tripSpaces,
+           tripItems,
+         });
+         logLifecycle('[Persistence] Ghost-empty auto-retry', { tripSpaces, tripItems });
+         fetchData();
+       }, 600);
+     });
+     return () => { cancelled = true; };
    }, [fetchData]);
 
    // Background refresh on app resume (no loading state change)
@@ -781,7 +850,11 @@ export function SpacesProvider({ children }: { children: ReactNode }) {
           );
           return localOnlyPending.length === 0 ? mapped : [...mapped, ...localOnlyPending];
         });
-        
+
+        // Background refresh also got an authoritative count — update tripwire.
+        writeLastKnown(LAST_KNOWN_SPACES_KEY, dbSpaces.length);
+        writeLastKnown(LAST_KNOWN_ITEMS_KEY, dbItems.length);
+
         // Update caches (wrapped in try-catch for storage resilience)
         try {
           const spacesCache = getSpacesCache();
