@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Plus, Pencil, Trash2, ChevronUp, ChevronDown, Check, Sparkles } from 'lucide-react';
+import { X, Plus, Pencil, Trash2, ChevronUp, ChevronDown, Check } from 'lucide-react';
 import { CATEGORY_ORDER } from '@/lib/smartTitle';
 
 export interface SectionGroup {
@@ -271,12 +271,9 @@ export function SectionsManagerSheet({ isOpen, groups, onClose, onChange }: Sect
                 </div>
                 {presets.length > 0 && (
                   <>
-                    <div className="flex items-center gap-1.5 mt-3 mb-2">
-                      <Sparkles className="w-3 h-3 text-primary/70" />
-                      <span className="text-[11px] uppercase tracking-wider font-semibold text-muted-foreground">
-                        Smart suggestions
-                      </span>
-                    </div>
+                    <p className="text-[10px] uppercase tracking-[0.18em] font-medium text-muted-foreground/70 mt-4 mb-2">
+                      Suggested
+                    </p>
                     <div className="flex flex-wrap gap-1.5">
                       {presets.map(label => (
                         <button
