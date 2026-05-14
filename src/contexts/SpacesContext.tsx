@@ -736,7 +736,13 @@ export function SpacesProvider({ children }: { children: ReactNode }) {
       } finally {
         setLoading(false);
       }
-   }, [user, notifyDataStatus]);
+   // Dep on user?.id (string) — NOT user (object). Supabase re-issues a new
+   // user object on every session refresh or auth state callback with the
+   // same id; depending on the object instance caused fetchData to be
+   // re-created and re-run, producing a double fetch + a brief empty-state
+   // flash on resume. user.id is the only field this callback consumes.
+   // eslint-disable-next-line react-hooks/exhaustive-deps
+   }, [user?.id, notifyDataStatus]);
  
    useEffect(() => {
      let cancelled = false;
@@ -899,7 +905,11 @@ export function SpacesProvider({ children }: { children: ReactNode }) {
        console.warn('[SpacesContext] Background refresh failed:', err);
        // Don't show error to user - this is silent background refresh
      }
-   }, [user]);
+   // Same reasoning as fetchData: depend on the stable user.id string so a
+   // new user-object instance with the same id doesn't trigger a redundant
+   // background refresh on every session-token rotation.
+   // eslint-disable-next-line react-hooks/exhaustive-deps
+   }, [user?.id]);
 
    // Flush pending sync queue operations when the user navigates away or closes the tab.
   // This gives in-flight writes the best chance of succeeding before the page unloads.
