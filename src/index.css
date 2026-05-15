@@ -168,19 +168,18 @@
     overscroll-behavior-x: none;
   }
 
-  /* Display headings — Helvetica-style, uppercase, heavy, tight tracking.
-     Global uppercase means every <h1>..<h6> in the app picks up the magazine
-     cover-line feel without per-component changes. */
+  /* Display headings — Helvetica-style, heavy, tight tracking.
+     Mixed case (no forced uppercase) so titles read like the reference
+     bubble-card style. */
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-display);
-    font-weight: 900;
-    text-transform: uppercase;
-    letter-spacing: -0.02em;
-    line-height: 0.96;
+    font-weight: 800;
+    letter-spacing: -0.025em;
+    line-height: 0.98;
   }
 
-  h1 { letter-spacing: -0.035em; }
-  h2 { letter-spacing: -0.03em; }
+  h1 { font-weight: 900; letter-spacing: -0.04em; }
+  h2 { font-weight: 900; letter-spacing: -0.03em; }
 
   p, span, label, a, button, input, textarea, select {
     font-weight: inherit;
